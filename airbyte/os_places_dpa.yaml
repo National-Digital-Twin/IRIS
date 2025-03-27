@@ -1,0 +1,188 @@
+version: 0.51.41
+type: DeclarativeSource
+check:
+  type: CheckStream
+  stream_names:
+    - os_places_dpa
+streams:
+  - type: DeclarativeStream
+    name: os_places_dpa
+    primary_key:
+      - UDPRN
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        $schema: http://json-schema.org/schema#
+        properties:
+          ADDRESS:
+            type: string
+          BLPU_STATE_CODE:
+            type: string
+          BLPU_STATE_CODE_DESCRIPTION:
+            type: string
+          BLPU_STATE_DATE:
+            type: string
+          BUILDING_NAME:
+            type: string
+          BUILDING_NUMBER:
+            type: string
+          CLASSIFICATION_CODE:
+            type: string
+          CLASSIFICATION_CODE_DESCRIPTION:
+            type: string
+          COUNTRY_CODE:
+            type: string
+          COUNTRY_CODE_DESCRIPTION:
+            type: string
+          DELIVERY_POINT_SUFFIX:
+            type: string
+          DEPENDENT_LOCALITY:
+            type: string
+          DEPENDENT_THOROUGHFARE_NAME:
+            type: string
+          ENTRY_DATE:
+            type: string
+          LANGUAGE:
+            type: string
+          LAST_UPDATE_DATE:
+            type: string
+          LOCAL_CUSTODIAN_CODE:
+            type: number
+          LOCAL_CUSTODIAN_CODE_DESCRIPTION:
+            type: string
+          LOGICAL_STATUS_CODE:
+            type: string
+          MATCH:
+            type: number
+          MATCH_DESCRIPTION:
+            type: string
+          ORGANISATION_NAME:
+            type: string
+          PARENT_UPRN:
+            type: string
+          PARISH_CODE:
+            type: string
+          POSTAL_ADDRESS_CODE:
+            type: string
+          POSTAL_ADDRESS_CODE_DESCRIPTION:
+            type: string
+          POSTCODE:
+            type: string
+          POST_TOWN:
+            type: string
+          RPC:
+            type: string
+          STATUS:
+            type: string
+          SUB_BUILDING_NAME:
+            type: string
+          THOROUGHFARE_NAME:
+            type: string
+          TOPOGRAPHY_LAYER_TOID:
+            type: string
+          UDPRN:
+            type: string
+          UPRN:
+            type: string
+          WARD_CODE:
+            type: string
+          X_COORDINATE:
+            type: number
+          Y_COORDINATE:
+            type: number
+        type: object
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url_base: https://api.os.uk/search/places/v1/
+        path: postcode
+        http_method: GET
+        request_parameters:
+          key: ORDNANCE_SURVEY_API_KEY # pragma: allowlist secret
+          dataset: DPA
+        request_headers: {}
+        authenticator:
+          type: NoAuth
+        request_body_json: {}
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - results
+            - "*"
+            - DPA
+      paginator:
+        type: DefaultPaginator
+        page_token_option:
+          type: RequestOption
+          inject_into: request_parameter
+          field_name: offset
+        page_size_option:
+          type: RequestOption
+          field_name: maxresults
+          inject_into: request_parameter
+        pagination_strategy:
+          type: OffsetIncrement
+          page_size: 100
+      partition_router:
+        - type: ListPartitionRouter
+          values:
+            - PO30
+            - PO31
+            - PO32
+            - PO33
+            - PO34
+            - PO35
+            - PO36
+            - PO37
+            - PO38
+            - PO39
+            - PO40
+            - PO41
+            - DN8
+            - DN14
+            - HU2
+            - HU4
+            - HU5
+            - HU6
+            - HU7
+            - HU8
+            - HU10
+            - HU11
+            - HU12
+            - HU13
+            - HU14
+            - HU15
+            - HU16
+            - HU17
+            - HU18
+            - HU19
+            - HU20
+            - YO4
+            - YO8
+            - YO11
+            - YO15
+            - YO16
+            - YO25
+            - YO41
+            - YO42
+            - YO43
+            - YO95
+          cursor_field: postcode
+          request_option:
+            type: RequestOption
+            field_name: postcode
+            inject_into: request_parameter
+spec:
+  connection_specification:
+    $schema: http://json-schema.org/draft-07/schema#
+    type: object
+    required: []
+    properties: {}
+    additionalProperties: true
+  type: Spec
+metadata:
+  autoImportSchema:
+    os_places_dpa: true

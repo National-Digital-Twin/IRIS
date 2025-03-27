@@ -1,0 +1,25 @@
+data:
+  allowedHosts:
+    hosts:
+      - TODO # Please change to the hostname of the source.
+  registries:
+    oss:
+      enabled: false
+    cloud:
+      enabled: false
+  connectorSubtype: api
+  connectorType: source
+  definitionId: df4845b7-6764-4cb8-bbf3-d752ef3beeb7
+  dockerImageTag: 0.1.0
+  dockerRepository: airbyte/source-epc-recommendations
+  githubIssueLabel: source-epc-recommendations
+  icon: epc-recommendations.svg
+  license: MIT
+  name: Epc Recommendations
+  releaseDate: TODO
+  supportLevel: community
+  releaseStage: alpha
+  documentationUrl: https://docs.airbyte.com/integrations/sources/epc-recommendations
+  tags:
+    - language:python
+metadataSpecVersion: "1.0"

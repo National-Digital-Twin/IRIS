@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: postgres
+    schema: public
+    tables:
+      - name: os_places_dpa
+      - name: os_places_lpi
+      - name: domestic_certificates_search
+      - name: non_domestic_certificates_search
+      - name: recommendations

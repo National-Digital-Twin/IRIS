@@ -1,0 +1,191 @@
+version: 2
+
+models:
+  - name: stg_os_places
+    description: "OS Places API staging dbt model (DPA and LPI)"
+    tags: [staging]
+
+    # column details taken from: https://osdatahub.os.uk/docs/places/technicalSpecification
+    columns:
+      - name: rpc
+        description: Representative Point Code. This describes the accuracy of the coordinate that has been allocated to the BLPU. See code list - RPC_CODE in AddressBase Premium Technical Specification.
+        field_type: CHAR
+        accepted_values:
+
+      - name: postcode
+        description: A postcode is an abbreviated form of address made up of combinations of between five and seven alphanumeric characters.
+        field_type: CHAR
+        accepted_values:
+
+      - name: logical_status_code
+        description: A code for the logical status of the BLPU.
+        field_type: INT
+        accepted_values:
+
+      - name: country_code_description
+        description: "Description of the country code."
+        field_type: CHAR
+        accepted_values: This record is within England | This record is within Wales | This record is within Scotland | This record is within Northern Ireland | This record is within Channel Islands | This record is within Isle of Man | This record is not assigned to a country as it falls outside of the land boundaries used
+
+      - name: x_coordinate
+        description: Easting coordinates in metres, defining the location in the British National Grid spatial reference system.
+        field_type: FLOAT
+        accepted_values:
+
+      - name: last_update_date
+        description: Date this record was last updated
+        field_type: DATE
+        accepted_values:
+
+      - name: classification_code_description
+        description: A description that describes the classification of the record, for example, CE01HE is a higher education establishment
+        field_type: CHAR
+        accepted_values:
+
+      - name: organisation_name
+        description: The organisation name is the business name given to a delivery point within a building or small group of buildings. This field could also include entries for churches, public houses and libraries.
+        field_type: CHAR
+        accepted_values:
+
+      - name: udprn
+        description: Royal Mail's Unique Delivery Point Reference Number.
+        field_type: INT
+        accepted_values:
+
+      - name: status
+        description: The status of the feature (i.e. APPROVED, ALTERNATIVE, PROVISIONAL, HISTORICAL). The AddressBase Premium product uses codes of 1,3,6,8 for these however the Address API will provide the text interpretation above.
+        field_type: CHAR
+        accepted_values:
+
+      - name: parent_uprn
+        description: UPRN of the parent record.
+        field_type: INT
+        accepted_values:
+
+      - name: postal_address_code
+        description: A code that describes the type of postal delivery that the object is subject to.
+        field_type: INT
+        accepted_values:
+
+      - name: local_custodian_code_description
+        description: Description of the Local Land and Property Gazetteer (LLPG) Custodian responsible for the maintenance of this record.
+        field_type: CHAR
+        accepted_values:
+
+      - name: delivery_point_suffix
+        description: Suffix for the delivery point.
+        field_type: CHAR
+        accepted_values: None
+
+      - name: building_number
+        description: The building number, or postal number, is a number given to a single building or a small group of buildings.
+        field_type: INT
+        accepted_values:
+
+      - name: thoroughfare_name
+        description: A road, track or named access route on which there are Royal Mail delivery points.
+        field_type: CHAR
+        accepted_values:
+
+      - name: LANGUAGE
+        description: A code identifying the language in use for the record.
+        field_type: CHAR
+        accepted_values:
+
+      - name: dependent_locality
+        description: Dependent locality areas may define an area within a post town.
+        field_type: CHAR
+        accepted_values:
+
+      - name: blpu_state_code_description
+        description: A description for the physical nature of the property or land object. These are used to represent the physical state or the feature.
+        field_type: CHAR
+        accepted_values:
+
+      - name: blpu_state_date
+        description: Date at which the BLPU achieved its current state in the real-world.
+        field_type: DATE
+        accepted_values:
+
+      - name: local_custodian_code
+        description: Unique identifier of the Local Land and Property Gazetteer (LLPG) Custodian responsible for the maintenance of this record.
+        field_type: INT
+        accepted_values:
+
+      - name: blpu_state_code
+        description: A code for the physical nature of the property or land object. These are used to represent the physical state or the feature.
+        field_type: INT
+        accepted_values:
+
+      - name: dependent_thoroughfare_name
+        description: In certain places, for example, town centres, there are named thoroughfares within other named thoroughfares.
+        field_type: CHAR
+        accepted_values:
+
+      - name: post_town
+        description: The town or city in which the Royal Mail sorting office is located.
+        field_type: CHAR
+        accepted_values:
+
+      - name: building_name
+        description: The building name is a description applied to a single building or a small group of buildings
+        field_type: CHAR
+        accepted_values:
+
+      - name: sub_building_name
+        description: The sub-building name and/or number are identifiers for subdivision of properties.
+        field_type: CHAR
+        accepted_values:
+
+      - name: postal_address_code_description
+        description: A description that describes the type of postal delivery that the object is subject to.
+        field_type: CHAR
+        accepted_values:
+
+      - name: uprn
+        description: Foreign key used to reference the delivery point address to the corresponding BLPU.
+        field_type: INT
+        accepted_values:
+
+      - name: topography_layer_toid
+        description: Unique key for the application cross reference record.
+        field_type: CHAR
+        accepted_values:
+
+      - name: address
+        description: String containing the concatenated address.
+        field_type: CHAR
+        accepted_values:
+
+      - name: y_coordinate
+        description: Northing coordinates in metres, defining the location in the British National Grid spatial reference system.
+        field_type: FLOAT
+        accepted_values:
+
+      - name: match_description
+        description: The description of the match.
+        field_type: CHAR
+        accepted_values: Exact = 1.0 (note; extra information in the input address that doesn't match the ABPREM version is ignored). Good = 0.8 - 0.9 (most of the address matches, but a part of it may be different, such as a different postcode). Partial = 0.7 (address could represent the same address but has some significant differences). No Match = <0.7. Resources other than Find and Match will return a fixed value of "Exact".
+
+      - name: classification_code
+        description: A code that describes the classification of the record, for example, CE01HE is a higher education establishment.
+        field_type: CHAR
+        accepted_values:
+
+      - name: entry_date
+        description: Date of the data entry
+        field_type: DATE
+        accepted_values:
+
+      - name: MATCH
+        description: The match score for the query against the returned address from 0 to 1. Resources other than Find and Match will return a fixed value of 1.0.
+        field_type: FLOAT
+        accepted_values:
+
+      - name: country_code
+        description: "Provide a meaningful description here"
+        field_type: CHAR
+        accepted_values: E | W | S | N | L | M | J
+
+    meta:
+      owner: "data_engineering_team"
