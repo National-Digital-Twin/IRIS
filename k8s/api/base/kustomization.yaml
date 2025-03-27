@@ -1,0 +1,11 @@
+resources:
+  - service-account.yaml
+  - deployment.yaml
+  - service.yaml
+  - istio/authorizationpolicy/allow-ingress-to-iris-write-api.yaml
+
+labels:
+  - pairs:
+      app: iris-write-api
+      env: ENV_PLACEHOLDER
+      app.kubernetes.io/name: iris-write-api

@@ -1,0 +1,19 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sparx: <http://data.sparxsystems.com#> .
+@prefix ies: <http://ies.data.gov.uk/ontology/ies4#> .
+@prefix gp: <https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#> .
+@prefix data: <http://ndtp.co.uk/data/> .
+@prefix ndt: <http://ndtp.co.uk/ontology#> .
+
+data:b1 a ndt:Building .
+data:b1 ies:isIdentifiedBy data:b1uprn .
+data:b1uprn a gp:UniquePropertyReferenceNumber .
+data:b1uprn ies:representationValue "123" .
+
+data:b1s1 a ndt:BuildingWithEnergyRatingOfA .
+data:b1s1 ies:isStateOf data:b1 .
