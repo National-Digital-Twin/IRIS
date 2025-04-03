@@ -17,7 +17,7 @@ patches:
 
 labels:
   - pairs:
-      env: demo
+      env: staging
 
 
 images:
