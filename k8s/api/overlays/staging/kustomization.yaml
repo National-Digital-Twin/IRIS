@@ -8,17 +8,14 @@ configMapGenerator:
     envs:
       - params.env
 
-
 patches:
   - path: patches/service-account.yaml
     target:
       kind: ServiceAccount
 
-
 labels:
   - pairs:
       env: staging
-
 
 images:
   - name: iris-write-api-image:template
