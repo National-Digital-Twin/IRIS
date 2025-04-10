@@ -2,11 +2,12 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from telicent_labels import SecurityLabelBuilder, TelicentSecurityLabelsV2
+from datetime import date, datetime
 from enum import Enum
+from typing import Dict, List, Optional
+
+from ianode_labels import IANodeSecurityLabelsV2, SecurityLabelBuilder
 from pydantic import BaseModel
-from datetime import datetime, date
-from typing import List, Dict, Optional
 
 ies = "http://ies.data.gov.uk/ontology/ies4#"
 
@@ -27,17 +28,17 @@ class EDH(BaseModel):
         builder = SecurityLabelBuilder()
         if len(self.permitted_organisations) > 0:
             builder.add_multiple(
-                TelicentSecurityLabelsV2.PERMITTED_ORGANISATIONS.value,
+                IANodeSecurityLabelsV2.PERMITTED_ORGANISATIONS.value,
                 *self.permitted_organisations,
             )
         if len(self.permitted_nationalities) > 0:
             builder.add_multiple(
-                TelicentSecurityLabelsV2.PERMITTED_NATIONALITIES.value,
+                IANodeSecurityLabelsV2.PERMITTED_NATIONALITIES.value,
                 *self.permitted_nationalities,
             )
         if self.classification:
             builder.add(
-                TelicentSecurityLabelsV2.CLASSIFICATION.value, self.classification.value
+                IANodeSecurityLabelsV2.CLASSIFICATION.value, self.classification.value
             )
         return builder.build()
 
@@ -148,3 +149,4 @@ class AccessUser(BaseModel):
     email: Optional[str] = None
     attributes: dict[str, str]
     groups: List[str]
+

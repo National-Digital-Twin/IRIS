@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_ACCESS_TOKEN: ${{ secrets.GH_PACKAGES_PAT }}
     environment: development
     steps:
       - name: Checkout repository
@@ -69,7 +69,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build --load \
+          docker build --secret id=pat_token,env=GITHUB_ACCESS_TOKEN --load \
                   -t ${{ inputs.aws_account_number }}.dkr.ecr.eu-west-2.amazonaws.com/${{ inputs.repo_name }}:${{ github.sha }} \
                   -t ${{ inputs.aws_account_number }}.dkr.ecr.eu-west-2.amazonaws.com/${{ inputs.repo_name }}:${{ inputs.version }} \
                   -f Dockerfile .
