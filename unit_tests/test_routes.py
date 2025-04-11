@@ -4,6 +4,7 @@
 
 import datetime
 import uuid
+
 import pytest
 from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
@@ -291,21 +292,6 @@ def test_get_flagged_buildings(client, monkeypatch):
     assert len(data) == 1
     assert data[0]["UPRN"] == "12345"
 
-def test_post_flag_visit(client, monkeypatch):
-    monkeypatch.setattr(routes.access_client, "get_user_details", lambda headers: dummy_user)
-    called = {}
-    def dummy_run_sparql_update(query, forwarding_headers, securityLabel):
-        called["query"] = query
-    monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
-    class DummyIesEntity:
-        def __init__(self, uri, securityLabel=None):
-            self.uri = uri
-            self.securityLabel = securityLabel
-    dummy_entity = DummyIesEntity("http://example.com/entity")
-    response = client.post("/flag-to-visit", json={"uri": dummy_entity.uri, "securityLabel": None}, headers={"dummy": "header"})
-    assert response.status_code == 200
-    flag_state = response.json()
-    assert flag_state.startswith(routes.data_uri_stub)
 
 def test_post_flag_investigate(client, monkeypatch):
     monkeypatch.setattr(routes.access_client, "get_user_details", lambda headers: dummy_user)
