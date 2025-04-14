@@ -224,27 +224,6 @@ def test_invalidate_flag_bad_assessment_type(client, monkeypatch):
     response = client.post("/invalidate-flag", json=payload, headers={"dummy": "header"})
     assert response.status_code == 422
 
-def test_get_building_by_uprn(client, monkeypatch):
-    dummy_result = {
-        "results": {
-            "bindings": [
-                {
-                    "building": {"value": "http://example.com/building1"},
-                    "buildingType": {"value": "http://example.com/type1"},
-                    "state": {"value": "http://example.com/state1"},
-                    "stateType": {"value": "http://example.com/stateType1"},
-                }
-            ]
-        }
-    }
-    monkeypatch.setattr(routes, "run_sparql_query", lambda q, h: dummy_result)
-    response = client.get("/buildings/uprn123", headers={"dummy": "header"})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["entity"]["uri"] == "http://example.com/building1"
-    assert "http://example.com/type1" in data["entity"]["types"]
-    assert len(data["states"]) == 1
-
 def test_get_building_flag_history(client, monkeypatch):
     dummy_result = {
         "results": {

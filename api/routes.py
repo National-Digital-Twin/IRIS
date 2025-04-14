@@ -4,31 +4,39 @@
 
 import configparser
 import os
-import uuid
-from datetime import datetime
-from typing import List
-
 import requests
+import uuid
+
 from access import AccessClient
+from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request, Response
+from mappers import map_single_building_response, map_bounded_buildings_response, map_epc_statistics_response
 from models import (
     EDH,
-    Building,
+    EpcStatistics,
+    IesThing,
+    IesClass,
+    IesState,
+    IesEntity,
+    IesPerson,
     ClassificationEmum,
     IesAccount,
     IesAssessment,
     IesAssessToBeFalse,
     IesAssessToBeTrue,
+    SimpleBuilding,
+    DetailedBuilding,
     IesClass,
     IesEntity,
-    IesEntityAndStates,
     IesPerson,
     IesState,
     IesThing,
     ies,
 )
+from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query, get_statistics_for_wards
 from pydantic import BaseModel
+from typing import List
 from rdflib import Graph
 from requests import exceptions
 from utils import get_headers as get_forwarding_headers
@@ -63,8 +71,8 @@ ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
 
 if update_mode == "KAFKA":
-    from telicent_lib import Adapter, Record, RecordUtils
-    from telicent_lib.sinks import KafkaSink
+    from ia_map_lib.sinks import KafkaSink
+    from ia_map_lib import Adapter, Record, RecordUtils
 
     knowledgeSink = KafkaSink(topic=fpTopic, broker=broker)
     knowledgeAdapter = Adapter(
@@ -359,125 +367,38 @@ def post_person(per: IesPerson):
     run_sparql_update(query=query, securityLabel=per.securityLabel)
     return per.uri
 
+def generate_wkt_polygon(x_min, y_min, x_max, y_max):
+    """
+    Generates a WKT POLYGON string for a bounding box given min/max coordinates.
+
+    :param x_min: Minimum longitude (west)
+    :param y_min: Minimum latitude (south)
+    :param x_max: Maximum longitude (east)
+    :param y_max: Maximum latitude (north)
+    :return: WKT POLYGON string
+    """
+    return f'POLYGON(({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))'
 
 @router.get(
     "/buildings",
-    response_model=List[Building],
-    description="Gets all the buildings inside a geohash (min 5 digits) along with their types, TOIDs, UPRNs, and current energy ratings",
+    response_model=List[SimpleBuilding],
+    description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_geohash(geohash: str, req: Request):
-    if len(geohash) < 5:
-        raise HTTPException(
-            422, detail="Lat Lon range too wide, please provide at least five digits"
-        )
-    gh = "http://geohash.org/" + geohash
-
-    query = f"""
-        {format_prefixes()}
-        SELECT
-            ?building
-            ?uprn_id
-            ?building_toid_id
-            ?parent_building_toid_id
-            ?current_energy_rating
-            ?parent_building
-            ?type
-            ?flag
-            ?flag_type
-            ?flag_person
-            ?flag_date
-            ?flag_assessment
-            ?flag_ass_date
-            ?flag_assessor
-        WHERE {{
-            ?building ies:inLocation ?geopoint .
-            BIND(str(?geopoint) as ?gh) .
-            FILTER (STRSTARTS(?gh,"{gh}") )
-            ?building a ?type .
-
-            ?state ies:isStateOf ?building .
-            ?state a ?energy_rating .
-            BIND(REPLACE(str(?energy_rating),"http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOf","","i") as ?current_energy_rating)
-
-            ?building ies:isIdentifiedBy ?uprn .
-            ?uprn ies:representationValue ?uprn_id .
-            ?uprn rdf:type gp:UniquePropertyReferenceNumber .
-
-            OPTIONAL {{
-                ?flag ies:interestedIn ?building .
-                ?flag ies:isStateOf ?flag_person .
-                ?flag a ?flag_type .
-                ?flag ies:inPeriod ?flag_date .
-                OPTIONAL {{
-                    ?flag_assessment ies:assessed ?flag .
-                    ?flag_assessment ies:inPeriod ?flag_ass_date .
-                    ?flag_assessment ies:assessor ?flag_assessor .
-                }}
-            }}
-
-            OPTIONAL {{
-                ?building ies:isIdentifiedBy ?building_toid .
-                ?building_toid rdf:type ies:TOID .
-                ?building_toid ies:representationValue ?building_toid_id .
-            }}
-            OPTIONAL {{
-                ?building ies:isPartOf ?parent_building .
-                ?parent_building ies:isIdentifiedBy ?parent_building_toid .
-                ?parent_building_toid ies:representationValue ?parent_building_toid_id .
-                ?parent_building_toid rdf:type ies:TOID .
-            }}
-
-        }}
-    """
-
-    out = {}
-    out_array = []
+def get_buildings_in_bounding_box(min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request):
+    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
+    query = get_buildings_in_bounding_box_query(polygon)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    return map_bounded_buildings_response(results)
 
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            building = shorten(result["building"]["value"])
-            typ = shorten(result["type"]["value"])
-            if building in out:
-                building_obj = out[building]
-                if typ not in building_obj["types"]:
-                    building_obj["types"].append(typ)
-            else:
-                energy_rating = result["current_energy_rating"]["value"]
-                building_obj = {
-                    "uri": building,
-                    "uprn": result["uprn_id"]["value"],
-                    "currentEnergyRating": energy_rating,
-                    "types": [typ],
-                    "flags": {},
-                    "invalidatedFlags": [],
-                }
-                out[building] = building_obj
-                out_array.append(building_obj)
-
-            if "flag" in result:
-                flag = shorten(result["flag"]["value"])
-                if flag not in building_obj["flags"]:
-                    flag_obj = {
-                        "flagType": shorten(result["flag_type"]["value"]),
-                        "flaggedBy": result["flag_person"]["value"],
-                        "date": result["flag_date"]["value"],
-                    }
-                    building_obj["flags"][flag] = flag_obj
-                else:
-                    flag_obj = building_obj["flags"][flag]
-                if "flag_assessment" in result:
-                    flag_obj["invalidated"] = result["flag_ass_date"]["value"]
-                    flag_obj["invalidatedBy"] = result["flag_assessor"]["value"]
-
-            if "building_toid_id" in result:
-                building_obj["buildingTOID"] = result["building_toid_id"]["value"]
-            elif "parent_building_toid_id" in result:
-                building_obj["parentBuildingTOID"] = result["parent_building_toid_id"][
-                    "value"
-                ]
-
-    return out_array
+@router.get(
+    "/epc-statistics/wards",
+    response_model=List[EpcStatistics],
+    description="Gets the statistics for all wards",
+)
+def get_epc_statistics_for_wards(req: Request):
+    query = get_statistics_for_wards()
+    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    return map_epc_statistics_response(results)
 
 
 class InvalidateFlag(BaseModel):
@@ -532,47 +453,21 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
 
 @router.get(
     "/buildings/{uprn}",
-    response_model=IesEntityAndStates,
+    response_model=DetailedBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
 def get_building_by_uprn(uprn: str, req: Request):
-    query = f"""SELECT ?building ?buildingType ?state ?stateType WHERE
-                {{
-                    ?building ies:isIdentifiedBy ?uprnID .
-                    ?building rdf:type ?buildingType .
-                    ?uprnID ies:representationValue "{uprn}" .
-                    OPTIONAL {{
-                        ?state ies:isStateOf ?building .
-                        ?state rdf:type ?stateType .
-                    }}
-                }}
-            """
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    building = {
-        "uri": "",
-        "types": [],
-    }
-    states = {}
-    if results and results["results"] and results["results"]["bindings"]:
-        for result in results["results"]["bindings"]:
-            building["uri"] = result["building"]["value"]
-            if result["buildingType"]["value"] not in building["types"]:
-                building["types"].append(result["buildingType"]["value"])
-            if result["state"]["value"]:
-                state = result["state"]["value"]
-                state_type = result["stateType"]["value"]
-                if state not in states:
-                    states[state] = {
-                        "uri": state,
-                        "types": [],
-                        "stateOf": building["uri"],
-                    }
-                if state_type not in states[state]["types"]:
-                    states[state]["types"].append(state_type)
-    out = {"entity": building, "states": []}
-    for state in states:
-        out["states"].append(states[state])
-    return out
+    building_results = run_sparql_query(get_building(uprn), get_forwarding_headers(req.headers))
+    results_bindings = building_results["results"]["bindings"] if building_results and building_results["results"] else None
+    if not results_bindings:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Building with UPRN {uprn} not found",
+            )
+    roof_results = run_sparql_query(get_roof_for_building(uprn), get_forwarding_headers(req.headers))
+    floor_results = run_sparql_query(get_floor_for_building(uprn), get_forwarding_headers(req.headers))
+    wall_window_results = run_sparql_query(get_walls_and_windows_for_building(uprn), get_forwarding_headers(req.headers))
+    return map_single_building_response(uprn, building_results, roof_results, floor_results, wall_window_results)
 
 
 @router.get(

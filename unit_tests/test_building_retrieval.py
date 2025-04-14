@@ -3,11 +3,13 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import ANY, patch, MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api.routes import router, run_sparql_query
+from api.routes import router
+from api.query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query
+from unit_tests.query_response_mocks import mock_known_building, empty_query_response, bounded_buildings_response
 
 @pytest.fixture(autouse=True)
 def set_identity_api_url(monkeypatch):
@@ -21,165 +23,98 @@ def client():
     app.include_router(router)
     return TestClient(app)
 
-# Mock SPARQL query results for building data
-@pytest.fixture
-def mock_building_query_results():
-    return {
-        "results": {
-            "bindings": [
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "type": {"value": "http://ies.data.gov.uk/ontology/ies4#Building"},
-                    "uprn_id": {"value": "10023456789"},
-                    "current_energy_rating": {"value": "C"},
-                    "flag": {"value": "http://nationaldigitaltwin.gov.uk/data#flag123"},
-                    "flag_type": {"value": "http://nationaldigitaltwin.gov.uk/ontology#InterestedInVisiting"},
-                    "flag_person": {"value": "http://nationaldigitaltwin.gov.uk/data#TestUser"},
-                    "flag_date": {"value": "2025-02-01T10:00:00"},
-                    "building_toid_id": {"value": "osgb1000012345678"}
-                },
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "type": {"value": "http://nationaldigitaltwin.gov.uk/ontology#ResidentialBuilding"},
-                    "uprn_id": {"value": "10023456789"},
-                    "current_energy_rating": {"value": "C"},
-                    "flag": {"value": "http://nationaldigitaltwin.gov.uk/data#flag456"},
-                    "flag_type": {"value": "http://nationaldigitaltwin.gov.uk/ontology#InterestedInInvestigating"},
-                    "flag_person": {"value": "http://nationaldigitaltwin.gov.uk/data#AnotherUser"},
-                    "flag_date": {"value": "2025-02-15T14:30:00"},
-                    "building_toid_id": {"value": "osgb1000012345678"}
-                }
-            ]
-        }
-    }
-
-# Mock SPARQL query results for building by UPRN
-@pytest.fixture
-def mock_building_by_uprn_results():
-    return {
-        "results": {
-            "bindings": [
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "buildingType": {"value": "http://ies.data.gov.uk/ontology/ies4#Building"},
-                    "state": {"value": "http://nationaldigitaltwin.gov.uk/data#state123"},
-                    "stateType": {"value": "http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOfC"}
-                },
-                {
-                    "building": {"value": "http://nationaldigitaltwin.gov.uk/data#building123"},
-                    "buildingType": {"value": "http://nationaldigitaltwin.gov.uk/ontology#ResidentialBuilding"},
-                    "state": {"value": "http://nationaldigitaltwin.gov.uk/data#state456"},
-                    "stateType": {"value": "http://nationaldigitaltwin.gov.uk/ontology#OccupiedState"}
-                }
-            ]
-        }
-    }
-
-class TestGetBuildingsInGeohash:
-    def test_successful_get_buildings(self, client, mock_building_query_results, monkeypatch):
-        """Test successful retrieval of buildings in a geohash"""
-        mock_query = MagicMock(return_value=mock_building_query_results)
+class TestGetBuildingsInBoundingBox:
+    def test_successful_get_buildings(self, client, monkeypatch):
+        """Test successful retrieval of buildings in a bounding box"""
+        mock_query = MagicMock(return_value=bounded_buildings_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings?geohash=u10j7")
+        response = client.get("/buildings?minLong=-1.1835&maxLong=-1.1507&minLat=50.6445&maxLat=50.7261")
         
         assert response.status_code == 200
         buildings = response.json()
         
-        assert len(buildings) == 1
+        assert len(buildings) == 2
         building = buildings[0]
         
-        assert building["uri"] == "data:building123"
-        assert building["uprn"] == "10023456789"
-        assert building["currentEnergyRating"] == "C"
-        assert building["buildingTOID"] == "osgb1000012345678"
+        assert building["uprn"] == "100060763456"
+        assert building["first_line_of_address"] == "1 Apple Avenue"
+        assert building["energy_rating"] == "C"
+        assert building["structure_unit_type"] == "Bungalow"
+        assert building["toid"] == "osgb1000013062259"
+        assert building["longitude"] == -1.1834759844410794
+        assert building["latitude"] == 50.72234886358317
         
-        assert len(building["types"]) == 2
-        assert "ies:Building" in building["types"]
-        assert "ndt_ont:ResidentialBuilding" in building["types"]
-        
-        # Verify the flags
-        assert len(building["flags"]) == 2
-        assert "data:flag123" in building["flags"]
-        assert "data:flag456" in building["flags"]
-        
-        flag123 = building["flags"]["data:flag123"]
-        assert flag123["flagType"] == "ndt_ont:InterestedInVisiting"
-        assert flag123["flaggedBy"] == "http://nationaldigitaltwin.gov.uk/data#TestUser"
-        
-        flag456 = building["flags"]["data:flag456"]
-        assert flag456["flagType"] == "ndt_ont:InterestedInInvestigating"
-        assert flag456["flaggedBy"] == "http://nationaldigitaltwin.gov.uk/data#AnotherUser"
-        
-        # Verify run_sparql_query was called with the correct params
-        mock_query.assert_called_once()
-        call_args = mock_query.call_args[0]
-        assert "http://geohash.org/u10j7" in call_args[0]
+        self.verify_query_run_with_correct_args(mock_query)
     
     def test_empty_results(self, client, monkeypatch):
         """Test when no buildings are found"""
-        # Mock the run_sparql_query function to return empty results
-        empty_results = {"results": {"bindings": []}}
-        mock_query = MagicMock(return_value=empty_results)
+        mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings?geohash=u10j7")
+        response = client.get("/buildings?minLong=-1.1835&maxLong=-1.1507&minLat=50.6445&maxLat=50.7261")
         
         assert response.status_code == 200
         buildings = response.json()
         assert len(buildings) == 0
+        
+        self.verify_query_run_with_correct_args(mock_query)
+        
+    def verify_query_run_with_correct_args(self, mock_query):
+        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
+        mock_query.assert_any_call(get_buildings_in_bounding_box_query(polygon), ANY)
+        call_args = mock_query.call_args[0]
+        assert polygon in call_args[0]
+        
 
 class TestGetBuildingByUprn:
-    def test_successful_get_building(self, client, mock_building_by_uprn_results, monkeypatch):
+    def test_successful_get_building(self, client, monkeypatch):
         """Test successful retrieval of a building by UPRN"""
         # Mock the run_sparql_query function
-        mock_query = MagicMock(return_value=mock_building_by_uprn_results)
+        uprn = 10023456789
+        mock_query = MagicMock()
+        mock_query.side_effect = mock_known_building
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         
-        response = client.get("/buildings/10023456789")
+        response = client.get(f"/buildings/{uprn}")
         
         assert response.status_code == 200
         data = response.json()
         
-        # Check the entity data
-        entity = data["entity"]
-        assert entity["uri"] == "http://nationaldigitaltwin.gov.uk/data#building123"
-        assert len(entity["types"]) == 2
-        assert "http://ies.data.gov.uk/ontology/ies4#Building" in entity["types"]
-        assert "http://nationaldigitaltwin.gov.uk/ontology#ResidentialBuilding" in entity["types"]
-        
-        states = data["states"]
-        assert len(states) == 2
-        
-        # Check the energy rating state
-        energy_state = next(s for s in states if s["uri"] == "http://nationaldigitaltwin.gov.uk/data#state123")
-        assert "http://gov.uk/government/organisations/department-for-levelling-up-housing-and-communities/ontology/epc#BuildingWithEnergyRatingOfC" in energy_state["types"]
-        
-        # Check the occupied state
-        occupied_state = next(s for s in states if s["uri"] == "http://nationaldigitaltwin.gov.uk/data#state456")
-        assert "http://nationaldigitaltwin.gov.uk/ontology#OccupiedState" in occupied_state["types"]
-        
+        # Check the data
+        assert data["uprn"] == f"{uprn}"
+        assert data["lodgement_date"] == "2024-03-30"
+        assert data["built_form"] == "SemiDetached"
+        assert data["structure_unit_type"] == "House"
+        assert data["roof_construction"] == "RoofRooms"
+        assert data["roof_insulation_location"] == "InsulatedAssumed"
+        assert data["roof_insulation_thickness"] == "250mm_Insulation"
+        assert data["floor_construction"] == "Suspended"
+        assert data["floor_insulation"] == "NoInsulationInFloor"
+        assert data["wall_construction"] == "CavityWall"
+        assert data["wall_insulation"] == "InsulatedWall"
+        assert data["window_glazing"] == "DoubleGlazingBefore2002"
+       
         # Verify run_sparql_query was called with the correct params
-        mock_query.assert_called_once()
+        assert mock_query.call_count == 4
+        mock_query.assert_any_call(get_building(uprn), ANY)
+        mock_query.assert_any_call(get_roof_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_floor_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_walls_and_windows_for_building(uprn), ANY)
         call_args = mock_query.call_args[0]
-        assert '10023456789' in call_args[0]
+        assert str(uprn) in call_args[0]
     
     def test_building_not_found(self, client, monkeypatch):
         """Test when building is not found"""
         # Mock the run_sparql_query function to return empty results
-        empty_results = {"results": {"bindings": []}}
-        mock_query = MagicMock(return_value=empty_results)
+        mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
+        uprn = 99999999999
         
-        response = client.get("/buildings/99999999999")
+        response = client.get(f"/buildings/{uprn}")
         
-        assert response.status_code == 200
-        data = response.json()
-        
-        # Check the response structure
-        assert data["entity"]["uri"] == ""
-        assert len(data["entity"]["types"]) == 0
-        assert len(data["states"]) == 0
+        assert response.status_code == 404
+        assert response.json() == {"detail": f"Building with UPRN {uprn} not found"}
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

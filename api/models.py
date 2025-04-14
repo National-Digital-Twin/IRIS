@@ -127,15 +127,39 @@ class IesPerson(IesThing):
     givenName: str
 
 
-class Building(IesThing):
+class SimpleBuilding(IesThing):
     uprn: Optional[str] = None
-    currentEnergyRating: Optional[str] = None
-    types: List[str] = []
-    parentBuildingTOID: Optional[str] = None
-    buildingTOID: Optional[str] = None
-    parentBuilding: Optional[str] = None
-    flags: Dict = {}
+    first_line_of_address: Optional[str] = None
+    energy_rating: Optional[str] = None
+    structure_unit_type: Optional[str] = None
+    toid: Optional[str] = None
+    longitude: Optional[str] = None
+    latitude: Optional[str] = None
 
+class DetailedBuilding(IesThing):
+    uprn: Optional[str] = None
+    lodgement_date: Optional[str] = None
+    built_form: Optional[str] = None
+    structure_unit_type: Optional[str] = None
+    floor_construction: Optional[str] = None
+    floor_insulation: Optional[str] = None
+    roof_construction: Optional[str] = None
+    roof_insulation_location: Optional[str] = None
+    roof_insulation_thickness: Optional[str] = None
+    wall_construction: Optional[str] = None
+    wall_insulation: Optional[str] = None
+    window_glazing: Optional[str] = None
+    
+class EpcStatistics(IesThing):
+    name: Optional[str] = None
+    a_rating: Optional[int] = 0
+    b_rating: Optional[int] = 0
+    c_rating: Optional[int] = 0
+    d_rating: Optional[int] = 0
+    e_rating: Optional[int] = 0
+    f_rating: Optional[int] = 0
+    g_rating: Optional[int] = 0
+    no_rating: Optional[int] = 0
 
 class IesEntityAndStates(BaseModel):
     entity: IesEntity
