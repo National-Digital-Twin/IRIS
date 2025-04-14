@@ -63,3 +63,4 @@ jobs:
       repo_name: "iris/api"
       app_name: "iris/api"
       version: ${{ needs.versioning.outputs.version }}
+    secrets: inherit
