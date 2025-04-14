@@ -53,6 +53,8 @@ jobs:
   api-ci:
     needs: [versioning]
     uses: ./.github/workflows/api-ci-pr.yml
+    secrets:
+      GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   push-to-ECR:
     needs: [api-ci, versioning]
