@@ -4,41 +4,47 @@
 
 import configparser
 import os
-import requests
 import uuid
-
-from access import AccessClient
 from datetime import datetime
+from typing import List
+
+import requests
+from access import AccessClient
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request, Response
-from mappers import map_single_building_response, map_bounded_buildings_response, map_epc_statistics_response
+from mappers import (
+    map_bounded_buildings_response,
+    map_epc_statistics_response,
+    map_single_building_response,
+)
 from models import (
     EDH,
-    EpcStatistics,
-    IesThing,
-    IesClass,
-    IesState,
-    IesEntity,
-    IesPerson,
     ClassificationEmum,
+    DetailedBuilding,
+    EpcStatistics,
     IesAccount,
     IesAssessment,
     IesAssessToBeFalse,
     IesAssessToBeTrue,
-    SimpleBuilding,
-    DetailedBuilding,
     IesClass,
     IesEntity,
     IesPerson,
     IesState,
     IesThing,
+    SimpleBuilding,
     ies,
 )
-from query import get_building, get_roof_for_building, get_floor_for_building, get_walls_and_windows_for_building, get_buildings_in_bounding_box_query, get_statistics_for_wards
 from pydantic import BaseModel
-from typing import List
+from query import (
+    get_building,
+    get_buildings_in_bounding_box_query,
+    get_floor_for_building,
+    get_roof_for_building,
+    get_statistics_for_wards,
+    get_walls_and_windows_for_building,
+)
 from rdflib import Graph
-from requests import exceptions
+from requests import codes, exceptions
 from utils import get_headers as get_forwarding_headers
 
 load_dotenv()
@@ -61,18 +67,19 @@ access_host = os.getenv("ACCESS_URL", "localhost")
 access_port = os.getenv("ACCESS_PORT", "8091")
 dev_mode = os.getenv("DEV", "False")
 access_path = os.getenv("ACCESS_PATH", "/")
-identity_api_url = os.getenv("IDENTITY_API_URL", "http://localhost:3000/api")
+identity_api_url = os.getenv("IDENTITY_API_URL", "http://localhost:3000")
 landing_page_url = os.getenv("LANDING_PAGE_URL", "http://localhost:5173")
 
 broker = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
 fpTopic = os.getenv("IES_TOPIC", "knowledge")
 
 ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
+IDENTITY_API_CALL_ERROR = "Error calling Identity API, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
 
 if update_mode == "KAFKA":
-    from ia_map_lib.sinks import KafkaSink
     from ia_map_lib import Adapter, Record, RecordUtils
+    from ia_map_lib.sinks import KafkaSink
 
     knowledgeSink = KafkaSink(topic=fpTopic, broker=broker)
     knowledgeAdapter = Adapter(
@@ -367,6 +374,7 @@ def post_person(per: IesPerson):
     run_sparql_update(query=query, securityLabel=per.securityLabel)
     return per.uri
 
+
 def generate_wkt_polygon(x_min, y_min, x_max, y_max):
     """
     Generates a WKT POLYGON string for a bounding box given min/max coordinates.
@@ -377,18 +385,22 @@ def generate_wkt_polygon(x_min, y_min, x_max, y_max):
     :param y_max: Maximum latitude (north)
     :return: WKT POLYGON string
     """
-    return f'POLYGON(({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))'
+    return f"POLYGON(({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))"
+
 
 @router.get(
     "/buildings",
     response_model=List[SimpleBuilding],
     description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_bounding_box(min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request):
+def get_buildings_in_bounding_box(
+    min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request
+):
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     query = get_buildings_in_bounding_box_query(polygon)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_bounded_buildings_response(results)
+
 
 @router.get(
     "/epc-statistics/wards",
@@ -457,17 +469,31 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     description="returns the building that corresponds to the provided UPRN",
 )
 def get_building_by_uprn(uprn: str, req: Request):
-    building_results = run_sparql_query(get_building(uprn), get_forwarding_headers(req.headers))
-    results_bindings = building_results["results"]["bindings"] if building_results and building_results["results"] else None
+    building_results = run_sparql_query(
+        get_building(uprn), get_forwarding_headers(req.headers)
+    )
+    results_bindings = (
+        building_results["results"]["bindings"]
+        if building_results and building_results["results"]
+        else None
+    )
     if not results_bindings:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Building with UPRN {uprn} not found",
-            )
-    roof_results = run_sparql_query(get_roof_for_building(uprn), get_forwarding_headers(req.headers))
-    floor_results = run_sparql_query(get_floor_for_building(uprn), get_forwarding_headers(req.headers))
-    wall_window_results = run_sparql_query(get_walls_and_windows_for_building(uprn), get_forwarding_headers(req.headers))
-    return map_single_building_response(uprn, building_results, roof_results, floor_results, wall_window_results)
+        raise HTTPException(
+            status_code=404,
+            detail=f"Building with UPRN {uprn} not found",
+        )
+    roof_results = run_sparql_query(
+        get_roof_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    floor_results = run_sparql_query(
+        get_floor_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    wall_window_results = run_sparql_query(
+        get_walls_and_windows_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    return map_single_building_response(
+        uprn, building_results, roof_results, floor_results, wall_window_results
+    )
 
 
 @router.get(
@@ -889,24 +915,36 @@ def post_assessment(ass: IesAssessment):
 
 @router.get("/user-details")
 def get_user_details(request: Request):
-    if dev_mode:
-        return {
-            "content": {"email": "local.user@test.com", "displayName": "Local User"}
-        }
-
-    user_details_response = requests.get(
-        f"{identity_api_url}/v1/user-details", headers=request.headers
-    )
-    return user_details_response.json()
+    try:
+        return access_client.get_user_details(request.headers)
+    except exceptions.RequestException as e:
+        if e.response is not None:
+            raise HTTPException(
+                e.response.status_code,
+                f"Error calling Access client:{e.response.reason}",
+            )
+        else:
+            raise HTTPException(codes.internal_server_error, ACCESS_API_CALL_ERROR)
 
 
 @router.get("/signout-links")
 def get_signout_links():
-    signout_links_response = requests.get(f"{identity_api_url}/v1/links/sign-out")
-    if signout_links_response.status_code == 200:
-        return {
-            "oauth2Signout": f"{landing_page_url}/oauth2/signout",
-            "signoutLink": signout_links_response.json(),
-        }
-    else:
-        return f"Error {signout_links_response.status_code}: {signout_links_response.json()}"
+    try:
+        signout_links_response = requests.get(
+            f"{identity_api_url}/api/v1/links/sign-out"
+        )
+        if signout_links_response.status_code == codes.ok:
+            return {
+                "oauth2Signout": f"{landing_page_url}/oauth2/signout",
+                "signoutLink": signout_links_response.json(),
+            }
+        else:
+            return f"Error {signout_links_response.status_code}: {signout_links_response.reason}"
+    except exceptions.RequestException as e:
+        if e.response is not None:
+            raise HTTPException(
+                e.response.status_code,
+                f"Error calling the identity api: {e.response.reason}",
+            )
+        else:
+            raise HTTPException(codes.internal_server_error, IDENTITY_API_CALL_ERROR)
