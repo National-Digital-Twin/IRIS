@@ -935,8 +935,8 @@ def get_signout_links():
         )
         if signout_links_response.status_code == codes.ok:
             return {
-                "oauth2Signout": f"{landing_page_url}/oauth2/signout",
-                "signoutLink": signout_links_response.json(),
+                "oauth2SignoutUrl": f"{landing_page_url}/oauth2/sign_out",
+                "redirectUrl": signout_links_response.json(),
             }
         else:
             return f"Error {signout_links_response.status_code}: {signout_links_response.reason}"
