@@ -31,9 +31,6 @@ from json import loads
 from mapping_function import map_func
 from dotenv import load_dotenv
 
-# run adapter.py, then mapper.py, then mapper-2.py and finally, this file
-
-# Mapper Configuration
 load_dotenv()
 config = Configurator()
 BROKER = config.get("BOOTSTRAP_SERVERS", required=True,
@@ -73,16 +70,19 @@ logger = CoreLoggerFactory.get_logger(
     kafka_config=kafka_producer_config,
     topic="logging",
 )
-# Function each record on the source topic is passed to.
+
 def mapping_function(record: Record) ->  Union[Record, List[Record], None]:
+    """
+    Loads the underlying data for a building and orchestates the call to the main mapper method.
     
+    Args:
+        record (Record): A record representing a building.
 
-    # Add mapping logic here
-    # Try to keep it small and performant
+    Returns:
+        Union[Record, List[Record], None]: The Record containing the mapped RDF building data.
+    """
     data = loads(record.value)
-    
     mapped = map_func(data)
-
     return RecordUtils.add_header(Record(record.headers, record.key, mapped, None), "Content-Type", "application/n-triples")
 
 

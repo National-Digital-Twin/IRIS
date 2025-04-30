@@ -27,6 +27,7 @@ from telicent_lib.config import Configurator
 from telicent_lib.logging import CoreLoggerFactory
 from telicent_lib import Mapper, Record, RecordUtils
 from typing import Union, List
+import logging
 from json import loads
 from mapping_function import map_func
 from dotenv import load_dotenv
@@ -86,27 +87,22 @@ kafka_producer_config = {
 logger = CoreLoggerFactory.get_logger(
     "{source}-to-{target}-mapper".format(source=SOURCE_TOPIC, target=TARGET_TOPIC),
     kafka_config=kafka_producer_config,
+    level = logging.DEBUG,
     topic="logging",
 )
 
 
 # Function each record on the source topic is passed to.
 def mapping_function(record: Record) -> Union[Record, List[Record], None]:
-    # Add mapping logic here
-    # Try to keep it small and performant
+    logger.info("Beginning processing of address_base record")
     data = loads(record.value)
 
     mapped = map_func(data)
     if mapped is None:
         logger.warning(
-            "{uprn}, {address} does not container a lat/lon lookup".format(
+            "{uprn}, {address} does not contain a lat/lon lookup".format(
                 uprn=data["UPRN"], address=data["Address"]
             ),
-        )
-        print(
-            "{uprn}, {address} does not container a lat/lon lookup".format(
-                uprn=data["UPRN"], address=data["Address"]
-            )
         )
         return mapped
     return RecordUtils.add_header(
@@ -129,4 +125,5 @@ mapper = Mapper(
     reporting_batch_size=500,
     has_error_handler=False
 )
+logger.info("Mapper instantiated")
 mapper.run()
