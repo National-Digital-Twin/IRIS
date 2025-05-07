@@ -4,6 +4,7 @@
 
 import os
 import pytest
+import requests
 from api.access import AccessClient
 
 @pytest.fixture
@@ -20,7 +21,7 @@ def headers():
 def test_dev_mode_returns_dummy_data(connection_string, headers):
     client = AccessClient(connection_string, dev_mode=True)
     result = client.get_user_details(headers)
-    expected = {"username": "Test User1", "user_id": "1234-5678-99ab-cdef"}
+    expected = { "username": "Test User1", "user_id": "1234-5678-99ab-cdef", "email": "test.user@example.com" }
     assert result == expected
 
 def test_api_successful_response(mocker, connection_string, headers):
@@ -30,7 +31,8 @@ def test_api_successful_response(mocker, connection_string, headers):
     fake_response.json.return_value = {
         "content": {
             "displayName": "Test User",
-            "username": "069292e4-3081-704c-68cd-b5e621f48b62"
+            "username": "069292e4-3081-704c-68cd-b5e621f48b62",
+            "email": "test.user@example.com"
         }
     }
     # Patch requests.get in the access module.
@@ -40,7 +42,8 @@ def test_api_successful_response(mocker, connection_string, headers):
     result = client.get_user_details(headers)
     expected = {
         "username": "Test User",
-        "user_id": "069292e4-3081-704c-68cd-b5e621f48b62"
+        "user_id": "069292e4-3081-704c-68cd-b5e621f48b62",
+        "email": "test.user@example.com"
     }
     assert result == expected
 
@@ -51,14 +54,12 @@ def test_api_successful_response(mocker, connection_string, headers):
 def test_api_error_response(mocker, connection_string, headers):
     # Create a fake error response from the API.
     fake_response = mocker.MagicMock()
-    fake_response.status_code = 400
-    fake_response.text = "Bad Request"
-    fake_response.json.return_value = {"error": "Bad Request"}
+    fake_response.raise_for_status.side_effect = requests.exceptions.HTTPError("400 Bad Request")
     mocker.patch("access.requests.get", return_value=fake_response)
 
     client = AccessClient(connection_string, dev_mode=False)
-    result = client.get_user_details(headers)
-    assert result == {"error": "Bad Request"}
+    with pytest.raises(requests.exceptions.HTTPError):
+        client.get_user_details(headers)
 
 def test_missing_environment_variable(monkeypatch, connection_string, headers):
     # Remove the environment variable to simulate a missing configuration.

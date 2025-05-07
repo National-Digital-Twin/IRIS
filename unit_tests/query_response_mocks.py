@@ -63,29 +63,111 @@ def empty_query_response():
     }
     
 def bounded_buildings_response():
+    first = bounded_building_response(100060763456, "1 Apple Avenue", "osgb1000013062259", "POINT(-1.1834759844410794 50.72234886358317)", "C", "Bungalow")
+    second = bounded_building_response(100060768637, "2 Orange Road", "osgb1000013076936", "POINT(-1.178467890878929 50.725098060722736)", "C", "House")
+    return {
+        "results": {
+            "bindings": [first, second]
+        }
+    }
+    
+def bounded_buildings_response_two_forms():
+    first = bounded_building_response(100060763456, "1 Apple Avenue", "osgb1000013062259", "POINT(-1.1834759844410794 50.72234886358317)", "C", "House")
+    second = bounded_building_response(100060768638, "3a Cherry Street", "osgb1000013076936", "POINT(-1.178467890878929 50.725098060722736)", "D", "Maisonette")
+    third = bounded_building_response(100060763456, "1 Apple Avenue", "osgb1000013062259", "POINT(-1.1834759844410794 50.72234886358317)", "C", "Bungalow")
+    fourth = bounded_building_response(100060768638, "3a Cherry Street", "osgb1000013076936", "POINT(-1.178467890878929 50.725098060722736)", "D", "Flat")
+    return {
+        "results": {
+            "bindings": [first, second, third, fourth]
+        }
+    }
+    
+def bounded_building_response(uprn, address, toid, point, epc_rating, structure_unit_type):
+    return {
+            "uprn": { "type": "uri" , "value": f"http://ndtp.co.uk/data#UPRN_{uprn}" } ,
+            "firstLineOfAddress": { "type": "uri" , "value": address } ,
+            "toid": { "type": "literal" , "value": toid } ,
+            "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": point } ,
+            "epcRating": { "type": "uri" , "value": epc_rating } ,
+            "structureUnitType": { "type": "uri" , "value": f"http://ies.data.gov.uk/ontology/ies-building1#{structure_unit_type}" }
+        }
+    
+def bounded_detailed_buildings_response():
     return {
         "results": {
             "bindings": [
-                {
-                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_100060763456" } ,
-                    "firstLineOfAddress": { "type": "uri" , "value": "1 Apple Avenue" } ,
-                    "toid": { "type": "literal" , "value": "osgb1000013062259" } ,
-                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.1834759844410794 50.72234886358317)" } ,
-                    "epcRating": { "type": "uri" , "value": "C" } ,
-                    "structureUnitType": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Bungalow" }
+                { 
+                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_10003319738" } ,
+                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.172860902466188 50.6485359929191)" } ,
+                    "postcode": { "type": "literal" , "value": "PO36 9JA" } ,
+                    "windowGlazing": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#DoubleGlazingBefore2002" } ,
+                    "wallConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#CavityWall" } ,
+                    "wallInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#InsulatedWall" } ,
+                    "floorConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Suspended" } ,
+                    "floorInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#NoInsulationInFloor" }
                 } ,
                 { 
-                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_100060768637" } ,
-                    "firstLineOfAddress": { "type": "uri" , "value": "2 Orange Road" } ,
-                    "toid": { "type": "literal" , "value": "osgb1000013076936" } ,
-                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.178467890878929 50.725098060722736)" } ,
-                    "epcRating": { "type": "uri" , "value": "C" } ,
-                    "structureUnitType": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#House" }
+                    "uprn": { "type": "uri" , "value": "http://ndtp.co.uk/data#UPRN_100060763759" } ,
+                    "point": { "type": "literal" , "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral" , "value": "POINT(-1.1511959894263062 50.71876029182787)" } ,
+                    "postcode": { "type": "literal" , "value": "PO33 1DG" } ,
+                    "windowGlazing": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#DoubleGlazingAfter2002" } ,
+                    "wallConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#CavityWall" } ,
+                    "wallInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#InsulatedWall" } ,
+                    "floorConstruction": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#Suspended" } ,
+                    "floorInsulation": { "type": "uri" , "value": "http://ies.data.gov.uk/ontology/ies-building1#NoInsulationInFloor" }
                 }
             ]
         }
     }
-        
+ 
+def flag_history_response(active):
+    result = {
+        "results": {
+            "bindings": [
+                {
+                    "uprn": {"value": "12345"},
+                    "flag": {"value": "http://ndtp.co.uk/data#flag1"},
+                    "flagType": {"value": "http://ndtp.co.uk/data#InterestedInInvestigating"},
+                    "retrofitterName": {"value": "John Doe"},
+                    "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"}
+                }
+            ]
+        }
+    }
+    if not active:
+        result["results"]["bindings"][0]["assessmentDate"] = {"value": "http://iso.org/iso8601#2020-01-02T00:00:00"}
+        result["results"]["bindings"][0]["assessorName"] = {"value": "Jane Smith"}
+        result["results"]["bindings"][0]["assessmentReason"] = {"value": "Reason1"}
+    return result
+
+def multiple_flag_history_response(active):
+    return {
+        "results": {
+            "bindings": [
+                {
+                    "uprn": {"value": "12345"},
+                    "flag": {"value": "http://ndtp.co.uk/data#flag1"},
+                    "flagType": {"value": "http://ndtp.co.uk/data#InterestedInInvestigating"},
+                    "retrofitterName": {"value": "Simon Smith"},
+                    "flagDate": {"value": "http://iso.org/iso8601#2020-01-03T00:00:00"},
+                    "assessmentDate": {"value": ""},
+                    "assessorName": {"value": ""},
+                    "assessmentReason": {"value": ""}
+                },
+                {
+                    "uprn": {"value": "67890"},
+                    "flag": {"value": "http://ndtp.co.uk/data#flag2"},
+                    "flagType": {"value": "http://ndtp.co.uk/data#InterestedInInvestigating"},
+                    "retrofitterName": {"value": "John Doe"},
+                    "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"},
+                    "assessmentDate": {"value": "http://iso.org/iso8601#2020-01-02T00:00:00"},
+                    "assessorName": {"value": "Jane Smith"},
+                    "assessmentReason": {"value": "Reason1"}
+                }
+            ]
+        }
+    }
+       
 def statistics_response():
     return {
         "results": {
@@ -128,4 +210,3 @@ def mock_known_building(query, headers):
         return wall_window_query_response(uprn)
     else:
         return "default response"
-    

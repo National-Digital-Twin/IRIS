@@ -150,6 +150,32 @@ def get_buildings_in_bounding_box_query(polygon: str) -> str:
         }}
     }}
     """
+
+def get_detailed_buildings_in_bounding_box_query(polygon: str) -> str:
+    return f"""
+        PREFIX data: <http://ndtp.co.uk/data#>
+        PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+        PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+
+        SELECT ?uprn ?point ?postcode ?windowGlazing ?wallConstruction ?wallInsulation ?floorConstruction ?floorInsulation ?roofConstruction ?roofInsulation ?roofInsulationThickness
+        WHERE {{ 
+            GRAPH <http://ndtp.co.uk/detailed-building-geo-mapping> {{
+                ?uprn geo:asWKT ?point ;
+                    data:hasPostcode ?postcode ;
+                    data:hasWindowGlazing ?windowGlazing ;
+                    data:hasWallConstruction ?wallConstruction ;
+                    data:hasWallInsulation ?wallInsulation ;
+                    data:hasFloorConstruction ?floorConstruction ;
+                    data:hasFloorInsulation ?floorInsulation .
+                OPTIONAL {{
+                    ?uprn data:hasRoofConstruction ?roofConstruction ;
+                        data:hasRoofInsulation ?roofInsulation ;
+                        data:hasRoofInsulationThickness ?roofInsulationThickness .
+                }}
+                FILTER(geof:sfIntersects(?point, "{polygon}"^^geo:wktLiteral))
+            }}
+        }}
+    """
     
 def get_statistics_for_wards() -> str:
     return """
@@ -171,4 +197,61 @@ def get_statistics_for_wards() -> str:
             } 
         } 
         ORDER BY ?wardName 
+    """
+    
+def get_flagged_buildings() -> str:
+    return """
+        PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX ies: <http://informationexchangestandard.org/ont/ies#>
+        SELECT ?toid ?uprn ?flag WHERE {
+            ?flag a ?flagType;
+                ies:interestedIn ?structureUnitState .
+            ?structureUnitState a building:StructureUnitState ;
+                ies:isStateOf ?structureUnit .
+            ?structureUnit a building:StructureUnit ;
+                ies:isIdentifiedBy ?uprn ;
+                ies:isIdentifiedBy ?_toid .
+            
+            ?uprn a building:UPRN .
+            ?_toid a ies:TOID ;
+                ies:representationValue ?toid .
+        
+            FILTER NOT EXISTS { ?flag_assessment ies:assessed ?flag . }
+        }
+        """
+    
+def get_flag_history(uprn: str) -> str:
+    return f"""
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX ies: <http://informationexchangestandard.org/ont/ies#>
+        PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data: <http://ndtp.co.uk/data#>
+
+        SELECT ?uprn ?flag ?flagType ?retrofitterName ?flagDate ?assessmentDate ?assessorName ?assessmentReason
+        WHERE {{
+            ?uprn a building:UPRN .
+            ?uprn ies:representationValue '{uprn}' .
+            
+            ?structureUnit ies:isIdentifiedBy ?uprn;
+                a building:StructureUnit .
+            ?structureUnitState a building:StructureUnitState ;
+                ies:isStateOf ?structureUnit .
+            
+            ?flag a ?flagType;
+                ies:interestedIn ?structureUnitState ;
+                ies:inPeriod ?flagDate ;
+                ies:isStateOf ?retrofitter .
+            ?retrofitter ies:hasName ?_retrofitterName .
+            ?_retrofitterName ies:representationValue ?retrofitterName .
+  
+                OPTIONAL {{
+                    ?assessment a ?assessmentReason ;
+                        ies:assessed ?flag ;
+                        ies:inPeriod ?assessmentDate ;
+                        ies:assessor ?assessor .
+                    ?assessor ies:hasName ?_assessorName .
+                    ?_assessorName ies:representationValue ?assessorName .
+                }}
+        }}
     """

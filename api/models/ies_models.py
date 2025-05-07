@@ -9,7 +9,8 @@ from typing import Dict, List, Optional
 from ianode_labels import IANodeSecurityLabelsV2, SecurityLabelBuilder
 from pydantic import BaseModel
 
-ies = "http://ies.data.gov.uk/ontology/ies4#"
+
+ies = "http://informationexchangestandard.org/ont/ies#"
 
 
 class ClassificationEmum(str, Enum):
@@ -22,7 +23,7 @@ class ClassificationEmum(str, Enum):
 class EDH(BaseModel):
     permitted_organisations: List[str] = []
     permitted_nationalities: List[str] = []
-    classification: ClassificationEmum = "O"
+    classification: ClassificationEmum = ClassificationEmum.official
 
     def to_string(self):
         builder = SecurityLabelBuilder()
@@ -125,52 +126,8 @@ class IesPerson(IesThing):
 
     surname: str
     givenName: str
-
-
-class SimpleBuilding(IesThing):
-    uprn: Optional[str] = None
-    first_line_of_address: Optional[str] = None
-    energy_rating: Optional[str] = None
-    structure_unit_type: Optional[str] = None
-    toid: Optional[str] = None
-    longitude: Optional[str] = None
-    latitude: Optional[str] = None
-
-class DetailedBuilding(IesThing):
-    uprn: Optional[str] = None
-    lodgement_date: Optional[str] = None
-    built_form: Optional[str] = None
-    structure_unit_type: Optional[str] = None
-    floor_construction: Optional[str] = None
-    floor_insulation: Optional[str] = None
-    roof_construction: Optional[str] = None
-    roof_insulation_location: Optional[str] = None
-    roof_insulation_thickness: Optional[str] = None
-    wall_construction: Optional[str] = None
-    wall_insulation: Optional[str] = None
-    window_glazing: Optional[str] = None
     
-class EpcStatistics(IesThing):
-    name: Optional[str] = None
-    a_rating: Optional[int] = 0
-    b_rating: Optional[int] = 0
-    c_rating: Optional[int] = 0
-    d_rating: Optional[int] = 0
-    e_rating: Optional[int] = 0
-    f_rating: Optional[int] = 0
-    g_rating: Optional[int] = 0
-    no_rating: Optional[int] = 0
 
 class IesEntityAndStates(BaseModel):
     entity: IesEntity
     states: List[IesState]
-
-
-class AccessUser(BaseModel):
-    username: str
-    user_id: str
-    active: Optional[bool] = None
-    email: Optional[str] = None
-    attributes: dict[str, str]
-    groups: List[str]
-
