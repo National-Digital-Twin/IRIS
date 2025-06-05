@@ -6,6 +6,6 @@ sources:
     tables:
       - name: os_places_dpa
       - name: os_places_lpi
-      - name: domestic_certificates_search
-      - name: non_domestic_certificates_search
-      - name: recommendations
+      - name: england_wales_domestic_certificates
+      - name: england_wales_non_domestic_certificates
+      # - name: recommendations

@@ -28,8 +28,26 @@ clean-targets: # directories to be removed by `dbt clean`
 # directory as views. These settings can be overridden in the individual model
 # files using the `{{ config(...) }}` macro.
 
-# models:
-#   iris_data_cleansing:
+models:
+  iris_data_cleansing:
+    stg_epc_recommendations:
+      +enabled: false
+    int_os_epc:
+      +enabled: false
+    mart_reduced_co2_measures:
+      +enabled: false
+    improvement_measures_s3_export:
+      +enabled: false
+    epc_with_uprn:
+      +enabled: true
+    epc_without_uprn:
+      +enabled: false
+    combine_epc_data:
+      +enabled: false
+    int_epc_certificates:
+      +enabled: false
+    # mart_address_place_plus:
+    #   +enabled: false
 #     # Config indicated by + and applies to all files under models/example/
 #     example:
 #       +materialized: view

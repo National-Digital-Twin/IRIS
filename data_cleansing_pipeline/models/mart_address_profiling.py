@@ -739,7 +739,7 @@ def pipeline(df):
 
 def model(dbt, fal):
     """dbt-fal model."""
-    return dbt.ref("int_epc_certificates").pipe(pipeline)
+    return dbt.ref("epc_with_uprn").pipe(pipeline)
 
 
 def main(input_csv: str, output_csv: str, to_excel: bool):

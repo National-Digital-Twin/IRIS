@@ -1,56 +1,51 @@
-spec:
-  type: Spec
-  connection_specification:
-    type: object
-    $schema: http://json-schema.org/draft-07/schema#
-    required: []
-    properties: {}
-    additionalProperties: true
+version: 6.41.5
+
 type: DeclarativeSource
+
 check:
   type: CheckStream
   stream_names:
-    - non_domestic_certificates_search
-streams:
-  - name: non_domestic_certificates_search
-    type: DeclarativeStream
-    retriever:
-      type: SimpleRetriever
-      paginator:
-        type: DefaultPaginator
-        page_size_option:
-          type: RequestOption
-          field_name: size
-          inject_into: request_parameter
-        page_token_option:
-          type: RequestOption
-          field_name: search-after
-          inject_into: request_parameter
-        pagination_strategy:
-          type: CursorPagination
-          page_size: 1000
-          cursor_value: '{{ response.get("X-Next-Search-After", {}) }}'
-          stop_condition: '{{ not response.get("X-Next-Search-After", {}) }}'
-      requester:
-        path: search
-        type: HttpRequester
-        url_base: https://epc.opendatacommunities.org/api/v1/non-domestic/
-        http_method: GET
-        authenticator:
-          type: NoAuth
-        request_headers:
-          Accept: application/json
-          Authorization:
-        request_body_json: {}
-        request_parameters: {}
-      record_selector:
-        type: RecordSelector
-        extractor:
-          type: DpathExtractor
-          field_path:
-            - rows
-      partition_router:
-        - type: ListPartitionRouter
+    - england_wales_non_domestic_certificates
+
+definitions:
+  streams:
+    england_wales_non_domestic_certificates:
+      type: DeclarativeStream
+      name: england_wales_non_domestic_certificates
+      retriever:
+        type: SimpleRetriever
+        decoder:
+          type: JsonDecoder
+        paginator:
+          type: DefaultPaginator
+          page_size_option:
+            type: RequestOption
+            field_name: size
+            inject_into: request_parameter
+          page_token_option:
+            type: RequestOption
+            field_name: search-after
+            inject_into: request_parameter
+          pagination_strategy:
+            type: CursorPagination
+            page_size: 1000
+            cursor_value: "{{ response.get(\"X-Next-Search-After\", {}) }}"
+            stop_condition: "{{ not response.get(\"X-Next-Search-After\", {}) }}"
+        requester:
+          $ref: "#/definitions/base_requester"
+          path: search
+          http_method: GET
+          request_headers:
+            Accept: application/json
+            Authorization:
+        record_selector:
+          type: RecordSelector
+          extractor:
+            type: DpathExtractor
+            field_path:
+              - rows
+        partition_router:
+          type: ListPartitionRouter
           values:
             - E06000046
             - E06000011
@@ -59,118 +54,208 @@ streams:
             type: RequestOption
             field_name: local-authority
             inject_into: request_parameter
-    primary_key: []
-    schema_loader:
-      type: InlineSchemaLoader
-      schema:
-        type: object
-        $schema: http://json-schema.org/schema#
-        properties:
-          uprn:
-            type: string
-          county:
-            type: string
-          address:
-            type: string
-          lmk-key:
-            type: string
-          address1:
-            type: string
-          address2:
-            type: string
-          address3:
-            type: string
-          postcode:
-            type: string
-          posttown:
-            type: string
-          floor-area:
-            type: string
-          uprn-source:
-            type: string
-          asset-rating:
-            type: string
-          constituency:
-            type: string
-          property-type:
-            type: string
-          aircon-present:
-            type: string
-          building-level:
-            type: string
-          lodgement-date:
-            type: string
-          inspection-date:
-            type: string
-          local-authority:
-            type: string
-          other-fuel-desc:
-            type: string
-          aircon-kw-rating:
-            type: string
-          target-emissions:
-            type: string
-          transaction-type:
-            type: string
-          asset-rating-band:
-            type: string
-          main-heating-fuel:
-            type: string
-          renewable-sources:
-            type: string
-          typical-emissions:
-            type: string
-          building-emissions:
-            type: string
-          constituency-label:
-            type: string
-          lodgement-datetime:
-            type: string
-          standard-emissions:
-            type: string
-          new-build-benchmark:
-            type: string
-          special-energy-uses:
-            type: string
-          building-environment:
-            type: string
-          primary-energy-value:
-            type: string
-          local-authority-label:
-            type: string
-          existing-stock-benchmark:
-            type: string
-          building-reference-number:
-            type: string
-          ac-inspection-commissioned:
-            type: string
-          estimated-aircon-kw-rating:
-            type: string
-    incremental_sync:
-      step: P1Y
-      type: DatetimeBasedCursor
-      cursor_field: from-year
-      end_datetime:
-        type: MinMaxDatetime
-        datetime: "{{ now_utc().strftime('%Y-%m-%dT%H:%M:%SZ') }}"
-        datetime_format: "%Y-%m-%dT%H:%M:%SZ"
-      start_datetime:
-        type: MinMaxDatetime
-        datetime: "2008"
-        datetime_format: "%Y"
-      datetime_format: "%Y"
-      end_time_option:
-        type: RequestOption
-        field_name: to-year
-        inject_into: request_parameter
-      start_time_option:
-        type: RequestOption
-        field_name: from-year
-        inject_into: request_parameter
-      cursor_granularity: PT1S
-      cursor_datetime_formats:
-        - "%Y"
-version: 0.51.41
+      primary_key:
+        - lmk-key
+      schema_loader:
+        type: InlineSchemaLoader
+        schema:
+          $ref: "#/schemas/england_wales_non_domestic_certificates"
+  base_requester:
+    type: HttpRequester
+    url_base: https://epc.opendatacommunities.org/api/v1/non-domestic/
+
+streams:
+  - $ref: "#/definitions/streams/england_wales_non_domestic_certificates"
+
+spec:
+  type: Spec
+  connection_specification:
+    type: object
+    $schema: http://json-schema.org/draft-07/schema#
+    required: []
+    properties: {}
+    additionalProperties: true
+
 metadata:
+  assist: {}
+  testedStreams:
+    england_wales_non_domestic_certificates:
+      hasRecords: true
+      streamHash: aede013ed54827a26bb64f9f6f20d26408cf5349
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
   autoImportSchema:
-    non_domestic_certificates_search: true
+    england_wales_non_domestic_certificates: true
+
+schemas:
+  england_wales_non_domestic_certificates:
+    type: object
+    $schema: http://json-schema.org/schema#
+    required:
+      - lmk-key
+    properties:
+      uprn:
+        type:
+          - string
+          - "null"
+      county:
+        type:
+          - string
+          - "null"
+      address:
+        type:
+          - string
+          - "null"
+      lmk-key:
+        type: string
+      address1:
+        type:
+          - string
+          - "null"
+      address2:
+        type:
+          - string
+          - "null"
+      address3:
+        type:
+          - string
+          - "null"
+      postcode:
+        type:
+          - string
+          - "null"
+      posttown:
+        type:
+          - string
+          - "null"
+      floor-area:
+        type:
+          - string
+          - "null"
+      report-type:
+        type:
+          - string
+          - "null"
+      uprn-source:
+        type:
+          - string
+          - "null"
+      asset-rating:
+        type:
+          - string
+          - "null"
+      constituency:
+        type:
+          - string
+          - "null"
+      property-type:
+        type:
+          - string
+          - "null"
+      aircon-present:
+        type:
+          - string
+          - "null"
+      building-level:
+        type:
+          - string
+          - "null"
+      lodgement-date:
+        type:
+          - string
+          - "null"
+      inspection-date:
+        type:
+          - string
+          - "null"
+      local-authority:
+        type:
+          - string
+          - "null"
+      other-fuel-desc:
+        type:
+          - string
+          - "null"
+      aircon-kw-rating:
+        type:
+          - string
+          - "null"
+      target-emissions:
+        type:
+          - string
+          - "null"
+      transaction-type:
+        type:
+          - string
+          - "null"
+      asset-rating-band:
+        type:
+          - string
+          - "null"
+      main-heating-fuel:
+        type:
+          - string
+          - "null"
+      renewable-sources:
+        type:
+          - string
+          - "null"
+      typical-emissions:
+        type:
+          - string
+          - "null"
+      building-emissions:
+        type:
+          - string
+          - "null"
+      constituency-label:
+        type:
+          - string
+          - "null"
+      lodgement-datetime:
+        type:
+          - string
+          - "null"
+      standard-emissions:
+        type:
+          - string
+          - "null"
+      new-build-benchmark:
+        type:
+          - string
+          - "null"
+      special-energy-uses:
+        type:
+          - string
+          - "null"
+      building-environment:
+        type:
+          - string
+          - "null"
+      primary-energy-value:
+        type:
+          - string
+          - "null"
+      local-authority-label:
+        type:
+          - string
+          - "null"
+      existing-stock-benchmark:
+        type:
+          - string
+          - "null"
+      building-reference-number:
+        type:
+          - string
+          - "null"
+      ac-inspection-commissioned:
+        type:
+          - string
+          - "null"
+      estimated-aircon-kw-rating:
+        type:
+          - string
+          - "null"
+    additionalProperties: true

@@ -1,240 +1,51 @@
-version: 0.51.41
+version: 6.41.5
+
 type: DeclarativeSource
+
 check:
   type: CheckStream
   stream_names:
-    - domestic_certificates_search
-streams:
-  - type: DeclarativeStream
-    name: domestic_certificates_search
-    primary_key: []
-    schema_loader:
-      type: InlineSchemaLoader
-      schema:
-        $schema: http://json-schema.org/schema#
-        properties:
-          address:
-            type: string
-          address1:
-            type: string
-          address2:
-            type: string
-          address3:
-            type: string
-          building-reference-number:
-            type: string
-          built-form:
-            type: string
-          co2-emiss-curr-per-floor-area:
-            type: string
-          co2-emissions-current:
-            type: string
-          co2-emissions-potential:
-            type: string
-          constituency:
-            type: string
-          constituency-label:
-            type: string
-          construction-age-band:
-            type: string
-          county:
-            type: string
-          current-energy-efficiency:
-            type: string
-          current-energy-rating:
-            type: string
-          energy-consumption-current:
-            type: string
-          energy-consumption-potential:
-            type: string
-          energy-tariff:
-            type: string
-          environment-impact-current:
-            type: string
-          environment-impact-potential:
-            type: string
-          extension-count:
-            type: string
-          fixed-lighting-outlets-count:
-            type: string
-          flat-storey-count:
-            type: string
-          flat-top-storey:
-            type: string
-          floor-description:
-            type: string
-          floor-energy-eff:
-            type: string
-          floor-env-eff:
-            type: string
-          floor-height:
-            type: string
-          floor-level:
-            type: string
-          glazed-area:
-            type: string
-          glazed-type:
-            type: string
-          heat-loss-corridor:
-            type: string
-          heating-cost-current:
-            type: string
-          heating-cost-potential:
-            type: string
-          hot-water-cost-current:
-            type: string
-          hot-water-cost-potential:
-            type: string
-          hot-water-energy-eff:
-            type: string
-          hot-water-env-eff:
-            type: string
-          hotwater-description:
-            type: string
-          inspection-date:
-            type: string
-          lighting-cost-current:
-            type: string
-          lighting-cost-potential:
-            type: string
-          lighting-description:
-            type: string
-          lighting-energy-eff:
-            type: string
-          lighting-env-eff:
-            type: string
-          lmk-key:
-            type: string
-          local-authority:
-            type: string
-          local-authority-label:
-            type: string
-          lodgement-date:
-            type: string
-          lodgement-datetime:
-            type: string
-          low-energy-fixed-light-count:
-            type: string
-          low-energy-lighting:
-            type: string
-          main-fuel:
-            type: string
-          main-heating-controls:
-            type: string
-          mainheat-description:
-            type: string
-          mainheat-energy-eff:
-            type: string
-          mainheat-env-eff:
-            type: string
-          mainheatc-energy-eff:
-            type: string
-          mainheatc-env-eff:
-            type: string
-          mainheatcont-description:
-            type: string
-          mains-gas-flag:
-            type: string
-          mechanical-ventilation:
-            type: string
-          multi-glaze-proportion:
-            type: string
-          number-habitable-rooms:
-            type: string
-          number-heated-rooms:
-            type: string
-          number-open-fireplaces:
-            type: string
-          photo-supply:
-            type: string
-          postcode:
-            type: string
-          posttown:
-            type: string
-          potential-energy-efficiency:
-            type: string
-          potential-energy-rating:
-            type: string
-          property-type:
-            type: string
-          roof-description:
-            type: string
-          roof-energy-eff:
-            type: string
-          roof-env-eff:
-            type: string
-          secondheat-description:
-            type: string
-          sheating-energy-eff:
-            type: string
-          sheating-env-eff:
-            type: string
-          solar-water-heating-flag:
-            type: string
-          tenure:
-            type: string
-          total-floor-area:
-            type: string
-          transaction-type:
-            type: string
-          unheated-corridor-length:
-            type: string
-          uprn:
-            type: string
-          uprn-source:
-            type: string
-          walls-description:
-            type: string
-          walls-energy-eff:
-            type: string
-          walls-env-eff:
-            type: string
-          wind-turbine-count:
-            type: string
-          windows-description:
-            type: string
-          windows-energy-eff:
-            type: string
-          windows-env-eff:
-            type: string
-        type: object
-    retriever:
-      type: SimpleRetriever
-      requester:
-        type: HttpRequester
-        url_base: https://epc.opendatacommunities.org/api/v1/domestic/
-        path: search
-        http_method: GET
-        request_parameters: {}
-        request_headers:
-          Accept: application/json
-          Authorization:
-        authenticator:
-          type: NoAuth
-        request_body_json: {}
-      record_selector:
-        type: RecordSelector
-        extractor:
-          type: DpathExtractor
-          field_path:
-            - rows
-      paginator:
-        type: DefaultPaginator
-        page_token_option:
-          type: RequestOption
-          inject_into: request_parameter
-          field_name: search-after
-        page_size_option:
-          type: RequestOption
-          field_name: size
-          inject_into: request_parameter
-        pagination_strategy:
-          type: CursorPagination
-          page_size: 1000
-          cursor_value: '{{ headers.get("X-Next-Search-After", {}) }}'
-          stop_condition: '{{ not headers.get("X-Next-Search-After", {}) }}'
-      partition_router:
-        - type: ListPartitionRouter
+    - england_wales_domestic_certificates
+
+definitions:
+  streams:
+    england_wales_domestic_certificates:
+      type: DeclarativeStream
+      name: england_wales_domestic_certificates
+      primary_key:
+        - lmk-key
+      retriever:
+        type: SimpleRetriever
+        requester:
+          $ref: "#/definitions/base_requester"
+          path: search
+          http_method: GET
+          request_headers:
+            Accept: application/json
+            Authorization:
+        record_selector:
+          type: RecordSelector
+          extractor:
+            type: DpathExtractor
+            field_path:
+              - rows
+        paginator:
+          type: DefaultPaginator
+          page_token_option:
+            type: RequestOption
+            field_name: search-after
+            inject_into: request_parameter
+          page_size_option:
+            type: RequestOption
+            field_name: size
+            inject_into: request_parameter
+          pagination_strategy:
+            type: CursorPagination
+            page_size: 1000
+            cursor_value: "{{ headers.get(\"X-Next-Search-After\", {}) }}"
+            stop_condition: "{{ not headers.get(\"X-Next-Search-After\", {}) }}"
+        partition_router:
+          type: ListPartitionRouter
           values:
             - E06000046
             - E06000011
@@ -243,38 +54,417 @@ streams:
             type: RequestOption
             field_name: local-authority
             inject_into: request_parameter
-    incremental_sync:
-      type: DatetimeBasedCursor
-      cursor_field: from-year
-      cursor_datetime_formats:
-        - "%Y"
-      datetime_format: "%Y"
-      start_datetime:
-        type: MinMaxDatetime
-        datetime: "2008"
-        datetime_format: "%Y"
-      start_time_option:
-        type: RequestOption
-        field_name: from-year
-        inject_into: request_parameter
-      end_time_option:
-        type: RequestOption
-        field_name: to-year
-        inject_into: request_parameter
-      end_datetime:
-        type: MinMaxDatetime
-        datetime: "{{ now_utc().strftime('%Y-%m-%dT%H:%M:%SZ') }}"
-        datetime_format: "%Y-%m-%dT%H:%M:%SZ"
-      step: P1Y
-      cursor_granularity: PT1S
+        decoder:
+          type: JsonDecoder
+      schema_loader:
+        type: InlineSchemaLoader
+        schema:
+          $ref: "#/schemas/england_wales_domestic_certificates"
+  base_requester:
+    type: HttpRequester
+    url_base: https://epc.opendatacommunities.org/api/v1/domestic/
+    authenticator: {}
+
+streams:
+  - $ref: "#/definitions/streams/england_wales_domestic_certificates"
+
 spec:
+  type: Spec
   connection_specification:
-    $schema: http://json-schema.org/draft-07/schema#
     type: object
+    $schema: http://json-schema.org/draft-07/schema#
     required: []
     properties: {}
     additionalProperties: true
-  type: Spec
+
 metadata:
   autoImportSchema:
-    domestic_certificates_search: true
+    england_wales_domestic_certificates: true
+  testedStreams:
+    england_wales_domestic_certificates:
+      hasRecords: true
+      streamHash: c54cbac732e0a8239184facd45ba0d850062c95c
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+  assist: {}
+
+schemas:
+  england_wales_domestic_certificates:
+    type: object
+    $schema: http://json-schema.org/schema#
+    additionalProperties: true
+    properties:
+      address:
+        type:
+          - string
+          - "null"
+      address1:
+        type:
+          - string
+          - "null"
+      address2:
+        type:
+          - string
+          - "null"
+      address3:
+        type:
+          - string
+          - "null"
+      building-reference-number:
+        type:
+          - string
+          - "null"
+      built-form:
+        type:
+          - string
+          - "null"
+      co2-emiss-curr-per-floor-area:
+        type:
+          - string
+          - "null"
+      co2-emissions-current:
+        type:
+          - string
+          - "null"
+      co2-emissions-potential:
+        type:
+          - string
+          - "null"
+      constituency:
+        type:
+          - string
+          - "null"
+      constituency-label:
+        type:
+          - string
+          - "null"
+      construction-age-band:
+        type:
+          - string
+          - "null"
+      county:
+        type:
+          - string
+          - "null"
+      current-energy-efficiency:
+        type:
+          - string
+          - "null"
+      current-energy-rating:
+        type:
+          - string
+          - "null"
+      energy-consumption-current:
+        type:
+          - string
+          - "null"
+      energy-consumption-potential:
+        type:
+          - string
+          - "null"
+      energy-tariff:
+        type:
+          - string
+          - "null"
+      environment-impact-current:
+        type:
+          - string
+          - "null"
+      environment-impact-potential:
+        type:
+          - string
+          - "null"
+      extension-count:
+        type:
+          - string
+          - "null"
+      fixed-lighting-outlets-count:
+        type:
+          - string
+          - "null"
+      flat-storey-count:
+        type:
+          - string
+          - "null"
+      flat-top-storey:
+        type:
+          - string
+          - "null"
+      floor-description:
+        type:
+          - string
+          - "null"
+      floor-energy-eff:
+        type:
+          - string
+          - "null"
+      floor-env-eff:
+        type:
+          - string
+          - "null"
+      floor-height:
+        type:
+          - string
+          - "null"
+      floor-level:
+        type:
+          - string
+          - "null"
+      glazed-area:
+        type:
+          - string
+          - "null"
+      glazed-type:
+        type:
+          - string
+          - "null"
+      heat-loss-corridor:
+        type:
+          - string
+          - "null"
+      heating-cost-current:
+        type:
+          - string
+          - "null"
+      heating-cost-potential:
+        type:
+          - string
+          - "null"
+      hot-water-cost-current:
+        type:
+          - string
+          - "null"
+      hot-water-cost-potential:
+        type:
+          - string
+          - "null"
+      hot-water-energy-eff:
+        type:
+          - string
+          - "null"
+      hot-water-env-eff:
+        type:
+          - string
+          - "null"
+      hotwater-description:
+        type:
+          - string
+          - "null"
+      inspection-date:
+        type:
+          - string
+          - "null"
+      lighting-cost-current:
+        type:
+          - string
+          - "null"
+      lighting-cost-potential:
+        type:
+          - string
+          - "null"
+      lighting-description:
+        type:
+          - string
+          - "null"
+      lighting-energy-eff:
+        type:
+          - string
+          - "null"
+      lighting-env-eff:
+        type:
+          - string
+          - "null"
+      lmk-key:
+        type: string
+      local-authority:
+        type:
+          - string
+          - "null"
+      local-authority-label:
+        type:
+          - string
+          - "null"
+      lodgement-date:
+        type:
+          - string
+          - "null"
+      lodgement-datetime:
+        type:
+          - string
+          - "null"
+      low-energy-fixed-light-count:
+        type:
+          - string
+          - "null"
+      low-energy-lighting:
+        type:
+          - string
+          - "null"
+      main-fuel:
+        type:
+          - string
+          - "null"
+      main-heating-controls:
+        type:
+          - string
+          - "null"
+      mainheat-description:
+        type:
+          - string
+          - "null"
+      mainheat-energy-eff:
+        type:
+          - string
+          - "null"
+      mainheat-env-eff:
+        type:
+          - string
+          - "null"
+      mainheatc-energy-eff:
+        type:
+          - string
+          - "null"
+      mainheatc-env-eff:
+        type:
+          - string
+          - "null"
+      mainheatcont-description:
+        type:
+          - string
+          - "null"
+      mains-gas-flag:
+        type:
+          - string
+          - "null"
+      mechanical-ventilation:
+        type:
+          - string
+          - "null"
+      multi-glaze-proportion:
+        type:
+          - string
+          - "null"
+      number-habitable-rooms:
+        type:
+          - string
+          - "null"
+      number-heated-rooms:
+        type:
+          - string
+          - "null"
+      number-open-fireplaces:
+        type:
+          - string
+          - "null"
+      photo-supply:
+        type:
+          - string
+          - "null"
+      postcode:
+        type:
+          - string
+          - "null"
+      posttown:
+        type:
+          - string
+          - "null"
+      potential-energy-efficiency:
+        type:
+          - string
+          - "null"
+      potential-energy-rating:
+        type:
+          - string
+          - "null"
+      property-type:
+        type:
+          - string
+          - "null"
+      report-type:
+        type:
+          - string
+          - "null"
+      roof-description:
+        type:
+          - string
+          - "null"
+      roof-energy-eff:
+        type:
+          - string
+          - "null"
+      roof-env-eff:
+        type:
+          - string
+          - "null"
+      secondheat-description:
+        type:
+          - string
+          - "null"
+      sheating-energy-eff:
+        type:
+          - string
+          - "null"
+      sheating-env-eff:
+        type:
+          - string
+          - "null"
+      solar-water-heating-flag:
+        type:
+          - string
+          - "null"
+      tenure:
+        type:
+          - string
+          - "null"
+      total-floor-area:
+        type:
+          - string
+          - "null"
+      transaction-type:
+        type:
+          - string
+          - "null"
+      unheated-corridor-length:
+        type:
+          - string
+          - "null"
+      uprn:
+        type:
+          - string
+          - "null"
+      uprn-source:
+        type:
+          - string
+          - "null"
+      walls-description:
+        type:
+          - string
+          - "null"
+      walls-energy-eff:
+        type:
+          - string
+          - "null"
+      walls-env-eff:
+        type:
+          - string
+          - "null"
+      wind-turbine-count:
+        type:
+          - string
+          - "null"
+      windows-description:
+        type:
+          - string
+          - "null"
+      windows-energy-eff:
+        type:
+          - string
+          - "null"
+      windows-env-eff:
+        type:
+          - string
+          - "null"
+    required:
+      - lmk-key

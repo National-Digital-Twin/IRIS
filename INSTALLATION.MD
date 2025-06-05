@@ -29,7 +29,9 @@ For Airbyte, follow the steps on their quickstart page [here](https://docs.airby
 
 ### 3. Configuration
 
-Following installation of Airbyte, add the connection details for Postgres in as a destination and import the `.yaml` files within the `airbyte/` directory.
+Following installation of Airbyte, open the Airbyte user interface and add the connection details for Postgres in as a destination. Then add new sources by importing the `.yaml` files which already exist in the `airbyte/` directory.
+
+Once the postgres destination and all necessary sources have been configured, create the necessary connections using the user interface and then sync them.
 
 Once the data is loaded into Postgres, you can run the following command within the `data_cleansing_pipeline` directory to build the models.
 ```

@@ -1,133 +1,51 @@
-version: 0.51.41
+version: 6.41.5
+
 type: DeclarativeSource
+
 check:
   type: CheckStream
   stream_names:
     - os_places_dpa
-streams:
-  - type: DeclarativeStream
-    name: os_places_dpa
-    primary_key:
-      - UDPRN
-    schema_loader:
-      type: InlineSchemaLoader
-      schema:
-        $schema: http://json-schema.org/schema#
-        properties:
-          ADDRESS:
-            type: string
-          BLPU_STATE_CODE:
-            type: string
-          BLPU_STATE_CODE_DESCRIPTION:
-            type: string
-          BLPU_STATE_DATE:
-            type: string
-          BUILDING_NAME:
-            type: string
-          BUILDING_NUMBER:
-            type: string
-          CLASSIFICATION_CODE:
-            type: string
-          CLASSIFICATION_CODE_DESCRIPTION:
-            type: string
-          COUNTRY_CODE:
-            type: string
-          COUNTRY_CODE_DESCRIPTION:
-            type: string
-          DELIVERY_POINT_SUFFIX:
-            type: string
-          DEPENDENT_LOCALITY:
-            type: string
-          DEPENDENT_THOROUGHFARE_NAME:
-            type: string
-          ENTRY_DATE:
-            type: string
-          LANGUAGE:
-            type: string
-          LAST_UPDATE_DATE:
-            type: string
-          LOCAL_CUSTODIAN_CODE:
-            type: number
-          LOCAL_CUSTODIAN_CODE_DESCRIPTION:
-            type: string
-          LOGICAL_STATUS_CODE:
-            type: string
-          MATCH:
-            type: number
-          MATCH_DESCRIPTION:
-            type: string
-          ORGANISATION_NAME:
-            type: string
-          PARENT_UPRN:
-            type: string
-          PARISH_CODE:
-            type: string
-          POSTAL_ADDRESS_CODE:
-            type: string
-          POSTAL_ADDRESS_CODE_DESCRIPTION:
-            type: string
-          POSTCODE:
-            type: string
-          POST_TOWN:
-            type: string
-          RPC:
-            type: string
-          STATUS:
-            type: string
-          SUB_BUILDING_NAME:
-            type: string
-          THOROUGHFARE_NAME:
-            type: string
-          TOPOGRAPHY_LAYER_TOID:
-            type: string
-          UDPRN:
-            type: string
-          UPRN:
-            type: string
-          WARD_CODE:
-            type: string
-          X_COORDINATE:
-            type: number
-          Y_COORDINATE:
-            type: number
-        type: object
-    retriever:
-      type: SimpleRetriever
-      requester:
-        type: HttpRequester
-        url_base: https://api.os.uk/search/places/v1/
-        path: postcode
-        http_method: GET
-        request_parameters:
-          key: ORDNANCE_SURVEY_API_KEY # pragma: allowlist secret
-          dataset: DPA
-        request_headers: {}
-        authenticator:
-          type: NoAuth
-        request_body_json: {}
-      record_selector:
-        type: RecordSelector
-        extractor:
-          type: DpathExtractor
-          field_path:
-            - results
-            - "*"
-            - DPA
-      paginator:
-        type: DefaultPaginator
-        page_token_option:
-          type: RequestOption
-          inject_into: request_parameter
-          field_name: offset
-        page_size_option:
-          type: RequestOption
-          field_name: maxresults
-          inject_into: request_parameter
-        pagination_strategy:
-          type: OffsetIncrement
-          page_size: 100
-      partition_router:
-        - type: ListPartitionRouter
+
+definitions:
+  streams:
+    os_places_dpa:
+      type: DeclarativeStream
+      name: os_places_dpa
+      primary_key:
+        - UDPRN
+      retriever:
+        type: SimpleRetriever
+        requester:
+          $ref: "#/definitions/base_requester"
+          path: postcode
+          http_method: GET
+          request_parameters:
+            key: ORDNANCE_SURVEY_API_KEY
+            dataset: DPA
+        record_selector:
+          type: RecordSelector
+          extractor:
+            type: DpathExtractor
+            field_path:
+              - results
+              - "*"
+              - DPA
+        paginator:
+          type: DefaultPaginator
+          page_token_option:
+            type: RequestOption
+            field_name: offset
+            inject_into: request_parameter
+          page_size_option:
+            type: RequestOption
+            field_name: maxresults
+            inject_into: request_parameter
+          pagination_strategy:
+            type: OffsetIncrement
+            page_size: 100
+        partition_router:
+          type: ListPartitionRouter
           values:
             - PO30
             - PO31
@@ -175,14 +93,213 @@ streams:
             type: RequestOption
             field_name: postcode
             inject_into: request_parameter
+        decoder:
+          type: JsonDecoder
+      schema_loader:
+        type: InlineSchemaLoader
+        schema:
+          $ref: "#/schemas/os_places_dpa"
+  base_requester:
+    type: HttpRequester
+    url_base: https://api.os.uk/search/places/v1/
+    authenticator:
+      type: ApiKeyAuthenticator
+      api_token: "{{ config[\"api_key\"] }}"
+      inject_into:
+        type: RequestOption
+        field_name: key
+        inject_into: header
+
+streams:
+  - $ref: "#/definitions/streams/os_places_dpa"
+
 spec:
-  connection_specification:
-    $schema: http://json-schema.org/draft-07/schema#
-    type: object
-    required: []
-    properties: {}
-    additionalProperties: true
   type: Spec
+  connection_specification:
+    type: object
+    $schema: http://json-schema.org/draft-07/schema#
+    required:
+      - api_key
+    properties:
+      api_key:
+        type: string
+        order: 0
+        title: API Key
+        airbyte_secret: true
+    additionalProperties: true
+
 metadata:
   autoImportSchema:
     os_places_dpa: true
+  testedStreams:
+    os_places_dpa:
+      hasRecords: true
+      streamHash: dc20f1714ad46df0a72aae3cbe3c9e838a3a9a50
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+  assist: {}
+
+schemas:
+  os_places_dpa:
+    type: object
+    $schema: http://json-schema.org/schema#
+    additionalProperties: true
+    properties:
+      ADDRESS:
+        type:
+          - string
+          - "null"
+      BLPU_STATE_CODE:
+        type:
+          - string
+          - "null"
+      BLPU_STATE_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      BLPU_STATE_DATE:
+        type:
+          - string
+          - "null"
+      BUILDING_NAME:
+        type:
+          - string
+          - "null"
+      BUILDING_NUMBER:
+        type:
+          - string
+          - "null"
+      CLASSIFICATION_CODE:
+        type:
+          - string
+          - "null"
+      CLASSIFICATION_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      COUNTRY_CODE:
+        type:
+          - string
+          - "null"
+      COUNTRY_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      DELIVERY_POINT_SUFFIX:
+        type:
+          - string
+          - "null"
+      DEPENDENT_LOCALITY:
+        type:
+          - string
+          - "null"
+      DEPENDENT_THOROUGHFARE_NAME:
+        type:
+          - string
+          - "null"
+      ENTRY_DATE:
+        type:
+          - string
+          - "null"
+      LANGUAGE:
+        type:
+          - string
+          - "null"
+      LAST_UPDATE_DATE:
+        type:
+          - string
+          - "null"
+      LOCAL_CUSTODIAN_CODE:
+        type:
+          - number
+          - "null"
+      LOCAL_CUSTODIAN_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      LOGICAL_STATUS_CODE:
+        type:
+          - string
+          - "null"
+      MATCH:
+        type:
+          - number
+          - "null"
+      MATCH_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      ORGANISATION_NAME:
+        type:
+          - string
+          - "null"
+      PARENT_UPRN:
+        type:
+          - string
+          - "null"
+      PARISH_CODE:
+        type:
+          - string
+          - "null"
+      POSTAL_ADDRESS_CODE:
+        type:
+          - string
+          - "null"
+      POSTAL_ADDRESS_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      POSTCODE:
+        type:
+          - string
+          - "null"
+      POST_TOWN:
+        type:
+          - string
+          - "null"
+      PO_BOX_NUMBER:
+        type:
+          - string
+          - "null"
+      RPC:
+        type:
+          - string
+          - "null"
+      STATUS:
+        type:
+          - string
+          - "null"
+      SUB_BUILDING_NAME:
+        type:
+          - string
+          - "null"
+      THOROUGHFARE_NAME:
+        type:
+          - string
+          - "null"
+      TOPOGRAPHY_LAYER_TOID:
+        type:
+          - string
+          - "null"
+      UDPRN:
+        type: string
+      UPRN:
+        type:
+          - string
+          - "null"
+      WARD_CODE:
+        type:
+          - string
+          - "null"
+      X_COORDINATE:
+        type:
+          - number
+          - "null"
+      Y_COORDINATE:
+        type:
+          - number
+          - "null"
+    required:
+      - UDPRN

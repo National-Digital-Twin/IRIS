@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: epc_without_uprn
+    description: >
+      EPC certificates without UPRNs, enriched via fuzzy matching to Ordnance Survey address data.
+      This model uses address and postcode information to identify the closest matching OS address
+      and assigns the corresponding UPRN.
+    columns:
+      - name: address_epc
+        description: >
+          Original EPC address string, formatted as "address, PostTown, Postcode" in lowercase.
+      - name: postcode_epc
+        description: >
+          Postcode from the EPC dataset.
+      - name: address_os
+        description: >
+          Matched address from the Ordnance Survey dataset.
+      - name: postcode_os
+        description: >
+          Postcode from the matched Ordnance Survey address.
+      - name: uprn
+        description: >
+          Unique Property Reference Number

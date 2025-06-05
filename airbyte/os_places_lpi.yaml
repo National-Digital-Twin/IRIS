@@ -1,155 +1,51 @@
-version: 0.51.41
+version: 6.41.5
+
 type: DeclarativeSource
+
 check:
   type: CheckStream
   stream_names:
     - os_places_lpi
-streams:
-  - type: DeclarativeStream
-    name: os_places_lpi
-    primary_key:
-      - UPRN
-    schema_loader:
-      type: InlineSchemaLoader
-      schema:
-        $schema: http://json-schema.org/schema#
-        properties:
-          ADDRESS:
-            type: string
-          ADMINISTRATIVE_AREA:
-            type: string
-          BLPU_STATE_CODE:
-            type: string
-          BLPU_STATE_CODE_DESCRIPTION:
-            type: string
-          BLPU_STATE_DATE:
-            type: string
-          CLASSIFICATION_CODE:
-            type: string
-          CLASSIFICATION_CODE_DESCRIPTION:
-            type: string
-          COUNTRY_CODE:
-            type: string
-          COUNTRY_CODE_DESCRIPTION:
-            type: string
-          ENTRY_DATE:
-            type: string
-          LANGUAGE:
-            type: string
-          LAST_UPDATE_DATE:
-            type: string
-          LOCALITY_NAME:
-            type: string
-          LOCAL_CUSTODIAN_CODE:
-            type: number
-          LOCAL_CUSTODIAN_CODE_DESCRIPTION:
-            type: string
-          LOGICAL_STATUS_CODE:
-            type: string
-          LPI_KEY:
-            type: string
-          LPI_LOGICAL_STATUS_CODE:
-            type: string
-          LPI_LOGICAL_STATUS_CODE_DESCRIPTION:
-            type: string
-          MATCH:
-            type: number
-          MATCH_DESCRIPTION:
-            type: string
-          ORGANISATION:
-            type: string
-          PAO_END_NUMBER:
-            type: string
-          PAO_START_NUMBER:
-            type: string
-          PAO_START_SUFFIX:
-            type: string
-          PAO_TEXT:
-            type: string
-          PARENT_UPRN:
-            type: string
-          PARISH_CODE:
-            type: string
-          POSTAL_ADDRESS_CODE:
-            type: string
-          POSTAL_ADDRESS_CODE_DESCRIPTION:
-            type: string
-          POSTCODE_LOCATOR:
-            type: string
-          RPC:
-            type: string
-          SAO_END_NUMBER:
-            type: string
-          SAO_START_NUMBER:
-            type: string
-          SAO_START_SUFFIX:
-            type: string
-          SAO_TEXT:
-            type: string
-          STATUS:
-            type: string
-          STREET_CLASSIFICATION_CODE:
-            type: string
-          STREET_CLASSIFICATION_CODE_DESCRIPTION:
-            type: string
-          STREET_DESCRIPTION:
-            type: string
-          STREET_STATE_CODE:
-            type: string
-          STREET_STATE_CODE_DESCRIPTION:
-            type: string
-          TOPOGRAPHY_LAYER_TOID:
-            type: string
-          TOWN_NAME:
-            type: string
-          UPRN:
-            type: string
-          USRN:
-            type: string
-          WARD_CODE:
-            type: string
-          X_COORDINATE:
-            type: number
-          Y_COORDINATE:
-            type: number
-        type: object
-    retriever:
-      type: SimpleRetriever
-      requester:
-        type: HttpRequester
-        url_base: https://api.os.uk/search/places/v1/
-        path: postcode
-        http_method: GET
-        request_parameters:
-          key: ORDNANCE_SURVEY_API_KEY # pragma: allowlist secret
-          dataset: LPI
-        request_headers: {}
-        authenticator:
-          type: NoAuth
-        request_body_json: {}
-      record_selector:
-        type: RecordSelector
-        extractor:
-          type: DpathExtractor
-          field_path:
-            - results
-            - "*"
-            - LPI
-      paginator:
-        type: DefaultPaginator
-        page_token_option:
-          type: RequestOption
-          inject_into: request_parameter
-          field_name: offset
-        page_size_option:
-          type: RequestOption
-          field_name: maxresults
-          inject_into: request_parameter
-        pagination_strategy:
-          type: OffsetIncrement
-          page_size: 100
-      partition_router:
-        - type: ListPartitionRouter
+
+definitions:
+  streams:
+    os_places_lpi:
+      type: DeclarativeStream
+      name: os_places_lpi
+      retriever:
+        type: SimpleRetriever
+        decoder:
+          type: JsonDecoder
+        paginator:
+          type: DefaultPaginator
+          page_size_option:
+            type: RequestOption
+            field_name: maxresults
+            inject_into: request_parameter
+          page_token_option:
+            type: RequestOption
+            field_name: offset
+            inject_into: request_parameter
+          pagination_strategy:
+            type: OffsetIncrement
+            page_size: 100
+        requester:
+          $ref: "#/definitions/base_requester"
+          path: postcode
+          http_method: GET
+          request_parameters:
+            key: ORDNANCE_SURVEY_API_KEY
+            dataset: LPI
+        record_selector:
+          type: RecordSelector
+          extractor:
+            type: DpathExtractor
+            field_path:
+              - results
+              - "*"
+              - LPI
+        partition_router:
+          type: ListPartitionRouter
           values:
             - PO30
             - PO31
@@ -197,14 +93,245 @@ streams:
             type: RequestOption
             field_name: postcode
             inject_into: request_parameter
+      primary_key:
+        - LPI_KEY
+      schema_loader:
+        type: InlineSchemaLoader
+        schema:
+          $ref: "#/schemas/os_places_lpi"
+  base_requester:
+    type: HttpRequester
+    url_base: https://api.os.uk/search/places/v1/
+    authenticator:
+      type: ApiKeyAuthenticator
+      api_token: "{{ config[\"api_key\"] }}"
+      inject_into:
+        type: RequestOption
+        field_name: key
+        inject_into: header
+
+streams:
+  - $ref: "#/definitions/streams/os_places_lpi"
+
 spec:
-  connection_specification:
-    $schema: http://json-schema.org/draft-07/schema#
-    type: object
-    required: []
-    properties: {}
-    additionalProperties: true
   type: Spec
+  connection_specification:
+    type: object
+    $schema: http://json-schema.org/draft-07/schema#
+    required:
+      - api_key
+    properties:
+      api_key:
+        type: string
+        order: 0
+        title: API Key
+        airbyte_secret: true
+    additionalProperties: true
+
 metadata:
+  assist: {}
+  testedStreams:
+    os_places_lpi:
+      hasRecords: true
+      streamHash: 87536bb422c2fcc138a284220c8e2d3f9e30842b
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
   autoImportSchema:
     os_places_lpi: true
+
+schemas:
+  os_places_lpi:
+    type: object
+    $schema: http://json-schema.org/schema#
+    required:
+      - LPI_KEY
+    properties:
+      RPC:
+        type:
+          - string
+          - "null"
+      UPRN:
+        type:
+          - string
+          - "null"
+      USRN:
+        type:
+          - string
+          - "null"
+      MATCH:
+        type:
+          - number
+          - "null"
+      STATUS:
+        type:
+          - string
+          - "null"
+      ADDRESS:
+        type:
+          - string
+          - "null"
+      LPI_KEY:
+        type: string
+      LANGUAGE:
+        type:
+          - string
+          - "null"
+      PAO_TEXT:
+        type:
+          - string
+          - "null"
+      SAO_TEXT:
+        type:
+          - string
+          - "null"
+      TOWN_NAME:
+        type:
+          - string
+          - "null"
+      WARD_CODE:
+        type:
+          - string
+          - "null"
+      ENTRY_DATE:
+        type:
+          - string
+          - "null"
+      PARENT_UPRN:
+        type:
+          - string
+          - "null"
+      PARISH_CODE:
+        type:
+          - string
+          - "null"
+      COUNTRY_CODE:
+        type:
+          - string
+          - "null"
+      ORGANISATION:
+        type:
+          - string
+          - "null"
+      X_COORDINATE:
+        type:
+          - number
+          - "null"
+      Y_COORDINATE:
+        type:
+          - number
+          - "null"
+      LOCALITY_NAME:
+        type:
+          - string
+          - "null"
+      BLPU_STATE_CODE:
+        type:
+          - string
+          - "null"
+      BLPU_STATE_DATE:
+        type:
+          - string
+          - "null"
+      LAST_UPDATE_DATE:
+        type:
+          - string
+          - "null"
+      PAO_START_NUMBER:
+        type:
+          - string
+          - "null"
+      PAO_START_SUFFIX:
+        type:
+          - string
+          - "null"
+      POSTCODE_LOCATOR:
+        type:
+          - string
+          - "null"
+      SAO_START_NUMBER:
+        type:
+          - string
+          - "null"
+      SAO_START_SUFFIX:
+        type:
+          - string
+          - "null"
+      MATCH_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      STREET_STATE_CODE:
+        type:
+          - string
+          - "null"
+      STREET_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      ADMINISTRATIVE_AREA:
+        type:
+          - string
+          - "null"
+      CLASSIFICATION_CODE:
+        type:
+          - string
+          - "null"
+      LOGICAL_STATUS_CODE:
+        type:
+          - string
+          - "null"
+      POSTAL_ADDRESS_CODE:
+        type:
+          - string
+          - "null"
+      LOCAL_CUSTODIAN_CODE:
+        type:
+          - number
+          - "null"
+      TOPOGRAPHY_LAYER_TOID:
+        type:
+          - string
+          - "null"
+      LPI_LOGICAL_STATUS_CODE:
+        type:
+          - string
+          - "null"
+      COUNTRY_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      STREET_CLASSIFICATION_CODE:
+        type:
+          - string
+          - "null"
+      BLPU_STATE_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      STREET_STATE_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      CLASSIFICATION_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      POSTAL_ADDRESS_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      LOCAL_CUSTODIAN_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      LPI_LOGICAL_STATUS_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+      STREET_CLASSIFICATION_CODE_DESCRIPTION:
+        type:
+          - string
+          - "null"
+    additionalProperties: true
