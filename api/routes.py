@@ -3,29 +3,34 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import configparser
-import os
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 import requests
 from access import AccessClient
-from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Request, Response
+from config import get_settings
+from db import get_db
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (
     map_bounded_buildings_response,
-    map_detailed_bounded_buildings_response,
+    map_bounded_filterable_buildings_response,
     map_epc_statistics_response,
+    map_filter_summary_response,
     map_flagged_buildings_response,
     map_single_building_response,
-    map_structure_unit_flag_history_response
+    map_structure_unit_flag_history_response,
 )
 from models.dto_models import (
     DetailedBuilding,
+    EpcAndOsBuildingSchema,
     EpcStatistics,
-    FlagHistory,
+    FilterableBuilding,
+    FilterableBuildingSchema,
+    FilterSummary,
     FlaggedBuilding,
-    SimpleBuilding,    
+    FlagHistory,
+    SimpleBuilding,
 )
 from models.ies_models import (
     EDH,
@@ -45,7 +50,7 @@ from pydantic import BaseModel
 from query import (
     get_building,
     get_buildings_in_bounding_box_query,
-    get_detailed_buildings_in_bounding_box_query,
+    get_filterable_buildings_in_bounding_box_query,
     get_flag_history,
     get_flagged_buildings,
     get_floor_for_building,
@@ -55,43 +60,29 @@ from query import (
 )
 from rdflib import Graph
 from requests import codes, exceptions
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_headers as get_forwarding_headers
-
-load_dotenv()
 
 router = APIRouter()
 
-# If you're running this yourself, and the Jena instance you're using is not local, you can used environment variables to override
-jenaURL = os.getenv("JENA_URL", "localhost")
-jenaPort = os.getenv("JENA_PORT", "3030")
-jenaProtocol = os.getenv("JENA_PROTOCOL", "http")
-ontoDataset = os.getenv("ONTO_DATASET", "ontology")
-dataset = os.getenv("KNOWLEDGE_DATASET", "knowledge")
-default_security_label = EDH(classification=ClassificationEmum.official)
-data_uri_stub = os.getenv(
-    "DATA_URI", "http://ndtp.co.uk/data#"
-)  # This can be overridden in use
-update_mode = os.getenv("UPDATE_MODE", "SCG")
-access_protocol = os.getenv("ACCESS_PROTOCOL", "http")
-access_host = os.getenv("ACCESS_URL", "localhost")
-access_port = os.getenv("ACCESS_PORT", "8091")
-dev_mode = os.getenv("DEV", "False")
-access_path = os.getenv("ACCESS_PATH", "/")
-identity_api_url = os.getenv("IDENTITY_API_URL", "http://localhost:3000")
-landing_page_url = os.getenv("LANDING_PAGE_URL", "http://localhost:5173")
+config_settings = get_settings()
 
-broker = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
-fpTopic = os.getenv("IES_TOPIC", "knowledge")
+default_security_label = EDH(classification=ClassificationEmum.official)
+data_uri_stub = config_settings.DATA_URI  # This can be overridden in use
 
 ACCESS_API_CALL_ERROR = "Error calling Access, Internal Server Error"
 IDENTITY_API_CALL_ERROR = "Error calling Identity API, Internal Server Error"
 ISO_8601_URL = "http://iso.org/iso8601#"
 
-if update_mode == "KAFKA":
+
+if config_settings.UPDATE_MODE == "KAFKA":
     from ia_map_lib import Adapter, Record, RecordUtils
     from ia_map_lib.sinks import KafkaSink
 
-    knowledgeSink = KafkaSink(topic=fpTopic, broker=broker)
+    knowledgeSink = KafkaSink(
+        topic=config_settings.IES_TOPIC, broker=config_settings.BOOTSTRAP_SERVERS
+    )
     knowledgeAdapter = Adapter(
         knowledgeSink, name="IoW Write-Back API", source_name="local data"
     )
@@ -105,22 +96,18 @@ def get_headers(security_labels):
 
 config = configparser.ConfigParser()
 config.read("setup.cfg")
-if dev_mode.lower() == "true":
-    dev_mode = True
-else:
-    dev_mode = False
 # The URIs used in the ontologies
 ndt_ont = "http://ndtp.co.uk/ontology#"
 
-access_url = f"{access_protocol}://{access_host}:{access_port}{access_path}"
-jena_url = f"{jenaProtocol}://{jenaURL}:{jenaPort}"
+access_url = f"{config_settings.ACCESS_PROTOCOL}://{config_settings.ACCESS_HOST}:{config_settings.ACCESS_PORT}{config_settings.ACCESS_PATH}"
+jena_url = f"{config_settings.JENA_PROTOCOL}://{config_settings.JENA_URL}:{config_settings.JENA_PORT}"
 
 
 def add_prefix(prefix, uri):
     prefix_dict[prefix] = uri
 
 
-access_client = AccessClient(access_url, dev_mode)
+access_client = AccessClient(access_url, config_settings.DEV_MODE)
 prefix_dict = {}
 add_prefix("xsd", "http://www.w3.org/2001/XMLSchema#")
 add_prefix("dc", "http://purl.org/dc/elements/1.1/")
@@ -180,7 +167,9 @@ assessment_classes = {}
 building_state_classes = {}
 
 
-def run_sparql_query(query: str, headers: dict[str, str], query_dataset=dataset):
+def run_sparql_query(
+    query: str, headers: dict[str, str], query_dataset=config_settings.DATASET
+):
     global jena_url
     get_uri = jena_url + "/" + query_dataset + "/query"
     try:
@@ -201,8 +190,8 @@ def run_sparql_update(
 
     if sec_label is None:
         sec_label = default_security_label
-    if update_mode == "SCG":
-        post_uri = jena_url + "/" + dataset + "/update"
+    if config_settings.UPDATE_MODE == "SCG":
+        post_uri = jena_url + "/" + config_settings.DATASET + "/update"
         headers = {
             "Accept": "*/*",
             "Security-Label": sec_label.to_string(),
@@ -213,7 +202,7 @@ def run_sparql_update(
             requests.post(post_uri, headers=headers, data=prefixes + query)
         except exceptions.HTTPError as e:
             raise HTTPException(e.response.status_code)
-    elif update_mode == "KAFKA":
+    elif config_settings.UPDATE_MODE == "KAFKA":
         g = Graph()
         g.update(query)
         out_data = g.serialize(format="nt")
@@ -224,7 +213,7 @@ def run_sparql_update(
             print(e)
             raise e
     else:
-        raise ValueError("unknown update mode: " + update_mode)
+        raise ValueError("unknown update mode: " + config_settings.UPDATE_MODE)
 
 
 def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
@@ -246,7 +235,7 @@ def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
                 {filter_clause}
             }}""",
         headers,
-        query_dataset=ontoDataset,
+        query_dataset=config_settings.ONTO_DATASET,
     )
 
     if results and results["results"] and results["results"]["bindings"]:
@@ -404,27 +393,73 @@ def generate_wkt_polygon(x_min, y_min, x_max, y_max):
     response_model=List[SimpleBuilding],
     description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
-def get_buildings_in_bounding_box(
-    min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request
+async def get_buildings_in_bounding_box(
+    min_long: str,
+    max_long: str,
+    min_lat: str,
+    max_lat: str,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
 ):
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
-    query = get_buildings_in_bounding_box_query(polygon)
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
+    buildings_in_bounding_box_results = await db.execute(
+        text(get_buildings_in_bounding_box_query()), {"polygon": polygon, "srid": 4326}
+    )
+    results = [
+        EpcAndOsBuildingSchema.from_orm(result)
+        for result in buildings_in_bounding_box_results
+    ]
     return map_bounded_buildings_response(results)
 
 
 @router.get(
-    "/detailed-buildings",
-    response_model=List[DetailedBuilding],
-    description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing",
+    "/filter-summary",
+    response_model=FilterSummary,
+    description="Get all the filters available inside a bounding box",
 )
-def get_detailed_buildings_in_bounding_box(
-    min_long: str, max_long: str, min_lat: str, max_lat: str, req: Request
+async def get_filter_summary(
+    min_long: str,
+    max_long: str,
+    min_lat: str,
+    max_lat: str,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
 ):
     polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
-    query = get_detailed_buildings_in_bounding_box_query(polygon)
-    results = run_sparql_query(query, get_forwarding_headers(req.headers))
-    return map_detailed_bounded_buildings_response(results)
+    detailed_buildings_in_bounding_box_results = await db.execute(
+        text(get_filterable_buildings_in_bounding_box_query()),
+        {"polygon": polygon, "srid": 4326},
+    )
+    results = [
+        FilterableBuildingSchema.from_orm(result)
+        for result in detailed_buildings_in_bounding_box_results
+    ]
+    return map_filter_summary_response(results)
+
+
+@router.get(
+    "/filterable-buildings",
+    response_model=List[FilterableBuilding],
+    description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing that can be used for filtering",
+)
+async def get_filterable_buildings_in_bounding_box(
+    min_long: str,
+    max_long: str,
+    min_lat: str,
+    max_lat: str,
+    req: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
+    filterable_buildings_in_bounding_box_results = await db.execute(
+        text(get_filterable_buildings_in_bounding_box_query()),
+        {"polygon": polygon, "srid": 4326},
+    )
+    results = [
+        FilterableBuildingSchema.from_orm(result)
+        for result in filterable_buildings_in_bounding_box_results
+    ]
+    return map_bounded_filterable_buildings_response(results)
 
 
 @router.get(
@@ -533,7 +568,7 @@ def get_building_flag_history(uprn: str, req: Request):
 
 
 @router.get(
-    "/flagged-buildings", 
+    "/flagged-buildings",
     description="Gets all buildings that have been flagged",
     response_model=list[FlaggedBuilding],
 )
@@ -792,11 +827,11 @@ def get_user_details(request: Request):
 def get_signout_links():
     try:
         signout_links_response = requests.get(
-            f"{identity_api_url}/api/v1/links/sign-out"
+            f"{config_settings.IDENTITY_API_URL}/api/v1/links/sign-out"
         )
         if signout_links_response.status_code == codes.ok:
             return {
-                "oauth2SignoutUrl": f"{landing_page_url}/oauth2/sign_out",
+                "oauth2SignoutUrl": f"{config_settings.LANDING_PAGE_URL}/oauth2/sign_out",
                 "redirectUrl": signout_links_response.json(),
             }
         else:

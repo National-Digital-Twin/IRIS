@@ -2,20 +2,17 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
+
+import uvicorn
+from config import get_settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router
-from dotenv import load_dotenv
-import os
 
-import uvicorn
+config_settings = get_settings()
 
 with open("README.md", "r") as file:
     description = file.read()
-
-load_dotenv()
-
-port = os.getenv("PORT", "5021")
 
 app = FastAPI(
     title="NDT Assessment Write-Back API",
@@ -40,4 +37,4 @@ app.add_middleware(
 app.include_router(router)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(port))
+    uvicorn.run(app, host="0.0.0.0", port=int(config_settings.PORT))

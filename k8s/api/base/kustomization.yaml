@@ -3,6 +3,8 @@ resources:
   - deployment.yaml
   - service.yaml
   - istio/authorizationpolicy/allow-ingress-to-iris-write-api.yaml
+  - vault/vaultAuth.yaml
+  - vault/vaultStaticSecret.yaml
 
 labels:
   - pairs:
