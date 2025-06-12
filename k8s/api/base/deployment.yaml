@@ -19,6 +19,8 @@ spec:
         - envFrom:
                - configMapRef:
                    name: iris-write-api-configs
+               - secretRef:
+                   name: iris-write-api-secrets
           name: iris-write-api
           image: iris-write-api-image:template
           resources:
