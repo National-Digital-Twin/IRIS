@@ -1,10 +1,14 @@
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.path.dirname(__file__), os.pardir, ".env"),
+        env_file_encoding="utf-8",
+    )
 
     ENVIRONMENT: str = "DEV"
     PORT: int = 5021
