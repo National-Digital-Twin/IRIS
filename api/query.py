@@ -138,27 +138,39 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
 
 def get_buildings_in_bounding_box_query() -> str:
     return """
-        SELECT building.uprn, first_line_of_address, toid, point, epc_assessment.epc_rating, structure_unit.type AS structure_unit_type
-        FROM iris.building building
-        JOIN iris.epc_assessment epc_assessment on building.uprn = epc_assessment.uprn
-        JOIN iris.structure_unit structure_unit on epc_assessment.id = structure_unit.epc_assessment_id
-        WHERE ST_INTERSECTS(building.point, ST_GeomFromText(:polygon, :srid));
+        WITH filtered_buildings AS (
+            SELECT uprn, first_line_of_address, toid, point
+            FROM iris.building
+            WHERE point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
+                AND ST_Intersects(point, ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid))
+        )
+        SELECT fb.uprn, fb.first_line_of_address,
+            fb.toid, fb.point, ea.epc_rating,
+            su.type AS structure_unit_type
+        FROM filtered_buildings fb
+        JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
+        JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
     """
 
 
 def get_filterable_buildings_in_bounding_box_query() -> str:
     return """
-        SELECT building.uprn, building.toid, building.post_code,
-            structure_unit.built_form, structure_unit.fuel_type,
-            epc_assessment.lodgement_date, structure_unit.window_glazing,
-            structure_unit.wall_construction, structure_unit.wall_insulation,
-            structure_unit.floor_construction, structure_unit.floor_insulation,
-            structure_unit.roof_construction, structure_unit.roof_insulation,
-            structure_unit.roof_insulation_thickness
-        FROM iris.epc_assessment epc_assessment
-        JOIN iris.building building on epc_assessment.uprn = building.uprn
-        JOIN iris.structure_unit structure_unit ON epc_assessment.id = structure_unit.epc_assessment_id
-        WHERE ST_INTERSECTS(building.point, ST_GeomFromText(:polygon, :srid))
+        WITH filtered_buildings AS (
+            SELECT uprn, toid, post_code, point
+            FROM iris.building
+            WHERE point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
+                AND ST_Intersects(point, ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid))
+        )
+        SELECT fb.uprn, fb.toid, fb.post_code,
+            su.built_form, su.fuel_type,
+            ea.lodgement_date, su.window_glazing,
+            su.wall_construction, su.wall_insulation,
+            su.floor_construction, su.floor_insulation,
+            su.roof_construction, su.roof_insulation,
+            su.roof_insulation_thickness
+        FROM filtered_buildings fb
+        JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
+        JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
     """
 
 

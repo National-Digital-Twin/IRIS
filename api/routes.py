@@ -12,52 +12,27 @@ from access import AccessClient
 from config import get_settings
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from mappers import (
-    map_bounded_buildings_response,
-    map_bounded_filterable_buildings_response,
-    map_epc_statistics_response,
-    map_filter_summary_response,
-    map_flagged_buildings_response,
-    map_single_building_response,
-    map_structure_unit_flag_history_response,
-)
-from models.dto_models import (
-    DetailedBuilding,
-    EpcAndOsBuildingSchema,
-    EpcStatistics,
-    FilterableBuilding,
-    FilterableBuildingSchema,
-    FilterSummary,
-    FlaggedBuilding,
-    FlagHistory,
-    SimpleBuilding,
-)
-from models.ies_models import (
-    EDH,
-    ClassificationEmum,
-    IesAccount,
-    IesAssessment,
-    IesAssessToBeFalse,
-    IesAssessToBeTrue,
-    IesClass,
-    IesEntity,
-    IesPerson,
-    IesState,
-    IesThing,
-    ies,
-)
+from mappers import (map_bounded_buildings_response,
+                     map_bounded_filterable_buildings_response,
+                     map_epc_statistics_response, map_filter_summary_response,
+                     map_flagged_buildings_response,
+                     map_single_building_response,
+                     map_structure_unit_flag_history_response)
+from models.dto_models import (DetailedBuilding, EpcAndOsBuildingSchema,
+                               EpcStatistics, FilterableBuilding,
+                               FilterableBuildingSchema, FilterSummary,
+                               FlaggedBuilding, FlagHistory, SimpleBuilding)
+from models.ies_models import (EDH, ClassificationEmum, IesAccount,
+                               IesAssessment, IesAssessToBeFalse,
+                               IesAssessToBeTrue, IesClass, IesEntity,
+                               IesPerson, IesState, IesThing, ies)
 from pydantic import BaseModel
-from query import (
-    get_building,
-    get_buildings_in_bounding_box_query,
-    get_filterable_buildings_in_bounding_box_query,
-    get_flag_history,
-    get_flagged_buildings,
-    get_floor_for_building,
-    get_roof_for_building,
-    get_statistics_for_wards,
-    get_walls_and_windows_for_building,
-)
+from query import (get_building, get_buildings_in_bounding_box_query,
+                   get_filterable_buildings_in_bounding_box_query,
+                   get_flag_history, get_flagged_buildings,
+                   get_floor_for_building, get_roof_for_building,
+                   get_statistics_for_wards,
+                   get_walls_and_windows_for_building)
 from rdflib import Graph
 from requests import codes, exceptions
 from sqlalchemy import text
@@ -375,35 +350,22 @@ def post_person(per: IesPerson):
     return per.uri
 
 
-def generate_wkt_polygon(x_min, y_min, x_max, y_max):
-    """
-    Generates a WKT POLYGON string for a bounding box given min/max coordinates.
-
-    :param x_min: Minimum longitude (west)
-    :param y_min: Minimum latitude (south)
-    :param x_max: Maximum longitude (east)
-    :param y_max: Maximum latitude (north)
-    :return: WKT POLYGON string
-    """
-    return f"POLYGON(({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))"
-
-
 @router.get(
     "/buildings",
     response_model=List[SimpleBuilding],
     description="Gets all the buildings inside a bounding box along with their types, TOIDs, UPRNs, and current energy ratings",
 )
 async def get_buildings_in_bounding_box(
-    min_long: str,
-    max_long: str,
-    min_lat: str,
-    max_lat: str,
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     buildings_in_bounding_box_results = await db.execute(
-        text(get_buildings_in_bounding_box_query()), {"polygon": polygon, "srid": 4326}
+        text(get_buildings_in_bounding_box_query()),
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326}
     )
     results = [
         EpcAndOsBuildingSchema.from_orm(result)
@@ -418,17 +380,16 @@ async def get_buildings_in_bounding_box(
     description="Get all the filters available inside a bounding box",
 )
 async def get_filter_summary(
-    min_long: str,
-    max_long: str,
-    min_lat: str,
-    max_lat: str,
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     detailed_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
-        {"polygon": polygon, "srid": 4326},
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
     )
     results = [
         FilterableBuildingSchema.from_orm(result)
@@ -443,17 +404,16 @@ async def get_filter_summary(
     description="Gets all the buildings inside a bounding box along with detailed metadata e.g. floor construction, wall insulation, window glazing that can be used for filtering",
 )
 async def get_filterable_buildings_in_bounding_box(
-    min_long: str,
-    max_long: str,
-    min_lat: str,
-    max_lat: str,
+    min_long: float,
+    max_long: float,
+    min_lat: float,
+    max_lat: float,
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    polygon = generate_wkt_polygon(min_long, min_lat, max_long, max_lat)
     filterable_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
-        {"polygon": polygon, "srid": 4326},
+        {"min_long": min_long, "max_long": max_long, "min_lat": min_lat, "max_lat": max_lat, "srid": 4326},
     )
     results = [
         FilterableBuildingSchema.from_orm(result)

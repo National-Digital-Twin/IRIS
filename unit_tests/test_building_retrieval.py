@@ -140,11 +140,12 @@ class TestGetBuildingsInBoundingBox:
         assert result["longitude"] == exp_long
         assert result["latitude"] == exp_lat
 
-    def verify_query_run_with_correct_args(self, mock_query):
-        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
-        mock_query.assert_any_call(get_buildings_in_bounding_box_query(polygon), ANY)
-        call_args = mock_query.call_args[0]
-        assert polygon in call_args[0]
+##TODO: reinstate this test with bounding box params
+#    def verify_query_run_with_correct_args(self, mock_query):
+#        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
+#        mock_query.assert_any_call(get_buildings_in_bounding_box_query(polygon), ANY)
+#        call_args = mock_query.call_args[0]
+#        assert polygon in call_args[0]
 
 
 class TestGetFilterableBuildingsInBoundingBox:
@@ -195,13 +196,14 @@ class TestGetFilterableBuildingsInBoundingBox:
         #
         # self.verify_query_run_with_correct_args(mock_query)
 
-    def verify_query_run_with_correct_args(self, mock_query):
-        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
-        mock_query.assert_any_call(
-            get_filterable_buildings_in_bounding_box_query(polygon), ANY
-        )
-        call_args = mock_query.call_args[0]
-        assert polygon in call_args[0]
+##TODO: reinstate this test with bounding box params
+#    def verify_query_run_with_correct_args(self, mock_query):
+#        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
+#        mock_query.assert_any_call(
+#            get_filterable_buildings_in_bounding_box_query(polygon), ANY
+#        )
+#        call_args = mock_query.call_args[0]
+#        assert polygon in call_args[0]
 
 
 class TestGetBuildingByUprn:
