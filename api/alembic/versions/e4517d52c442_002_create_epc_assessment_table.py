@@ -40,9 +40,21 @@ def upgrade() -> None:
     """
     )
 
+    op.execute(
+        """
+        CREATE INDEX idx_epc_uprn ON iris.epc_assessment(uprn);
+    """
+    )
+
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.execute(
+        """
+        DROP INDEX IF EXISTS idx_epc_uprn;
+    """
+    )
+
     op.execute(
         """
         ALTER TABLE iris.epc_assessment
