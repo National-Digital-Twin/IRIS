@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: run-query-job
+  namespace: iris
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgres-import-data-clearer
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0
+          resources:
+            limits:
+              memory: "2GiB"
+            requests:
+              memory: "2GiB"
+              cpu: 2
+          env:
+            - name: DB_HOST
+              value: REPLACE_ME
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "iris"
+            - name: DB_USERNAME
+              value: REPLACE_ME
+            - name: DB_PASSWORD
+              value: REPLACE_ME
+          command: ["sh", "-c"]
+          args:
+            - |
+              # Wait for PostgreSQL to be ready
+              while ! pg_isready -h ${DB_HOST} -p ${DB_PORT}; do
+                echo "Waiting for database connection..."
+                sleep 2
+              done
+
+              echo "Running provided query..."
+
+              PGPASSWORD=${DB_PASSWORD} psql \
+                -h ${DB_HOST} \
+                -p ${DB_PORT} \
+                -U ${DB_USERNAME} \
+                -d ${DB_NAME} \
+                -t -c "REPLACE ME WITH ACTUAL QUERY"
+
+              # Check for errors
+              if [ $? -ne 0 ]; then
+                echo "Failed to run provided query!"
+                exit 1
+              fi
+
+              echo "Successfully ran provided query!"
+      restartPolicy: OnFailure
+      securityContext:
+        fsGroup: 999
