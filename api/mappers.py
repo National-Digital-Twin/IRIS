@@ -352,8 +352,9 @@ def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSu
     mapped_result: FilterSummary = FilterSummary()
     for result in results:
         post_code_matches = re.search(r"^[0-9A-Z]{3,4}", result.post_code)
-        transformed_post_code = post_code_matches.group()
-        mapped_result.postcode.add(transformed_post_code)
+        if post_code_matches:
+            transformed_post_code = post_code_matches.group()
+            mapped_result.postcode.add(transformed_post_code)
         if result.built_form and len(result.built_form) > 0:
             mapped_result.built_form.add(result.built_form)
         inspection_year = str(result.lodgement_date.year)
