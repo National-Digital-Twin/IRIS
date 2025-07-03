@@ -492,16 +492,6 @@ def get_building_by_uprn(uprn: str, req: Request):
     building_results = run_sparql_query(
         get_building(uprn), get_forwarding_headers(req.headers)
     )
-    results_bindings = (
-        building_results["results"]["bindings"]
-        if building_results and building_results["results"]
-        else None
-    )
-    if not results_bindings:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Building with UPRN {uprn} not found",
-        )
     roof_results = run_sparql_query(
         get_roof_for_building(uprn), get_forwarding_headers(req.headers)
     )
