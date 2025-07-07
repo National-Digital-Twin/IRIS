@@ -357,8 +357,9 @@ def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSu
             mapped_result.postcode.add(transformed_post_code)
         if result.built_form and len(result.built_form) > 0:
             mapped_result.built_form.add(result.built_form)
-        inspection_year = str(result.lodgement_date.year)
-        mapped_result.inspection_year.add(inspection_year)
+        if result.lodgement_date:
+            inspection_year = str(result.lodgement_date.year)
+            mapped_result.inspection_year.add(inspection_year)
         if result.fuel_type and len(result.fuel_type) > 0:
             mapped_result.fuel_type.add(result.fuel_type)
         if result.window_glazing and len(result.window_glazing) > 0:

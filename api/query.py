@@ -148,8 +148,8 @@ def get_buildings_in_bounding_box_query() -> str:
             fb.toid, fb.point, ea.epc_rating,
             su.type AS structure_unit_type
         FROM filtered_buildings fb
-        JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
-        JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
+        LEFT JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
+        LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
     """
 
 
@@ -169,8 +169,8 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
             su.roof_construction, su.roof_insulation,
             su.roof_insulation_thickness
         FROM filtered_buildings fb
-        JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
-        JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
+        LEFT JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
+        LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
     """
 
 

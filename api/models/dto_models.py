@@ -141,7 +141,7 @@ class FilterableBuildingSchema(BaseModel):
     uprn: str
     post_code: str
     built_form: Optional[str]
-    lodgement_date: datetime.date
+    lodgement_date: Optional[datetime.date]
     fuel_type: Optional[str]
     window_glazing: Optional[str]
     wall_construction: Optional[str]
@@ -175,7 +175,7 @@ class FilterSummary(BaseModel):
     postcode: set[str] = set()
     built_form: set[str] = set()
     inspection_year: set[str] = set()
-    energy_rating: set[str] = set(["EPC In Date", "EPC Expired"])
+    energy_rating: set[str] = {"EPC In Date", "EPC Expired"}
     fuel_type: set[str] = set()
     window_glazing: set[str] = set()
     wall_construction: set[str] = set()
