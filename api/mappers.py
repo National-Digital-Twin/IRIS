@@ -3,10 +3,8 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import re
-from re import match
 
 from models.dto_models import (
-    Building,
     DetailedBuilding,
     EpcAndOsBuildingSchema,
     EpcStatistics,
@@ -178,26 +176,6 @@ def map_single_building_response(
     map_floor_results(building, floor_results)
     map_wall_window_results(building, wall_window_results)
     return building
-
-
-def map_lat_long(building: Building, point: str) -> None:
-    """
-    Uses regex to extract the longitude and latitude from a POINT wkt literal and map to building attributes.
-
-    Args:
-        building (SimpleBuilding): A simple representation of a building.
-        point (str): A POINT wkt literal e.g. "POINT(-1.1834759844410794 50.72234886358317)".
-
-    Returns:
-        None
-    """
-    result = match(r"POINT\((-?\d+\.\d+) (-?\d+\.\d+)\)", point)
-    if result:
-        # Extract longitude and latitude from the matched groups
-        building.longitude = float(result.group(1))
-        building.latitude = float(result.group(2))
-    else:
-        raise ValueError("Invalid format")
 
 
 def map_bounded_buildings_response(

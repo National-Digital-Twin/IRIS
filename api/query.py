@@ -11,11 +11,8 @@ def get_building(uprn: str) -> str:
         PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
         PREFIX data: <http://ndtp.co.uk/data#>
 
-        SELECT ?uprn ?lodgementDate ?builtForm ?structureUnitType WHERE {{
-            ?uprn a building:UPRN .
-            ?uprn ies:representationValue '{uprn}' .
-
-            ?structureUnit ies:isIdentifiedBy ?uprn .
+        SELECT ?lodgementDate ?builtForm ?structureUnitType WHERE {{
+            ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
@@ -46,10 +43,7 @@ def get_roof_for_building(uprn: str) -> str:
 
         SELECT ?uprn ?roofConstruction ?roofInsulation ?roofInsulationThickness 
         WHERE {{
-            ?uprn a building:UPRN .
-            ?uprn ies:representationValue '{uprn}' .
-
-            ?structureUnit ies:isIdentifiedBy ?uprn .
+            ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
@@ -81,10 +75,8 @@ def get_floor_for_building(uprn: str) -> str:
         PREFIX data: <http://ndtp.co.uk/data#>
 
         SELECT ?uprn ?floorConstruction ?floorInsulation WHERE {{
-        ?uprn a building:UPRN .
-        ?uprn ies:representationValue '{uprn}' .
 
-        ?structureUnit ies:isIdentifiedBy ?uprn .
+        ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
         ?structureUnit a building:StructureUnit .
         ?structureUnitState a building:StructureUnitState .
         ?structureUnitState ies:isStateOf ?structureUnit .
@@ -111,10 +103,8 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
         PREFIX data: <http://ndtp.co.uk/data#>
 
         SELECT ?uprn ?wallConstruction ?wallInsulation ?windowGlazing WHERE {{
-            ?uprn a building:UPRN .
-            ?uprn ies:representationValue '{uprn}' .
 
-            ?structureUnit ies:isIdentifiedBy ?uprn .
+            ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .

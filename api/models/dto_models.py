@@ -32,13 +32,10 @@ class AccessUser(BaseModel):
 
 class Building(IesThing):
     uprn: Optional[str] = None
-    longitude: Optional[str] = None
-    latitude: Optional[str] = None
     structure_unit_type: Optional[str] = None
 
 
 class DetailedBuilding(Building):
-    postcode: Optional[str] = None
     lodgement_date: Optional[str] = None
     built_form: Optional[str] = None
     floor_construction: Optional[str] = None
@@ -107,6 +104,8 @@ class FlagHistory(BaseModel):
 
 
 class SimpleBuilding(Building):
+    longitude: Optional[str] = None
+    latitude: Optional[str] = None
     first_line_of_address: Optional[str] = None
     energy_rating: Optional[str] = None
     toid: Optional[str] = None
