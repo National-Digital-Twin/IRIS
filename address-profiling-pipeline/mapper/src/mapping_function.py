@@ -28,12 +28,14 @@ from models.roof import Roof
 from models.wall import Wall
 from models.window import Window
 from models.epc_assessment import EpcAssessment
-from namespaces import *
-from utils import *
+from models.heating_system import HeatingSystem
+import namespaces
+from utils import create_record_uri, add_ies_building_type_mappings, build_ies_uri, get_uprn, create_stateful_record_uri
+import os
 
 DEBUG_MODE = False # output to local file if True
 
-ies = ies_tool.IESTool(data_ns)
+ies = ies_tool.IESTool(namespaces.data_ns)
 
 def bind_namespaces() -> None:
     """
@@ -44,15 +46,15 @@ def bind_namespaces() -> None:
     Returns:
         None
     """
-    ies.graph.namespace_manager.bind("ies", ies_ns)
-    ies.graph.namespace_manager.bind("building", ies_building_ns)
-    ies.graph.namespace_manager.bind("data", data_ns)
-    ies.graph.namespace_manager.bind("iesuncertainty", ies_uncertainty_ns)
-    ies.graph.namespace_manager.bind("epc", epc_ns)
-    ies.graph.namespace_manager.bind("geoplace", geoplace_ns)
-    ies.graph.namespace_manager.bind("qudt", qudt)
-    ies.graph.namespace_manager.bind("unit", qudt_unit)
-    ies.graph.namespace_manager.bind("quantitykind", qudt_quantitykind)
+    ies.graph.namespace_manager.bind("ies", namespaces.ies_ns)
+    ies.graph.namespace_manager.bind("building", namespaces.ies_building_ns)
+    ies.graph.namespace_manager.bind("data", namespaces.data_ns)
+    ies.graph.namespace_manager.bind("iesuncertainty", namespaces.ies_uncertainty_ns)
+    ies.graph.namespace_manager.bind("epc", namespaces.epc_ns)
+    ies.graph.namespace_manager.bind("geoplace", namespaces.geoplace_ns)
+    ies.graph.namespace_manager.bind("qudt", namespaces.qudt)
+    ies.graph.namespace_manager.bind("unit", namespaces.qudt_unit)
+    ies.graph.namespace_manager.bind("quantitykind", namespaces.qudt_quantitykind)
     
 
 def add_building_mapping(record: dict) -> str:
@@ -70,9 +72,9 @@ def add_building_mapping(record: dict) -> str:
     ies.add_triple(building_uri, build_ies_uri("inLocation"), create_record_uri(record, "Location"))
     return building_uri
 
-def map_func(record: dict) -> str:
+def main_graph_map(record: dict):
     """
-    Creates the graph and orchestrates its mappings.
+    Creates triples for the main graph.
     
     Args:
         record (dict): A record representing a building.
@@ -80,9 +82,7 @@ def map_func(record: dict) -> str:
     Returns:
         str: The RDF graph serialized into triples.
     """
-    ies.clear_graph()
-    bind_namespaces()
-
+    
     uprn = get_uprn(record)
     building_uri = add_building_mapping(record)
     structure_unit = StructureUnit(ies, record, building_uri)
@@ -94,9 +94,57 @@ def map_func(record: dict) -> str:
         Roof(ies, record, structure_unit.state_uri, epc_assessment.uri)
         Wall(ies, record, structure_unit.state_uri, epc_assessment.uri)
         Window(ies, record, structure_unit.state_uri, epc_assessment.uri)
+        
+    if DEBUG_MODE:
+        ies.graph.serialize(destination=f"{uprn}_epc.ttl", format="turtle")
+        return
+
+    return ies.graph.serialize(format="nt")
+
+def heating_graph_map(record: dict):
+    """
+    Creates triples for the heating system graph.
+    
+    Args:
+        record (dict): A record representing a building.
+        
+    Returns:
+        str: The RDF graph serialized into triples."""
+    
+    uprn = get_uprn(record)
+
+    structure_unit_state_uri = create_stateful_record_uri(record, "StructureUnitState")
+
+    # only add more detail if the certificate is related to a domestic property
+    if record["CertificateType"] == "domestic":
+        HeatingSystem(ies, record, structure_unit_state_uri)
 
     if DEBUG_MODE:
         ies.graph.serialize(destination=f"{uprn}_epc.ttl", format="turtle")
         return
 
     return ies.graph.serialize(format="nt")
+
+def map_func(record: dict) -> str:
+    """
+    Creates the graph of choice and orchestrates its mappings.
+    
+    Args:
+        record (dict): A record representing a building.
+        
+    Returns:
+        str: The RDF graph serialized into triples.
+    """
+
+    ies.clear_graph()
+    bind_namespaces()
+
+    map_function = os.getenv("MAP_FUNC")
+
+    if map_function == "MAIN":
+        return main_graph_map(record)
+    elif map_function == "HEATING":
+        return heating_graph_map(record)
+    else:
+        return main_graph_map(record)
+
