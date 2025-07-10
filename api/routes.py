@@ -32,7 +32,8 @@ from query import (get_building, get_buildings_in_bounding_box_query,
                    get_flag_history, get_flagged_buildings,
                    get_floor_for_building, get_roof_for_building,
                    get_statistics_for_wards,
-                   get_walls_and_windows_for_building)
+                   get_walls_and_windows_for_building,
+                   get_fueltype_for_building)
 from rdflib import Graph
 from requests import codes, exceptions
 from sqlalchemy import text
@@ -501,8 +502,11 @@ def get_building_by_uprn(uprn: str, req: Request):
     wall_window_results = run_sparql_query(
         get_walls_and_windows_for_building(uprn), get_forwarding_headers(req.headers)
     )
+    fueltype_results = run_sparql_query(
+        get_fueltype_for_building(uprn), get_forwarding_headers(req.headers)
+    )
     return map_single_building_response(
-        uprn, building_results, roof_results, floor_results, wall_window_results
+        uprn, building_results, roof_results, floor_results, wall_window_results, fueltype_results
     )
 
 

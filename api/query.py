@@ -125,6 +125,24 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
         LIMIT 1
     """
 
+def get_fueltype_for_building(uprn: str) -> str:
+    return f"""
+        PREFIX ies:      <http://informationexchangestandard.org/ont/ies#>
+        PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data:     <http://ndtp.co.uk/data#>
+
+        SELECT ?fuelType
+            WHERE {{
+            ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
+            ?structureUnitState ies:isStateOf ?structureUnit .
+
+            GRAPH <http://ndtp.com/graph/heating-v1> {{
+                ?structureUnitState building:isServicedBy ?heatingSystem .
+                ?heatingSystem building:isOperableWithFuel ?fuelType .
+            }}
+        }}
+    """
+
 
 def get_buildings_in_bounding_box_query() -> str:
     return """

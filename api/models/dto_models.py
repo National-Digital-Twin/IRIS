@@ -46,6 +46,7 @@ class DetailedBuilding(Building):
     wall_construction: Optional[str] = None
     wall_insulation: Optional[str] = None
     window_glazing: Optional[str] = None
+    fueltype: Optional[str] = None
 
 
 class FilterableBuilding(BaseModel):
