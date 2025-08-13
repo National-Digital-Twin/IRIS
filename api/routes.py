@@ -10,6 +10,7 @@ from typing import List
 import requests
 from access import AccessClient
 from config import get_settings
+from climate_service import fetch_geojson_for_wind_driven_rain
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (map_bounded_buildings_response,
@@ -571,6 +572,9 @@ def post_flag_investigate(request: Request, visited: IesEntity):
     )
     return flag_state
 
+@router.get("/data/climate/wind-driven-rain")
+async def get_wind_driven_rain_data(geojson = Depends(fetch_geojson_for_wind_driven_rain)):
+    return geojson
 
 # @app.post("/buildings/states",description="Add a new state to a building")
 def post_building_state(bs: IesState):

@@ -13,3 +13,9 @@ services:
       POSTGRES_DB: iris
     ports:
       - "5432:5432"
+    networks: 
+      - iris
+
+networks:
+  iris:
+    driver: bridge
