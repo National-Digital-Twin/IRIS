@@ -15,7 +15,18 @@ async def fetch_geojson_for_wind_driven_rain(
     Keyword arguments:
     db -- an AsyncSession for sql alchemy
     """
-    result = await db.execute(text("SELECT geojson FROM iris.wind_driven_rain_projections_geojson;"))
+    result = await db.execute(text("SELECT geojson::text AS geojson FROM iris.wind_driven_rain_projections_geojson;"))
+    row = result.fetchone()
+    return row[0]
+
+async def fetch_geojson_for_icing_days(
+    db: AsyncSession = Depends(get_db),):
+    """ Query the database to fetch icing days data in GeoJSON format.
+    
+    Keyword arguments:
+    db -- an AsyncSession for sql alchemy
+    """
+    result = await db.execute(text("SELECT geojson::text AS geojson FROM iris.icing_days_geojson;"))
     row = result.fetchone()
     return row[0]
     
