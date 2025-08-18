@@ -25,7 +25,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     
-    """ Create table for icing days."""
+    """ Create sequence for icing days table primary key."""
     op.execute(
         """
         CREATE SEQUENCE IF NOT EXISTS iris.annual_count_of_icing_days_1991_2020_objectid_seq
@@ -52,7 +52,7 @@ def upgrade() -> None:
     )
     
     
-    """ Create table for icing days."""
+    """ Alter sequence owner."""
     op.execute(
         """
         ALTER SEQUENCE iris.annual_count_of_icing_days_1991_2020_objectid_seq
@@ -61,7 +61,7 @@ def upgrade() -> None:
     )
     
     
-    """ Create table for icing days."""
+    """ Create index for icing days table."""
     op.execute(
         """
         CREATE INDEX IF NOT EXISTS annual_count_of_icing_days_1991_2020_shape_geom_idx
@@ -72,7 +72,7 @@ def upgrade() -> None:
     )
     
     
-    """ Create table for icing days."""
+    """ Create materialized view containing GeoJSON."""
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.icing_days_geojson
@@ -81,15 +81,6 @@ def upgrade() -> None:
             SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(shape)::json, 'properties', to_jsonb(t.*) - 'shape'::text))) AS geojson
             FROM iris.annual_count_of_icing_days_1991_2020 t
             WITH DATA;
-    """
-    )
-    
-    
-    """ Create table for icing days."""
-    op.execute(
-        """
-        ALTER TABLE IF EXISTS iris.icing_days_geojson
-            OWNER TO postgres;
     """
     )
 
