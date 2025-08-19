@@ -69,7 +69,7 @@ def upgrade() -> None:
             hsd_40_lower double precision,
             hsd_40_median double precision,
             hsd_40_upper double precision,
-            shape geometry(MultiPolygon,3857),
+            shape geometry(MultiPolygon,4326),
             CONSTRAINT annual_count_of_hot_summer_days_projections_12km_pkey PRIMARY KEY (objectid)
         )
     """

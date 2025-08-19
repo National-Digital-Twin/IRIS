@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: Apache-2.0
+# © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
+# and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+
+"""008_create_uk_ward_table_view
+
+Revision ID: 2215b32f49a9
+Revises: a75353f01fa0
+Create Date: 2025-08-19 16:01:44.272631
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '2215b32f49a9'
+down_revision: Union[str, None] = 'a75353f01fa0'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    """ Create id for uk_ward."""
+    op.execute(
+        """
+        CREATE SEQUENCE IF NOT EXISTS iris.uk_ward_fid_seq1
+            INCREMENT 1
+            START 1
+            MINVALUE 1
+            MAXVALUE 2147483647
+            CACHE 1;
+    """
+    )
+   
+    
+    """ Create table for uk_ward."""
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS iris.uk_ward
+            ( 
+                fid integer NOT NULL DEFAULT nextval('iris.uk_ward_fid_seq1'::regclass),
+                name character varying,
+                area_code character varying,
+                area_description character varying,
+                file_name character varying,
+                feature_serial_number integer,
+                collection_serial_number integer,
+                global_polygon_id integer,
+                admin_unit_id integer,
+                census_code character varying,
+                hectares double precision,
+                non_inland_area double precision,
+                area_type_code character varying,
+                area_type_description character varying,
+                non_area_type_code character varying,
+                non_area_type_description character varying,
+                geometry geometry(MultiPolygon,4326),
+                CONSTRAINT uk_ward_pkey PRIMARY KEY (fid)
+            )
+    """
+    )
+    
+    
+    """ Create geo index for uk_ward table."""
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS uk_ward_geometry_geom_idx
+            ON iris.uk_ward USING gist
+            (geometry)
+            TABLESPACE pg_default;
+    """
+    )
+    
+    """ Create table containing uk_ward_epc_data."""
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS iris.uk_ward_epc_data
+            AS
+            SELECT b.epc_rating, count (a.point),c.name, c.geometry 
+            FROM iris.building a
+            LEFT JOIN iris.epc_assessment b
+            ON a.uprn =b.uprn
+            JOIN iris.uk_ward c
+            ON ST_Intersects(c.geometry, a.point)
+            WHERE c.global_polygon_id = 140424
+            GROUP BY b.epc_rating, c.name, c,geometry;
+    """
+    )
+    
+    """ Create materialized view containing GeoJSON."""
+    op.execute(
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc
+            TABLESPACE pg_default
+            AS
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(geometry)::json, 'properties', to_jsonb(t.*) - 'shape'::text))) AS geojson
+            FROM iris.uk_ward_epc_data t
+            WITH DATA;
+    """
+    )
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+
+    op.execute(
+        """
+        DROP MATERIALIZED VIEW IF EXISTS iris.uk_ward_epc;
+    """
+    )
+
+    op.execute(
+        """
+        DROP INDEX IF EXISTS iris.uk_ward_shape_geom_idx;
+    """
+    )
+
+    op.execute(
+        """
+        DROP TABLE IF EXISTS iris.uk_ward;
+    """
+    )
+
+    op.execute(
+        """
+        DROP SEQUENCE IF EXISTS iris.uk_ward_objectid_seq;
+    """
+    )
