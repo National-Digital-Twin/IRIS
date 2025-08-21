@@ -24,10 +24,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    """ Create id for uk_ward."""
+    """ Create id for district_borough_unitary_ward"""
     op.execute(
         """
-        CREATE SEQUENCE IF NOT EXISTS iris.uk_ward_fid_seq1
+        CREATE SEQUENCE IF NOT EXISTS iris.district_borough_unitary_ward_fid_seq1
             INCREMENT 1
             START 1
             MINVALUE 1
@@ -37,12 +37,12 @@ def upgrade() -> None:
     )
    
     
-    """ Create table for uk_ward."""
+    """ Create table for district_borough_unitary_ward"""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.uk_ward
+        CREATE TABLE IF NOT EXISTS iris.district_borough_unitary_ward
             ( 
-                fid integer NOT NULL DEFAULT nextval('iris.uk_ward_fid_seq1'::regclass),
+                fid integer NOT NULL DEFAULT nextval('iris.district_borough_unitary_ward_fid_seq1'::regclass),
                 name character varying,
                 area_code character varying,
                 area_description character varying,
@@ -59,26 +59,85 @@ def upgrade() -> None:
                 non_area_type_code character varying,
                 non_area_type_description character varying,
                 geometry geometry(MultiPolygon,4326),
-                CONSTRAINT uk_ward_pkey PRIMARY KEY (fid)
+                CONSTRAINT district_borough_unitary_ward_P PRIMARY KEY (fid)
             )
     """
     )
     
     
-    """ Create geo index for uk_ward table."""
+    """ Create geo index for district_borough_unitary_ward"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS uk_ward_geometry_geom_idx
-            ON iris.uk_ward USING gist
+        CREATE INDEX IF NOT EXISTS district_borough_unitary_ward_geometry_geom_idx
+            ON iris.district_borough_unitary_ward USING gist
+            (geometry)
+            TABLESPACE pg_default;
+    """
+    )
+    """ Create id for unitary_electoral_division"""
+    op.execute(
+        """
+        CREATE SEQUENCE IF NOT EXISTS iris.unitary_electoral_division_fid_seq1
+            INCREMENT 1
+            START 1
+            MINVALUE 1
+            MAXVALUE 2147483647
+            CACHE 1;
+    """
+    )
+    """ Create table for unitary_electoral_division"""
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS iris.unitary_electoral_division
+            ( 
+                fid integer NOT NULL DEFAULT nextval('iris.unitary_electoral_division_fid_seq1'::regclass),
+                name character varying,
+                area_code character varying,
+                area_description character varying,
+                file_name character varying,
+                feature_serial_number integer,
+                collection_serial_number integer,
+                global_polygon_id integer,
+                admin_unit_id integer,
+                census_code character varying,
+                hectares double precision,
+                non_inland_area double precision,
+                area_type_code character varying,
+                area_type_description character varying,
+                non_area_type_code character varying,
+                non_area_type_description character varying,
+                geometry geometry(MultiPolygon,4326),
+                CONSTRAINT unitary_electoral_division_P PRIMARY KEY (fid)
+            )
+    """
+    )
+    
+    
+    """ Create geo index for unitary_electoral_division"""
+    op.execute(
+        """
+        CREATE INDEX IF NOT EXISTS unitary_electoral_division_geometry_geom_idx
+            ON iris.unitary_electoral_division USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
     
-    """ Create table containing uk_ward_epc_data."""
+    """ Create table uk_ward"""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.uk_ward_epc_data
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward
+            AS
+            SELECT * FROM iris.district_borough_unitary_ward
+            UNION 
+            SELECT * FROM iris.unitary_electoral_division;
+    """
+    )
+    
+    
+    op.execute(
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc_data
             AS
             SELECT b.epc_rating, count (a.point),c.name, c.geometry 
             FROM iris.building a
@@ -124,9 +183,28 @@ def downgrade() -> None:
         DROP TABLE IF EXISTS iris.uk_ward;
     """
     )
-
+    op.execute(
+        """
+        DROP TABLE IF EXISTS iris.district_borough_unitary_ward;
+    """
+    )
+    op.execute(
+        """
+        DROP TABLE IF EXISTS iris.unitary_electoral_division;
+    """
+    )
     op.execute(
         """
         DROP SEQUENCE IF EXISTS iris.uk_ward_objectid_seq;
+    """
+    )
+    op.execute(
+        """
+        DROP SEQUENCE IF EXISTS iris.district_borough_unitary_ward_fid_seq1;
+    """
+    )
+    op.execute(
+        """
+        DROP SEQUENCE IF EXISTS iris.unitary_electoral_division_fid_seq1;
     """
     )

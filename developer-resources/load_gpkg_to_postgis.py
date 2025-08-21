@@ -22,6 +22,8 @@ GPKG_TABLE = os.getenv("GPKG_TABLE", "none")
 TARGET_SCHEMA = os.getenv("TARGET_SCHEMA", "iris")
 TARGET_TABLE = os.getenv("TARGET_TABLE", "wind_driven_rain_projections")
 MATERIALIZED_VIEW = os.getenv("MATERIALIZED_VIEW", "iris.wind_driven_rain_projections_geojson")
+JOIN_VIEW = os.getenv("JOIN_VIEW", "iris.uk_ward")
+DATA_VIEW = os.getenv("DATA_VIEW", "iris.uk_ward_epc_data")
 
 
 def download_file(url: str, dest: Path):
@@ -125,6 +127,16 @@ def refresh_materialized_view():
     run_db_command(f"REFRESH MATERIALIZED VIEW {MATERIALIZED_VIEW};")
     print("Materialized view refresh complete.")
 
+def refresh_join_view():
+    print(f"Refreshing materialized view {JOIN_VIEW}")
+    run_db_command(f"REFRESH MATERIALIZED VIEW {JOIN_VIEW};")
+    print("Materialized view refresh complete.")
+
+def refresh_data_view():
+    print(f"Refreshing materialized view {DATA_VIEW}")
+    run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
+    print("Materialized view refresh complete.")    
+
 
 def main():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -142,8 +154,14 @@ def main():
             download_file(GPKG_SOURCE, zip_file)
             if GPKG_TABLE == "none":
                 run_ogr2ogr(gpkg_file)
+                  
             else:
                 run_ogr2ogr_table(gpkg_file)
+                if JOIN_VIEW == "none":
+                    print("no Join")
+                else:
+                    refresh_data_view()
+                    refresh_join_view()
             refresh_materialized_view()
 
 
