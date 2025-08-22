@@ -10,7 +10,8 @@ from typing import List
 import requests
 from access import AccessClient
 from config import get_settings
-from climate_service import fetch_geojson_for_hot_summer_days, fetch_geojson_for_icing_days, fetch_geojson_for_wind_driven_rain
+from services.climate_service import fetch_geojson_for_hot_summer_days, fetch_geojson_for_icing_days, fetch_geojson_for_wind_driven_rain
+from services.energy_performance_service import fetch_geojson_for_energy_performance_by_wards
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (map_bounded_buildings_response,
@@ -583,6 +584,10 @@ async def get_icing_days_data(geojson = Depends(fetch_geojson_for_icing_days)):
 
 @router.get("/data/climate/hot-summer-days")
 async def get_hot_summer_days_data(geojson = Depends(fetch_geojson_for_hot_summer_days)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/energy-performance/wards")
+async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_wards)):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 # @app.post("/buildings/states",description="Add a new state to a building")
