@@ -24,7 +24,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    """ Create id for district_borough_unitary_ward"""
+    """ Create id for iris.district_borough_unitary_ward"""
     op.execute(
         """
         CREATE SEQUENCE IF NOT EXISTS iris.district_borough_unitary_ward_fid_seq1
@@ -37,7 +37,7 @@ def upgrade() -> None:
     )
    
     
-    """ Create table for district_borough_unitary_ward"""
+    """ Create table for iris.district_borough_unitary_ward"""
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS iris.district_borough_unitary_ward
@@ -85,7 +85,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-    """ Create table for unitary_electoral_division"""
+    """ Create table for iris.unitary_electoral_division"""
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS iris.unitary_electoral_division
@@ -145,7 +145,7 @@ def upgrade() -> None:
             ON a.uprn =b.uprn
             JOIN iris.uk_ward c
             ON ST_Intersects(c.geometry, a.point)
-            WHERE c.global_polygon_id = 140424
+            WHERE c.global_polygon_id IS NOT NULL
             GROUP BY b.epc_rating, c.name, c,geometry;
     """
     )

@@ -160,8 +160,8 @@ def main():
                 if JOIN_VIEW == "none":
                     print("no Join")
                 else:
-                    refresh_data_view()
                     refresh_join_view()
+                    refresh_data_view()
             refresh_materialized_view()
 
 
