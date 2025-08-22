@@ -156,7 +156,7 @@ def upgrade() -> None:
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc
             TABLESPACE pg_default
             AS
-            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(geometry)::json, 'properties', to_jsonb(t.*) - 'shape'::text))) AS geojson
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(geometry)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
             FROM iris.uk_ward_epc_data t
             WITH DATA;
     """
