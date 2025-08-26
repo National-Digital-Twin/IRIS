@@ -47,7 +47,7 @@ def download_file(url: str, dest: Path):
                         file_gpkg = os.path.join(root, file)
                         print (f"GeoPackage available: {file_gpkg}")
                         shutil.copyfile(file_gpkg, f"{dest}/data.gpkg")
-                        outfile = f"{dest}/data.gpkg)"
+                        outfile = f"{dest}/data.gpkg"
                         print (f"Download complete: {outfile}")
                     else:
                         print (f"No GeoPAckage found {file}")
