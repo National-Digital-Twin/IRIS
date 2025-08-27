@@ -54,7 +54,7 @@ def download_file(url: str, dest: Path):
 
 
     
-def run_db_command(command: str):
+def run_db_command(command: str, fetchone=False):
     conn = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -65,8 +65,15 @@ def run_db_command(command: str):
     conn.autocommit = True
     with conn.cursor() as cur:
         cur.execute(command)
-    conn.close()    
+        if fetchone:
+            row = cur.fetchone()
+            return row[0] if row else None
+    conn.close()
 
+
+def is_table_populated():
+    count = run_db_command(f"SELECT COUNT(*) FROM {TARGET_SCHEMA}.{TARGET_TABLE};", fetchone=True)
+    return count > 0
 
 def run_ogr2ogr(gpkg_path: Path):
     """Run ogr2ogr to import GPKG into PostGIS."""
@@ -135,34 +142,45 @@ def refresh_join_view():
 def refresh_data_view():
     print(f"Refreshing materialized view {DATA_VIEW}")
     run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
-    print("Materialized view refresh complete.")    
+    print("Materialized view refresh complete.")
+
+
+def handle_geopackage(tmpdir):
+    gpkg_file = Path(tmpdir) / "data.gpkg"
+    download_file(GPKG_SOURCE, gpkg_file)
+    if GPKG_TABLE == "none":
+        run_ogr2ogr(gpkg_file)
+    else:
+        run_ogr2ogr_table(gpkg_file)
+    
+
+def handle_zip(tmpdir):
+    zip_file = Path(tmpdir)
+    gpkg_file = Path(tmpdir) / "data.gpkg"
+    download_file(GPKG_SOURCE, zip_file)
+    if GPKG_TABLE == "none":
+        run_ogr2ogr(gpkg_file)
+    else:
+        run_ogr2ogr_table(gpkg_file)
+        if JOIN_VIEW == "none":
+            print("no Join")
+        else:
+            refresh_join_view()
+            refresh_data_view()
+    
 
 
 def main():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        if GPKG_SOURCE.endswith('.gpkg'):
-            gpkg_file = Path(tmpdir) / "data.gpkg"
-            download_file(GPKG_SOURCE, gpkg_file)
-            if GPKG_TABLE == "none":
-                run_ogr2ogr(gpkg_file)
+    if not is_table_populated():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if GPKG_SOURCE.endswith('.gpkg'):
+                handle_geopackage(tmpdir)       
             else:
-                run_ogr2ogr_table(gpkg_file)
-            refresh_materialized_view()          
-        else:
-            zip_file = Path(tmpdir)
-            gpkg_file = Path(tmpdir) / "data.gpkg"
-            download_file(GPKG_SOURCE, zip_file)
-            if GPKG_TABLE == "none":
-                run_ogr2ogr(gpkg_file)
-                  
-            else:
-                run_ogr2ogr_table(gpkg_file)
-                if JOIN_VIEW == "none":
-                    print("no Join")
-                else:
-                    refresh_join_view()
-                    refresh_data_view()
+                handle_zip(tmpdir)
             refresh_materialized_view()
+    else:
+        print(f"Table {TARGET_SCHEMA}.{TARGET_TABLE} already populated. Skipping data load.")
+            
 
 
 if __name__ == "__main__":
