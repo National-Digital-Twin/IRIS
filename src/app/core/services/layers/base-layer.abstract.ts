@@ -1,20 +1,26 @@
 import { Injectable, inject } from '@angular/core';
 import { MAP_SERVICE } from '@core/services/map.token';
+import { UiStateService } from '@core/services/ui-state.service';
 import { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import { LayerSpecification, MapMouseEvent } from 'mapbox-gl';
 import { BaseLayer } from './base-layer.interface';
 
+interface LayerFactory {
+    getAllLayers(): BaseLayer[];
+}
+
 @Injectable()
 export abstract class AbstractBaseLayer implements BaseLayer {
     protected readonly mapService = inject(MAP_SERVICE);
+    protected readonly uiStateService = inject(UiStateService);
 
     public abstract readonly id: string;
-
     public isVisible: boolean = false;
 
-    private static layerFactory: any = null;
+    private static layerFactory: LayerFactory | null = null;
+    private boundClickHandler?: (event: MapMouseEvent) => void;
 
-    public static setLayerFactory(factory: any): void {
+    public static setLayerFactory(factory: LayerFactory): void {
         AbstractBaseLayer.layerFactory = factory;
     }
 
@@ -32,6 +38,9 @@ export abstract class AbstractBaseLayer implements BaseLayer {
 
     private hideAllOtherLayers(): void {
         if (AbstractBaseLayer.layerFactory) {
+            this.closeAllPopups();
+            this.closeLegend();
+
             const allLayers = AbstractBaseLayer.layerFactory.getAllLayers();
             allLayers.forEach((layer: BaseLayer) => {
                 if (layer.id !== this.id && layer.isVisible) {
@@ -62,7 +71,12 @@ export abstract class AbstractBaseLayer implements BaseLayer {
                 this.mapService.addMapLayer(layerConfig);
 
                 if (this.onLayerClick) {
-                    this.mapService.mapInstance.on('click', layerConfig.id, this.onLayerClick.bind(this));
+                    if (this.boundClickHandler) {
+                        this.mapService.mapInstance.off('click', layerConfig.id, this.boundClickHandler);
+                    }
+
+                    this.boundClickHandler = this.onLayerClick.bind(this);
+                    this.mapService.mapInstance.on('click', layerConfig.id, this.boundClickHandler);
                 }
             }
         } catch (error) {
@@ -73,10 +87,28 @@ export abstract class AbstractBaseLayer implements BaseLayer {
     protected removeLayerFromMap(): void {
         const layerConfig = this.getLayerConfig();
         if (layerConfig.source) {
+            this.closeAllPopups();
+
+            if (this.boundClickHandler) {
+                this.mapService.mapInstance.off('click', layerConfig.id, this.boundClickHandler);
+                this.boundClickHandler = undefined;
+            }
+
             this.mapService.mapInstance.removeLayer(this.id);
             this.mapService.mapInstance.removeSource(layerConfig.source);
         }
     }
 
     public onLayerClick?(event: MapMouseEvent): void;
+
+    private closeAllPopups(): void {
+        const popups = document.querySelectorAll('.mapboxgl-popup');
+        popups.forEach((popup) => popup.remove());
+    }
+
+    private closeLegend(): void {
+        if (this.uiStateService.showLegend()) {
+            this.uiStateService.closeLegend();
+        }
+    }
 }
