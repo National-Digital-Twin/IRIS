@@ -2,11 +2,11 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-"""008_create_uk_ward_table_view
+"""009_create_uk_region_table_view
 
-Revision ID: 2215b32f49a9
-Revises: a75353f01fa0
-Create Date: 2025-08-19 16:01:44.272631
+Revision ID: 8f985d72a651
+Revises: 2215b32f49a9
+Create Date: 2025-08-26 13:48:42.927690
 
 """
 from typing import Sequence, Union
@@ -16,42 +16,19 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2215b32f49a9'
-down_revision: Union[str, None] = 'a75353f01fa0'
+revision: str = '8f985d72a651'
+down_revision: Union[str, None] = '2215b32f49a9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+
 def upgrade() -> None:
     """Upgrade schema."""
-
-    """ Create lookup table building_epc"""
-    op.execute(
-        """   
-   	CREATE INDEX IF NOT EXISTS idx_building_uprn ON iris.building(uprn);
-    """
-    )
+    """ Create id for iris.scotland_and_wales_region"""
     op.execute(
         """
-   	CREATE MATERIALIZED VIEW IF NOT EXISTS iris.building_epc AS
-        SELECT a.uprn, b.epc_rating, a.point
-        FROM iris.building a
-        LEFT JOIN iris.epc_assessment b
-        ON a.uprn = b.uprn;
-    """
-    )        
-
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_building_epc_geom
-        ON iris.building_epc
-        USING GIST (point);
-    """
-    )  
-    """ Create id for iris.district_borough_unitary_ward"""
-    op.execute(
-        """
-        CREATE SEQUENCE IF NOT EXISTS iris.district_borough_unitary_ward_fid_seq1
+        CREATE SEQUENCE IF NOT EXISTS iris.scotland_and_wales_region_fid_seq1
             INCREMENT 1
             START 1
             MINVALUE 1
@@ -61,12 +38,12 @@ def upgrade() -> None:
     )
    
     
-    """ Create table for iris.district_borough_unitary_ward"""
+    """ Create table for iris.scotland_and_wales_region"""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.district_borough_unitary_ward
+        CREATE TABLE IF NOT EXISTS iris.scotland_and_wales_region
             ( 
-                fid integer NOT NULL DEFAULT nextval('iris.district_borough_unitary_ward_fid_seq1'::regclass),
+                fid integer NOT NULL DEFAULT nextval('iris.scotland_and_wales_region_fid_seq1'::regclass),
                 name character varying,
                 area_code character varying,
                 area_description character varying,
@@ -83,7 +60,7 @@ def upgrade() -> None:
                 non_area_type_code character varying,
                 non_area_type_description character varying,
                 geometry geometry(MultiPolygon,4326),
-                CONSTRAINT district_borough_unitary_ward_P PRIMARY KEY (fid)
+                CONSTRAINT scotland_and_wales_region_P PRIMARY KEY (fid)
             )
     """
     )
@@ -92,16 +69,16 @@ def upgrade() -> None:
     """ Create geo index for district_borough_unitary_ward"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS district_borough_unitary_ward_geometry_geom_idx
-            ON iris.district_borough_unitary_ward USING gist
+        CREATE INDEX IF NOT EXISTS scotland_and_wales_region_geometry_geom_idx
+            ON iris.scotland_and_wales_region USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    """ Create id for unitary_electoral_division"""
+    """ Create id for english_region"""
     op.execute(
         """
-        CREATE SEQUENCE IF NOT EXISTS iris.unitary_electoral_division_fid_seq1
+        CREATE SEQUENCE IF NOT EXISTS iris.english_region_fid_seq1
             INCREMENT 1
             START 1
             MINVALUE 1
@@ -109,12 +86,12 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-    """ Create table for iris.unitary_electoral_division"""
+    """ Create table for iris.english_region"""
     op.execute(
         """
-        CREATE TABLE IF NOT EXISTS iris.unitary_electoral_division
+        CREATE TABLE IF NOT EXISTS iris.english_region
             ( 
-                fid integer NOT NULL DEFAULT nextval('iris.unitary_electoral_division_fid_seq1'::regclass),
+                fid integer NOT NULL DEFAULT nextval('iris.english_region_fid_seq1'::regclass),
                 name character varying,
                 area_code character varying,
                 area_description character varying,
@@ -131,46 +108,37 @@ def upgrade() -> None:
                 non_area_type_code character varying,
                 non_area_type_description character varying,
                 geometry geometry(MultiPolygon,4326),
-                CONSTRAINT unitary_electoral_division_P PRIMARY KEY (fid)
+                CONSTRAINT english_region_P PRIMARY KEY (fid)
             )
     """
     )
     
     
-    """ Create geo index for unitary_electoral_division"""
+    """ Create geo index for english_region"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS unitary_electoral_division_geometry_geom_idx
-            ON iris.unitary_electoral_division USING gist
+        CREATE INDEX IF NOT EXISTS english_region_geometry_geom_idx
+            ON iris.english_region USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
     
-    """ Create table uk_ward"""
+    """ Create table uk_region"""
     op.execute(
         """
-        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region
             AS
-            SELECT * FROM iris.district_borough_unitary_ward
+            SELECT * FROM iris.scotland_and_wales_region
             UNION 
-            SELECT * FROM iris.unitary_electoral_division;
-    """
-    )
-    """ Create geo index for uk_ward"""
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS uk_ward__geometry_geom_idx
-            ON iris.uk_ward USING gist
-            (geometry)
-            TABLESPACE pg_default;
+            SELECT * FROM iris.english_region;
     """
     )
     
     
     op.execute(
         """
-        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc_data
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc_data
             AS
             SELECT
                 b.name,
@@ -185,19 +153,20 @@ def upgrade() -> None:
                 COUNT(CASE WHEN a.epc_rating IS NULL THEN 1 END) AS epc_null,
                 b.geometry
             FROM iris.building_epc a
-            LEFT JOIN iris.uk_ward b
+            LEFT JOIN iris.uk_region b
             ON ST_Intersects(b.geometry, a.point)
-            GROUP BY b.name, b.geometry;;
+            GROUP BY b.name, b.geometry;
     """
     )
     
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
-        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc
+        CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc
+            TABLESPACE pg_default
             AS
             SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
-            FROM iris.uk_ward_epc_data t
+            FROM iris.uk_region_epc_data t
             WITH DATA;
     """
     )
@@ -208,43 +177,39 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP MATERIALIZED VIEW IF EXISTS iris.uk_ward_epc;
+        DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc;
     """
     )
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.uk_ward_shape_geom_idx;
+        DROP INDEX IF EXISTS iris.uk_region_geometry_geom_idx;
     """
     )
 
     op.execute(
         """
-        DROP TABLE IF EXISTS iris.uk_ward;
+        DROP TABLE IF EXISTS iris.uk_region;
     """
     )
     op.execute(
         """
-        DROP TABLE IF EXISTS iris.district_borough_unitary_ward;
+        DROP TABLE IF EXISTS iris.scotland_and_wales_region;
     """
     )
     op.execute(
         """
-        DROP TABLE IF EXISTS iris.unitary_electoral_division;
+        DROP TABLE IF EXISTS iris.english_region;
+    """
+    )
+
+    op.execute(
+        """
+        DROP SEQUENCE IF EXISTS iris.scotland_and_wales_region_fid_seq1;
     """
     )
     op.execute(
         """
-        DROP SEQUENCE IF EXISTS iris.uk_ward_objectid_seq;
-    """
-    )
-    op.execute(
-        """
-        DROP SEQUENCE IF EXISTS iris.district_borough_unitary_ward_fid_seq1;
-    """
-    )
-    op.execute(
-        """
-        DROP SEQUENCE IF EXISTS iris.unitary_electoral_division_fid_seq1;
+        DROP SEQUENCE IF EXISTS iris.english_region_fid_seq1;
     """
     )

@@ -22,8 +22,8 @@ GPKG_TABLE = os.getenv("GPKG_TABLE", "none")
 TARGET_SCHEMA = os.getenv("TARGET_SCHEMA", "iris")
 TARGET_TABLE = os.getenv("TARGET_TABLE", "wind_driven_rain_projections")
 MATERIALIZED_VIEW = os.getenv("MATERIALIZED_VIEW", "iris.wind_driven_rain_projections_geojson")
-JOIN_VIEW = os.getenv("JOIN_VIEW", "iris.uk_ward")
-DATA_VIEW = os.getenv("DATA_VIEW", "iris.uk_ward_epc_data")
+JOIN_VIEW = os.getenv("JOIN_VIEW", "none")
+DATA_VIEW = os.getenv("DATA_VIEW", "none")
 
 
 def download_file(url: str, dest: Path):
@@ -164,6 +164,7 @@ def handle_zip(tmpdir):
         run_ogr2ogr_table(gpkg_file)
         if JOIN_VIEW == "none":
             print("no Join")
+            refresh_data_view()
         else:
             refresh_join_view()
             refresh_data_view()
