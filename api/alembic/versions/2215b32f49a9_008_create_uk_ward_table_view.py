@@ -24,30 +24,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-
-    """ Create lookup table building_epc"""
-    op.execute(
-        """   
-   	CREATE INDEX IF NOT EXISTS idx_building_uprn ON iris.building(uprn);
-    """
-    )
-    op.execute(
-        """
-   	CREATE MATERIALIZED VIEW IF NOT EXISTS iris.building_epc AS
-        SELECT a.uprn, b.epc_rating, a.point
-        FROM iris.building a
-        LEFT JOIN iris.epc_assessment b
-        ON a.uprn = b.uprn;
-    """
-    )        
-
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_building_epc_geom
-        ON iris.building_epc
-        USING GIST (point);
-    """
-    )  
     """ Create id for iris.district_borough_unitary_ward"""
     op.execute(
         """
@@ -157,37 +133,20 @@ def upgrade() -> None:
             SELECT * FROM iris.unitary_electoral_division;
     """
     )
-    """ Create geo index for uk_ward"""
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS uk_ward__geometry_geom_idx
-            ON iris.uk_ward USING gist
-            (geometry)
-            TABLESPACE pg_default;
-    """
-    )
     
     
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc_data
             AS
-            SELECT
-                b.name,
-                COUNT (a.point) AS total,
-                COUNT(CASE WHEN a.epc_rating = 'A' THEN 1 END) AS epc_a,
-                COUNT(CASE WHEN a.epc_rating = 'B' THEN 1 END) AS epc_b,
-                COUNT(CASE WHEN a.epc_rating = 'C' THEN 1 END) AS epc_c,
-                COUNT(CASE WHEN a.epc_rating = 'D' THEN 1 END) AS epc_d,
-                COUNT(CASE WHEN a.epc_rating = 'E' THEN 1 END) AS epc_e,
-                COUNT(CASE WHEN a.epc_rating = 'F' THEN 1 END) AS epc_f,
-                COUNT(CASE WHEN a.epc_rating = 'G' THEN 1 END) AS epc_g,
-                COUNT(CASE WHEN a.epc_rating IS NULL THEN 1 END) AS epc_null,
-                b.geometry
-            FROM iris.building_epc a
-            LEFT JOIN iris.uk_ward b
-            ON ST_Intersects(b.geometry, a.point)
-            GROUP BY b.name, b.geometry;;
+            SELECT b.epc_rating, count (a.point),c.name, c.geometry 
+            FROM iris.building a
+            LEFT JOIN iris.epc_assessment b
+            ON a.uprn =b.uprn
+            JOIN iris.uk_ward c
+            ON ST_Intersects(c.geometry, a.point)
+            WHERE c.global_polygon_id IS NOT NULL
+            GROUP BY b.epc_rating, c.name, c,geometry;
     """
     )
     
@@ -195,8 +154,9 @@ def upgrade() -> None:
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc
+            TABLESPACE pg_default
             AS
-            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
+            SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(geometry)::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
             FROM iris.uk_ward_epc_data t
             WITH DATA;
     """
