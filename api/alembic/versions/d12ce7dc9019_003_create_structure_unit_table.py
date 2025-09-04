@@ -44,7 +44,7 @@ def upgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.structure_unit
-        ADD CONSTRAINT fk_epc_assessment_id FOREIGN KEY (epc_assessment_id) REFERENCES iris.epc_assessment(id) ON DELETE CASCADE;
+        ADD CONSTRAINT IF NOT EXISTS fk_epc_assessment_id FOREIGN KEY (epc_assessment_id) REFERENCES iris.epc_assessment(id) ON DELETE CASCADE;
     """
     )
 

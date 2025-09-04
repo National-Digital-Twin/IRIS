@@ -11,7 +11,7 @@ import requests
 from access import AccessClient
 from config import get_settings
 from services.climate_service import fetch_geojson_for_hot_summer_days, fetch_geojson_for_icing_days, fetch_geojson_for_wind_driven_rain
-from services.energy_performance_service import fetch_geojson_for_energy_performance_by_wards
+from services.energy_performance_service import fetch_geojson_for_energy_performance_by_wards, fetch_geojson_for_energy_performance_by_districts, fetch_geojson_for_energy_performance_by_counties, fetch_geojson_for_energy_performance_by_regions
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from mappers import (map_bounded_buildings_response,
@@ -588,6 +588,18 @@ async def get_hot_summer_days_data(geojson = Depends(fetch_geojson_for_hot_summe
 
 @router.get("/data/energy-performance/wards")
 async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_wards)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/energy-performance/districts")
+async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_districts)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/energy-performance/counties")
+async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_counties)):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+@router.get("/data/energy-performance/regions")
+async def get_energy_performance_data_by_wards(geojson = Depends(fetch_geojson_for_energy_performance_by_regions)):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 # @app.post("/buildings/states",description="Add a new state to a building")
