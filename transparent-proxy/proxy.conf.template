@@ -73,7 +73,8 @@ server {
         proxy_pass https://api.mapbox.com/$requested_path$access_token_qs;
     }
 
-    location /mapbox-events/ {
+    # Mapbox events (telemetry)
+    location /transparent-proxy/mapbox-events/ {
         set $delimeter "?";
 
         if ($is_args) {
