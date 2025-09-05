@@ -23,6 +23,9 @@ import {
     WindowGlazing,
 } from '@core/enums';
 import { FuelType } from '@core/enums/fuel-type';
+import { RoofMaterial } from '@core/enums/roof-material';
+import { RoofShape } from '@core/enums/roof-shape';
+import { SolarPanelPresence } from '@core/enums/solar-panel-presence';
 import { BuildingModel } from '@core/models/building.model';
 import { DownloadDataWarningData, DownloadDataWarningResponse } from '@core/models/download-data-warning.model';
 import { DataService } from '@core/services/data.service';
@@ -76,6 +79,9 @@ export class DetailsPanelComponent implements OnInit {
     public wallInsulation: Record<string, string> = WallInsulation;
     public windowGlazing: Record<string, string> = WindowGlazing;
     public fuelType: Record<string, string> = FuelType;
+    public roofMaterial: Record<string, string> = RoofMaterial;
+    public roofShape: Record<string, string> = RoofShape;
+    public solarPanelPresence: Record<string, string> = SolarPanelPresence;
 
     private readonly updateFlagHistory$ = toObservable(this.buildingDetails).pipe(
         takeUntilDestroyed(),
@@ -122,6 +128,26 @@ export class DetailsPanelComponent implements OnInit {
                 this.#dataService.updateFlagHistory(UPRN).subscribe();
             }
         }
+    }
+
+    public formatRoofAspectAreas(building?: BuildingModel): string {
+        if (!building) return '';
+        const entries: string[] = [];
+        const add = (dir: string, value?: string): void => {
+            if (!value) return;
+            const n = Number(value);
+            if (!Number.isNaN(n) && n === 0) return; // skip zeros
+            entries.push(`${value} m² ${dir}`);
+        };
+        add('North', building.RoofAspectAreaNorth);
+        add('North East', building.RoofAspectAreaNortheast);
+        add('East', building.RoofAspectAreaEast);
+        add('South East', building.RoofAspectAreaSoutheast);
+        add('South', building.RoofAspectAreaSouth);
+        add('South West', building.RoofAspectAreaSouthwest);
+        add('West', building.RoofAspectAreaWest);
+        add('North West', building.RoofAspectAreaNorthwest);
+        return entries.join(', ');
     }
 }
 
