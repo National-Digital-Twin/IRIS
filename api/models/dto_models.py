@@ -47,6 +47,20 @@ class DetailedBuilding(Building):
     wall_insulation: Optional[str] = None
     window_glazing: Optional[str] = None
     fueltype: Optional[str] = None
+    # OS NGD Buildings attributes
+    roof_material: Optional[str] = None
+    solar_panel_presence: Optional[str] = None
+    roof_shape: Optional[str] = None
+    # Roof aspect areas (square meters) by direction; values returned as strings
+    roof_aspect_area_north: Optional[str] = None
+    roof_aspect_area_northeast: Optional[str] = None
+    roof_aspect_area_east: Optional[str] = None
+    roof_aspect_area_southeast: Optional[str] = None
+    roof_aspect_area_south: Optional[str] = None
+    roof_aspect_area_southwest: Optional[str] = None
+    roof_aspect_area_west: Optional[str] = None
+    roof_aspect_area_northwest: Optional[str] = None
+    roof_aspect_area_indeterminable: Optional[str] = None
 
 
 class FilterableBuilding(BaseModel):

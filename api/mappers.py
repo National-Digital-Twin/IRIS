@@ -165,13 +165,62 @@ def map_fueltype_results(building: DetailedBuilding, results:dict) -> None:
                 result, "fuelType"
             )
 
+
+def map_ngd_roof_material_results(building: DetailedBuilding, results: dict) -> None:
+    if results and results.get("results") and results["results"].get("bindings"):
+        for result in results["results"]["bindings"]:
+            building.roof_material = get_value_from_result(result, "roofMaterial")
+
+
+def map_ngd_solar_panel_presence_results(
+    building: DetailedBuilding, results: dict
+) -> None:
+    if results and results.get("results") and results["results"].get("bindings"):
+        for result in results["results"]["bindings"]:
+            building.solar_panel_presence = get_value_from_result(
+                result, "solarPanelPresence"
+            )
+
+
+def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
+    if results and results.get("results") and results["results"].get("bindings"):
+        for result in results["results"]["bindings"]:
+            building.roof_shape = get_value_from_result(result, "roofShape")
+
+
+def map_ngd_roof_aspect_areas_results(
+    building: DetailedBuilding, results: dict
+) -> None:
+    direction_to_field = {
+        "NorthFacingRoofSectionSum": "roof_aspect_area_north",
+        "NorthEastFacingRoofSectionSum": "roof_aspect_area_northeast",
+        "EastFacingRoofSectionSum": "roof_aspect_area_east",
+        "SouthEastFacingRoofSectionSum": "roof_aspect_area_southeast",
+        "SouthFacingRoofSectionSum": "roof_aspect_area_south",
+        "SouthWestFacingRoofSectionSum": "roof_aspect_area_southwest",
+        "WestFacingRoofSectionSum": "roof_aspect_area_west",
+        "NorthWestFacingRoofSectionSum": "roof_aspect_area_northwest",
+        "AreaIndeterminableRoofSectionSum": "roof_aspect_area_indeterminable",
+    }
+    if results and results.get("results") and results["results"].get("bindings"):
+        for result in results["results"]["bindings"]:
+            direction = get_value_from_result(result, "direction")
+            m2 = get_value_from_result(result, "m2")
+            field = direction_to_field.get(direction)
+            if field:
+                setattr(building, field, m2)
+
 def map_single_building_response(
     uprn: str,
     building_results: dict,
     roof_results: dict,
     floor_results: dict,
     wall_window_results: dict,
-    fueltype_results: dict
+    fueltype_results: dict,
+    ngd_roof_material_results: dict | None = None,
+    ngd_solar_panel_presence_results: dict | None = None,
+    ngd_roof_shape_results: dict | None = None,
+    ngd_roof_aspect_areas_results: dict | None = None,
 ) -> DetailedBuilding:
     """
     Maps a `DetailedBuilding` response from SPARQL queries for generic, roof, floor, wall and window data.
@@ -193,6 +242,16 @@ def map_single_building_response(
     map_floor_results(building, floor_results)
     map_wall_window_results(building, wall_window_results)
     map_fueltype_results(building, fueltype_results)
+    if ngd_roof_material_results is not None:
+        map_ngd_roof_material_results(building, ngd_roof_material_results)
+    if ngd_solar_panel_presence_results is not None:
+        map_ngd_solar_panel_presence_results(
+            building, ngd_solar_panel_presence_results
+        )
+    if ngd_roof_shape_results is not None:
+        map_ngd_roof_shape_results(building, ngd_roof_shape_results)
+    if ngd_roof_aspect_areas_results is not None:
+        map_ngd_roof_aspect_areas_results(building, ngd_roof_aspect_areas_results)
     return building
 
 

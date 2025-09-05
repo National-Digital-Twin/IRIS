@@ -35,7 +35,11 @@ from query import (get_building, get_buildings_in_bounding_box_query,
                    get_floor_for_building, get_roof_for_building,
                    get_statistics_for_wards,
                    get_walls_and_windows_for_building,
-                   get_fueltype_for_building)
+                   get_fueltype_for_building,
+                   get_ngd_roof_material_for_building,
+                   get_ngd_solar_panel_presence_for_building,
+                   get_ngd_roof_shape_for_building,
+                   get_ngd_roof_aspect_areas_for_building)
 from rdflib import Graph
 from requests import codes, exceptions
 from sqlalchemy import text
@@ -508,8 +512,29 @@ def get_building_by_uprn(uprn: str, req: Request):
     fueltype_results = run_sparql_query(
         get_fueltype_for_building(uprn), get_forwarding_headers(req.headers)
     )
+    ngd_roof_material_results = run_sparql_query(
+        get_ngd_roof_material_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    ngd_solar_panel_presence_results = run_sparql_query(
+        get_ngd_solar_panel_presence_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    ngd_roof_shape_results = run_sparql_query(
+        get_ngd_roof_shape_for_building(uprn), get_forwarding_headers(req.headers)
+    )
+    ngd_roof_aspect_areas_results = run_sparql_query(
+        get_ngd_roof_aspect_areas_for_building(uprn), get_forwarding_headers(req.headers)
+    )
     return map_single_building_response(
-        uprn, building_results, roof_results, floor_results, wall_window_results, fueltype_results
+        uprn,
+        building_results,
+        roof_results,
+        floor_results,
+        wall_window_results,
+        fueltype_results,
+        ngd_roof_material_results,
+        ngd_solar_panel_presence_results,
+        ngd_roof_shape_results,
+        ngd_roof_aspect_areas_results,
     )
 
 

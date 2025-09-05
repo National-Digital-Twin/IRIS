@@ -144,6 +144,109 @@ def get_fueltype_for_building(uprn: str) -> str:
     """
 
 
+def get_ngd_roof_material_for_building(uprn: str) -> str:
+    return f"""
+        PREFIX building:  <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data:      <http://ndtp.co.uk/data#>
+        PREFIX ies:       <http://informationexchangestandard.org/ont/ies#>
+
+        SELECT ?roofMaterial
+        WHERE {{
+            data:StructureUnit_{uprn} ies:isPartOf ?building .
+            ?roof ies:isPartOf ?building .
+            ?roofState a building:RoofState ;
+                      ies:isStateOf ?roof ;
+                      building:isMadeOf ?roofMaterial .
+        }}
+        LIMIT 1
+    """
+
+
+def get_ngd_solar_panel_presence_for_building(uprn: str) -> str:
+    return f"""
+        PREFIX building:  <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data:      <http://ndtp.co.uk/data#>
+        PREFIX ies:       <http://informationexchangestandard.org/ont/ies#>
+
+        SELECT ?solarPanelPresence
+        WHERE {{
+            data:StructureUnit_{uprn} ies:isPartOf ?building .
+            ?state ies:isStateOf ?building ;
+                   a ?solarPanelPresence .
+            VALUES ?solarPanelPresence {{
+                building:NoSolarPanels
+                building:HasSolarPanels
+                building:UnknownSolarPanelPresence
+            }}
+        }}
+        LIMIT 1
+    """
+
+
+def get_ngd_roof_shape_for_building(uprn: str) -> str:
+    return f"""
+        PREFIX building:  <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data:      <http://ndtp.co.uk/data#>
+        PREFIX ies:       <http://informationexchangestandard.org/ont/ies#>
+
+        SELECT DISTINCT ?roofShape
+        WHERE {{
+            data:StructureUnit_{uprn} ies:isPartOf ?building .
+            ?shapeState ies:isStateOf ?building ;
+                        a building:RoofState ;
+                        a ?roofShape .
+            VALUES ?roofShape {{
+                building:PitchedRoofShape
+                building:FlatRoofShape
+                building:MixedRoofShape
+                building:UnknownRoofShape
+            }}
+        }}
+        LIMIT 1
+    """
+
+
+def get_ngd_roof_aspect_areas_for_building(uprn: str) -> str:
+    return f"""
+        PREFIX building:     <http://ies.data.gov.uk/ontology/ies-building1#>
+        PREFIX data:         <http://ndtp.co.uk/data#>
+        PREFIX ies:          <http://informationexchangestandard.org/ont/ies#>
+        PREFIX qudt:         <http://qudt.org/schema/qudt/>
+        PREFIX unit:         <http://qudt.org/vocab/unit/>
+        PREFIX quantitykind: <http://qudt.org/vocab/quantitykind/>
+
+        SELECT ?direction ?m2
+        WHERE {{
+            data:StructureUnit_{uprn} ies:isPartOf ?building .
+            ?roof ies:isPartOf ?building .
+            ?roofState a building:RoofState ; ies:isStateOf ?roof .
+
+            ?aspect a ?directionClass ;
+                    ies:isPartOf ?roofState ;
+                    building:hasCombinedSurfaceArea [
+                        building:hasQuantity [
+                            qudt:hasQuantityKind quantitykind:Area ;
+                            qudt:unit unit:M2 ;
+                            qudt:value ?m2
+                        ]
+                    ] .
+
+            VALUES ?directionClass {{
+                building:NorthFacingRoofSectionSum
+                building:NorthEastFacingRoofSectionSum
+                building:EastFacingRoofSectionSum
+                building:SouthEastFacingRoofSectionSum
+                building:SouthFacingRoofSectionSum
+                building:SouthWestFacingRoofSectionSum
+                building:WestFacingRoofSectionSum
+                building:NorthWestFacingRoofSectionSum
+                building:AreaIndeterminableRoofSectionSum
+            }}
+            BIND(STRAFTER(STR(?directionClass), "#") AS ?direction)
+        }}
+    """
+
+
 def get_buildings_in_bounding_box_query() -> str:
     return """
         WITH filtered_buildings AS (
