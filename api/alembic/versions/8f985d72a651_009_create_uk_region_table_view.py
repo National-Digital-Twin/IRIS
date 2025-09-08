@@ -155,7 +155,8 @@ def upgrade() -> None:
             FROM iris.building_epc a
             LEFT JOIN iris.uk_region b
             ON ST_Intersects(b.geometry, a.point)
-            GROUP BY b.name, b.geometry;
+            GROUP BY b.name, b.geometry
+        WITH NO DATA;
     """
     )
     
@@ -167,7 +168,7 @@ def upgrade() -> None:
             AS
             SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(jsonb_build_object('type', 'Feature', 'geometry', st_asgeojson(ST_SIMPLIFY(geometry, 0.0001))::json, 'properties', to_jsonb(t.*) - 'geometry'::text))) AS geojson
             FROM iris.uk_region_epc_data t
-            WITH DATA;
+            WITH NO DATA;
     """
     )
 
