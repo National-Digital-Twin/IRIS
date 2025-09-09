@@ -125,6 +125,7 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
         LIMIT 1
     """
 
+
 def get_fueltype_for_building(uprn: str) -> str:
     return f"""
         PREFIX ies:      <http://informationexchangestandard.org/ont/ies#>
@@ -277,6 +278,15 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
             ea.lodgement_date, su.window_glazing,
             su.wall_construction, su.wall_insulation,
             su.floor_construction, su.floor_insulation,
+            su.has_roof_solar_panels, su.roof_material,
+            su.roof_aspect_area_facing_north_m2,
+            su.roof_aspect_area_facing_north_east_m2,
+            su.roof_aspect_area_facing_north_west_m2,
+            su.roof_aspect_area_facing_east_m2,
+            su.roof_aspect_area_facing_south_m2,
+            su.roof_aspect_area_facing_south_east_m2,
+            su.roof_aspect_area_facing_south_west_m2,
+            su.roof_aspect_area_facing_west_m2,
             su.roof_construction, su.roof_insulation,
             su.roof_insulation_thickness
         FROM filtered_buildings fb

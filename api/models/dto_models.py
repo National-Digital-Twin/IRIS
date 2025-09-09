@@ -52,15 +52,15 @@ class DetailedBuilding(Building):
     solar_panel_presence: Optional[str] = None
     roof_shape: Optional[str] = None
     # Roof aspect areas (square meters) by direction; values returned as strings
-    roof_aspect_area_north: Optional[str] = None
-    roof_aspect_area_northeast: Optional[str] = None
-    roof_aspect_area_east: Optional[str] = None
-    roof_aspect_area_southeast: Optional[str] = None
-    roof_aspect_area_south: Optional[str] = None
-    roof_aspect_area_southwest: Optional[str] = None
-    roof_aspect_area_west: Optional[str] = None
-    roof_aspect_area_northwest: Optional[str] = None
-    roof_aspect_area_indeterminable: Optional[str] = None
+    roof_aspect_area_facing_north: Optional[str] = None
+    roof_aspect_area_facing_northeast: Optional[str] = None
+    roof_aspect_area_facing_east: Optional[str] = None
+    roof_aspect_area_facing_southeast: Optional[str] = None
+    roof_aspect_area_facing_south: Optional[str] = None
+    roof_aspect_area_facing_southwest: Optional[str] = None
+    roof_aspect_area_facing_west: Optional[str] = None
+    roof_aspect_area_facing_northwest: Optional[str] = None
+    roof_aspect_area_facing_indeterminable: Optional[str] = None
 
 
 class FilterableBuilding(BaseModel):
@@ -77,6 +77,16 @@ class FilterableBuilding(BaseModel):
     wall_construction: Optional[str] = None
     wall_insulation: Optional[str] = None
     window_glazing: Optional[str] = None
+    has_roof_solar_panels: Optional[bool] = None
+    roof_material: Optional[str] = None
+    roof_aspect_area_facing_north: Optional[float] = None
+    roof_aspect_area_facing_north_east: Optional[float] = None
+    roof_aspect_area_facing_east: Optional[float] = None
+    roof_aspect_area_facing_south_east: Optional[float] = None
+    roof_aspect_area_facing_south: Optional[float] = None
+    roof_aspect_area_facing_south_west: Optional[float] = None
+    roof_aspect_area_facing_west: Optional[float] = None
+    roof_aspect_area_facing_north_west: Optional[float] = None
 
 
 class EpcStatistics(IesThing):
@@ -162,6 +172,16 @@ class FilterableBuildingSchema(BaseModel):
     wall_insulation: Optional[str]
     floor_construction: Optional[str]
     floor_insulation: Optional[str]
+    has_roof_solar_panels: Optional[bool]
+    roof_material: Optional[str]
+    roof_aspect_area_facing_north_m2: Optional[float]
+    roof_aspect_area_facing_north_east_m2: Optional[float]
+    roof_aspect_area_facing_east_m2: Optional[float]
+    roof_aspect_area_facing_south_east_m2: Optional[float]
+    roof_aspect_area_facing_south_m2: Optional[float]
+    roof_aspect_area_facing_south_west_m2: Optional[float]
+    roof_aspect_area_facing_west_m2: Optional[float]
+    roof_aspect_area_facing_north_west_m2: Optional[float]
     roof_construction: Optional[str]
     roof_insulation: Optional[str]
     roof_insulation_thickness: Optional[str]
@@ -182,7 +202,20 @@ class FilterableBuildingSchema(BaseModel):
             roof_construction=obj.roof_construction,
             roof_insulation=obj.roof_insulation,
             roof_insulation_thickness=obj.roof_insulation_thickness,
+            has_roof_solar_panels=obj.has_roof_solar_panels,
+            roof_material=obj.roof_material,
+            roof_aspect_area_facing_north_m2=obj.roof_aspect_area_facing_north_m2,
+            roof_aspect_area_facing_north_east_m2=obj.roof_aspect_area_facing_north_east_m2,
+            roof_aspect_area_facing_east_m2=obj.roof_aspect_area_facing_east_m2,
+            roof_aspect_area_facing_south_east_m2=obj.roof_aspect_area_facing_south_east_m2,
+            roof_aspect_area_facing_south_m2=obj.roof_aspect_area_facing_south_m2,
+            roof_aspect_area_facing_south_west_m2=obj.roof_aspect_area_facing_south_west_m2,
+            roof_aspect_area_facing_west_m2=obj.roof_aspect_area_facing_west_m2,
+            roof_aspect_area_facing_north_west_m2=obj.roof_aspect_area_facing_north_west_m2,
         )
+
+    class Config:
+        from_orm = True
 
 
 class FilterSummary(BaseModel):
@@ -196,6 +229,9 @@ class FilterSummary(BaseModel):
     wall_insulation: set[str] = set()
     floor_construction: set[str] = set()
     floor_insulation: set[str] = set()
+    has_roof_solar_panels: set[bool] = set()
+    roof_material: set[str] = set()
+    roof_aspect_area_direction: set[str] = set()
     roof_construction: set[str] = set()
     roof_insulation_location: set[str] = set()
     roof_insulation_thickness: set[str] = set()
