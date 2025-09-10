@@ -530,41 +530,49 @@ def _add_roof_aspect_area_direction_filter(
 ):
     if (
         roof_aspect_area_facing_north_m2
+        and roof_aspect_area_facing_north_m2 > 0
         and "North" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("North")
     if (
         roof_aspect_area_facing_north_east_m2
+        and roof_aspect_area_facing_north_east_m2 > 0
         and "NorthEast" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("NorthEast")
     if (
         roof_aspect_area_facing_north_west_m2
+        and roof_aspect_area_facing_north_west_m2 > 0
         and "NorthWest" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("NorthWest")
     if (
         roof_aspect_area_facing_south_m2
+        and roof_aspect_area_facing_south_m2 > 0
         and "South" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("South")
     if (
         roof_aspect_area_facing_south_east_m2
+        and roof_aspect_area_facing_south_east_m2 > 0
         and "SouthEast" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("SouthEast")
     if (
         roof_aspect_area_facing_south_west_m2
+        and roof_aspect_area_facing_south_west_m2 > 0
         and "SouthWest" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("SouthWest")
     if (
         roof_aspect_area_facing_east_m2
+        and roof_aspect_area_facing_east_m2 > 0
         and "East" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("East")
     if (
         roof_aspect_area_facing_west_m2
+        and roof_aspect_area_facing_west_m2 > 0
         and "West" not in filter_summary.roof_aspect_area_direction
     ):
         filter_summary.roof_aspect_area_direction.add("West")
