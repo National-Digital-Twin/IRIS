@@ -144,6 +144,25 @@ def get_fueltype_for_building(uprn: str) -> str:
         }}
     """
 
+def get_all_ngd_attributes_pg() -> str:
+    return """
+        SELECT
+            su.has_roof_solar_panels,
+            su.roof_material,
+            su.roof_aspect_area_facing_north_m2,
+            su.roof_aspect_area_facing_north_east_m2,
+            su.roof_aspect_area_facing_east_m2,
+            su.roof_aspect_area_facing_south_east_m2,
+            su.roof_aspect_area_facing_south_m2,
+            su.roof_aspect_area_facing_south_west_m2,
+            su.roof_aspect_area_facing_west_m2,
+            su.roof_aspect_area_facing_north_west_m2,
+            su.roof_aspect_area_indeterminable_m2
+        FROM iris.structure_unit su
+        WHERE su.uprn = :uprn
+        LIMIT 1;
+    """
+
 
 def get_ngd_roof_material_for_building(uprn: str) -> str:
     return f"""

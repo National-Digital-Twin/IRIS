@@ -20,7 +20,7 @@ from mappers import (map_bounded_buildings_response,
                      map_flagged_buildings_response,
                      map_single_building_response,
                      map_structure_unit_flag_history_response)
-from models.dto_models import (DetailedBuilding, EpcAndOsBuildingSchema,
+from models.dto_models import (DetailedBuilding, DetailedBuildingSchema, EpcAndOsBuildingSchema,
                                EpcStatistics, FilterableBuilding,
                                FilterableBuildingSchema, FilterSummary,
                                FlaggedBuilding, FlagHistory, SimpleBuilding)
@@ -36,6 +36,7 @@ from query import (get_building, get_buildings_in_bounding_box_query,
                    get_statistics_for_wards,
                    get_walls_and_windows_for_building,
                    get_fueltype_for_building,
+                   get_all_ngd_attributes_pg,
                    get_ngd_roof_material_for_building,
                    get_ngd_solar_panel_presence_for_building,
                    get_ngd_roof_shape_for_building,
@@ -44,7 +45,7 @@ from rdflib import Graph
 from requests import codes, exceptions
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils import get_headers as get_forwarding_headers
+from utils import get_headers as get_forwarding_headers, has_bindings
 
 router = APIRouter()
 
@@ -496,7 +497,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     response_model=DetailedBuilding,
     description="returns the building that corresponds to the provided UPRN",
 )
-def get_building_by_uprn(uprn: str, req: Request):
+async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depends(get_db)):
     building_results = run_sparql_query(
         get_building(uprn), get_forwarding_headers(req.headers)
     )
@@ -524,6 +525,43 @@ def get_building_by_uprn(uprn: str, req: Request):
     ngd_roof_aspect_areas_results = run_sparql_query(
         get_ngd_roof_aspect_areas_for_building(uprn), get_forwarding_headers(req.headers)
     )
+
+    # OS NGD Buildings PG fallback: synthesize SPARQL-like dicts from PG if missing
+    fallback_required = (
+        not has_bindings(ngd_roof_material_results)
+        or not has_bindings(ngd_solar_panel_presence_results)
+        or not has_bindings(ngd_roof_aspect_areas_results)
+    )
+    if fallback_required:
+
+        # get OS Roof data for dwelling from PostGIS
+        data = await db.execute(text(get_all_ngd_attributes_pg()), {"uprn": uprn})
+
+        # extract data using Pydantic class
+        results = [DetailedBuildingSchema.from_orm(row) for row in data]
+        
+        # check if list has single element
+        if len(results) == 1:
+            # check if roof material exists from Fuseki server
+            if not has_bindings(ngd_roof_material_results):
+                ngd_roof_material_results = {'roof_material': results[0].roof_material}
+            
+            if not has_bindings(ngd_solar_panel_presence_results):
+                ngd_solar_panel_presence_results = {'solar_panel_presence': results[0].solar_panel_presence}
+
+            if not has_bindings(ngd_roof_aspect_areas_results):
+                ngd_roof_aspect_areas_results = {
+                    'roof_aspect_area_facing_north_m2': results[0].roof_aspect_area_facing_north_m2,
+                    'roof_aspect_area_facing_north_east_m2': results[0].roof_aspect_area_facing_north_east_m2,
+                    'roof_aspect_area_facing_east_m2': results[0].roof_aspect_area_facing_east_m2,
+                    'roof_aspect_area_facing_south_east_m2': results[0].roof_aspect_area_facing_east_m2,
+                    'roof_aspect_area_facing_south_m2': results[0].roof_aspect_area_facing_south_m2,
+                    'roof_aspect_area_facing_south_west_m2': results[0].roof_aspect_area_facing_south_west_m2,
+                    'roof_aspect_area_facing_west_m2': results[0].roof_aspect_area_facing_west_m2,
+                    'roof_aspect_area_facing_north_west_m2': results[0].roof_aspect_area_facing_north_west_m2,
+                    'roof_aspect_area_indeterminable_m2': results[0].roof_aspect_area_indeterminable_m2
+                }
+
     return map_single_building_response(
         uprn,
         building_results,

@@ -14,3 +14,6 @@ def get_headers(headers):
         if hv is not None:
             forward_headers[header] = hv
     return forward_headers
+
+def has_bindings(r): 
+    return bool(r and r.get("results") and r.get("results").get("bindings"))

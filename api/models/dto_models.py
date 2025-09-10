@@ -51,16 +51,35 @@ class DetailedBuilding(Building):
     roof_material: Optional[str] = None
     solar_panel_presence: Optional[str] = None
     roof_shape: Optional[str] = None
-    # Roof aspect areas (square meters) by direction; values returned as strings
-    roof_aspect_area_facing_north: Optional[str] = None
-    roof_aspect_area_facing_northeast: Optional[str] = None
-    roof_aspect_area_facing_east: Optional[str] = None
-    roof_aspect_area_facing_southeast: Optional[str] = None
-    roof_aspect_area_facing_south: Optional[str] = None
-    roof_aspect_area_facing_southwest: Optional[str] = None
-    roof_aspect_area_facing_west: Optional[str] = None
-    roof_aspect_area_facing_northwest: Optional[str] = None
-    roof_aspect_area_facing_indeterminable: Optional[str] = None
+    # Roof aspect areas (square meters) by direction
+    roof_aspect_area_facing_north_m2: Optional[float] = None
+    roof_aspect_area_facing_north_east_m2: Optional[float] = None
+    roof_aspect_area_facing_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_m2: Optional[float] = None
+    roof_aspect_area_facing_south_west_m2: Optional[float] = None
+    roof_aspect_area_facing_west_m2: Optional[float] = None
+    roof_aspect_area_facing_north_west_m2: Optional[float] = None
+    roof_aspect_area_indeterminable_m2: Optional[float] = None
+    
+
+class DetailedBuildingSchema(DetailedBuilding):
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            solar_panel_presence=str(obj.has_roof_solar_panels),
+            roof_material=obj.roof_material,
+            roof_aspect_area_facing_north_m2=float(obj.roof_aspect_area_facing_north_m2),
+            roof_aspect_area_facing_north_east_m2=float(obj.roof_aspect_area_facing_north_east_m2),
+            roof_aspect_area_facing_east_m2=float(obj.roof_aspect_area_facing_east_m2),
+            roof_aspect_area_facing_south_east_m2=float(obj.roof_aspect_area_facing_south_east_m2),
+            roof_aspect_area_facing_south_m2=float(obj.roof_aspect_area_facing_south_m2),
+            roof_aspect_area_facing_south_west_m2=float(obj.roof_aspect_area_facing_south_west_m2),
+            roof_aspect_area_facing_west_m2=float(obj.roof_aspect_area_facing_west_m2),
+            roof_aspect_area_facing_north_west_m2=float(obj.roof_aspect_area_facing_north_west_m2),
+            roof_aspect_area_indeterminable_m2=float(obj.roof_aspect_area_indeterminable_m2)
+        )
 
 
 class FilterableBuilding(BaseModel):

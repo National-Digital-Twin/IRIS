@@ -4,9 +4,11 @@
 
 import datetime
 import re
+from utils import has_bindings
 
 from models.dto_models import (
     DetailedBuilding,
+    DetailedBuildingSchema,
     EpcAndOsBuildingSchema,
     EpcStatistics,
     FilterableBuilding,
@@ -167,10 +169,13 @@ def map_fueltype_results(building: DetailedBuilding, results: dict) -> None:
 
 
 def map_ngd_roof_material_results(building: DetailedBuilding, results: dict) -> None:
-    if results and results.get("results") and results["results"].get("bindings"):
+
+    if results and results.get("results") and results["results"].get("bindings"):       # check if results come from Fuseki or from PostGIS
         for result in results["results"]["bindings"]:
             building.roof_material = get_value_from_result(result, "roofMaterial")
-
+    else:
+        if 'roof_material' in results.keys():
+            building.roof_material = results['roof_material'].replace(' ', '') if results['roof_material'] else results['roof_material']
 
 def map_ngd_solar_panel_presence_results(
     building: DetailedBuilding, results: dict
@@ -180,8 +185,10 @@ def map_ngd_solar_panel_presence_results(
             building.solar_panel_presence = get_value_from_result(
                 result, "solarPanelPresence"
             )
-
-
+    else:
+        if 'solar_panel_presence' in results.keys():
+            building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']==True else 'Unknown'
+            
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
         for result in results["results"]["bindings"]:
@@ -192,23 +199,33 @@ def map_ngd_roof_aspect_area_facings_results(
     building: DetailedBuilding, results: dict
 ) -> None:
     direction_to_field = {
-        "NorthFacingRoofSectionSum": "roof_aspect_area_facing_north",
-        "NorthEastFacingRoofSectionSum": "roof_aspect_area_facing_northeast",
-        "EastFacingRoofSectionSum": "roof_aspect_area_facing_east",
-        "SouthEastFacingRoofSectionSum": "roof_aspect_area_facing_southeast",
-        "SouthFacingRoofSectionSum": "roof_aspect_area_facing_south",
-        "SouthWestFacingRoofSectionSum": "roof_aspect_area_facing_southwest",
-        "WestFacingRoofSectionSum": "roof_aspect_area_facing_west",
-        "NorthWestFacingRoofSectionSum": "roof_aspect_area_facing_northwest",
-        "AreaIndeterminableRoofSectionSum": "roof_aspect_area_facing_indeterminable",
+        "NorthFacingRoofSectionSum": "roof_aspect_area_facing_north_m2",
+        "NorthEastFacingRoofSectionSum": "roof_aspect_area_facing_north_east_m2",
+        "EastFacingRoofSectionSum": "roof_aspect_area_facing_east_m2",
+        "SouthEastFacingRoofSectionSum": "roof_aspect_area_facing_south_east_m2",
+        "SouthFacingRoofSectionSum": "roof_aspect_area_facing_south_m2",
+        "SouthWestFacingRoofSectionSum": "roof_aspect_area_facing_south_west_m2",
+        "WestFacingRoofSectionSum": "roof_aspect_area_facing_west_m2",
+        "NorthWestFacingRoofSectionSum": "roof_aspect_area_facing_north_west_m2",
+        "AreaIndeterminableRoofSectionSum": "roof_aspect_area_indeterminable_m2",
     }
+
+    def assign(field: str | None, m2) -> None:
+        if field and m2:
+            setattr(building, field, float(m2))
+
     if results and results.get("results") and results["results"].get("bindings"):
         for result in results["results"]["bindings"]:
-            direction = get_value_from_result(result, "direction")
-            m2 = get_value_from_result(result, "m2")
-            field = direction_to_field.get(direction)
-            if field:
-                setattr(building, field, m2)
+            assign(
+                direction_to_field.get(get_value_from_result(result, "direction")),
+                get_value_from_result(result, "m2"),
+            )
+        return
+
+    if "roof_aspect_area_facing_north_m2" in results:
+        for field, m2 in results.items():
+            assign(field, m2)
+    
 
 
 def map_single_building_response(
@@ -243,16 +260,13 @@ def map_single_building_response(
     map_floor_results(building, floor_results)
     map_wall_window_results(building, wall_window_results)
     map_fueltype_results(building, fueltype_results)
-    if ngd_roof_material_results is not None:
-        map_ngd_roof_material_results(building, ngd_roof_material_results)
-    if ngd_solar_panel_presence_results is not None:
-        map_ngd_solar_panel_presence_results(building, ngd_solar_panel_presence_results)
-    if ngd_roof_shape_results is not None:
-        map_ngd_roof_shape_results(building, ngd_roof_shape_results)
-    if ngd_roof_aspect_area_facings_results is not None:
-        map_ngd_roof_aspect_area_facings_results(
-            building, ngd_roof_aspect_area_facings_results
-        )
+
+    # check if roof material exists
+    map_ngd_roof_material_results(building, ngd_roof_material_results)
+    map_ngd_solar_panel_presence_results(building, ngd_solar_panel_presence_results)
+    map_ngd_roof_shape_results(building, ngd_roof_shape_results)
+    map_ngd_roof_aspect_area_facings_results(building, ngd_roof_aspect_area_facings_results)
+
     return building
 
 
