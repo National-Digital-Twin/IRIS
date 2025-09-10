@@ -18,12 +18,12 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "iris")
 DB_USERNAME = os.getenv("DB_USERNAME", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-GPKG_TABLE = os.getenv("GPKG_TABLE", "none")
+GPKG_TABLE = os.getenv("GPKG_TABLE")
 TARGET_SCHEMA = os.getenv("TARGET_SCHEMA", "iris")
-TARGET_TABLE = os.getenv("TARGET_TABLE", "wind_driven_rain_projections")
-MATERIALIZED_VIEW = os.getenv("MATERIALIZED_VIEW", "iris.wind_driven_rain_projections_geojson")
-JOIN_VIEW = os.getenv("JOIN_VIEW", "none")
-DATA_VIEW = os.getenv("DATA_VIEW", "none")
+TARGET_TABLE = os.getenv("TARGET_TABLE")
+MATERIALIZED_VIEW = os.getenv("MATERIALIZED_VIEW")
+JOIN_VIEW = os.getenv("JOIN_VIEW")
+DATA_VIEW = os.getenv("DATA_VIEW")
 
 
 def download_file(url: str, dest: Path):
@@ -130,19 +130,28 @@ def run_ogr2ogr_table(gpkg_path: Path):
 
 
 def refresh_materialized_view():
-    print(f"Refreshing materialized view {MATERIALIZED_VIEW}")
-    run_db_command(f"REFRESH MATERIALIZED VIEW {MATERIALIZED_VIEW};")
-    print("Materialized view refresh complete.")
+    if (MATERIALIZED_VIEW is not None and MATERIALIZED_VIEW != ""):        
+        print(f"Refreshing materialized view {MATERIALIZED_VIEW}")
+        run_db_command(f"REFRESH MATERIALIZED VIEW {MATERIALIZED_VIEW};")
+        print("Materialized view refresh complete.")
+    else:
+        print("No materialized view given to refresh.")
 
 def refresh_join_view():
-    print(f"Refreshing materialized view {JOIN_VIEW}")
-    run_db_command(f"REFRESH MATERIALIZED VIEW {JOIN_VIEW};")
-    print("Materialized view refresh complete.")
+    if (JOIN_VIEW is not None and JOIN_VIEW != ""):      
+        print(f"Refreshing materialized view {JOIN_VIEW}")
+        run_db_command(f"REFRESH MATERIALIZED VIEW {JOIN_VIEW};")
+        print("Materialized view refresh complete.")
+    else:
+        print("No join view given to refresh.")
 
 def refresh_data_view():
-    print(f"Refreshing materialized view {DATA_VIEW}")
-    run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
-    print("Materialized view refresh complete.")
+    if (DATA_VIEW is not None and DATA_VIEW != ""):      
+        print(f"Refreshing materialized view {DATA_VIEW}")
+        run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
+        print("Materialized view refresh complete.")
+    else:
+        print("No data view given to refresh.")
 
 
 def handle_geopackage(tmpdir):
@@ -162,20 +171,15 @@ def handle_zip(tmpdir):
         run_ogr2ogr(gpkg_file)
     else:
         run_ogr2ogr_table(gpkg_file)
-        if JOIN_VIEW == "none":
-            print("no Join")
-            refresh_data_view()
-        else:
-            refresh_join_view()
-            refresh_data_view()
-    
+        refresh_join_view()
+        refresh_data_view()
 
 
 def main():
     if not is_table_populated():
         with tempfile.TemporaryDirectory() as tmpdir:
             if GPKG_SOURCE.endswith('.gpkg'):
-                handle_geopackage(tmpdir)       
+                handle_geopackage(tmpdir)
             else:
                 handle_zip(tmpdir)
             refresh_materialized_view()
