@@ -526,41 +526,50 @@ async def get_building_by_uprn(uprn: str, req: Request, db: AsyncSession = Depen
         get_ngd_roof_aspect_areas_for_building(uprn), get_forwarding_headers(req.headers)
     )
 
-    # OS NGD Buildings PG fallback: synthesize SPARQL-like dicts from PG if missing
-    fallback_required = (
-        not has_bindings(ngd_roof_material_results)
-        or not has_bindings(ngd_solar_panel_presence_results)
-        or not has_bindings(ngd_roof_aspect_areas_results)
+    # OS NGD Buildings PG fallback
+    fallback_required = any(
+        not has_bindings(r)
+        for r in (
+            ngd_roof_material_results,
+            ngd_solar_panel_presence_results,
+            ngd_roof_shape_results,
+            ngd_roof_aspect_areas_results,
+        )
     )
     if fallback_required:
-
-        # get OS Roof data for dwelling from PostGIS
         data = await db.execute(text(get_all_ngd_attributes_pg()), {"uprn": uprn})
+        rows = [DetailedBuildingSchema.from_orm(row) for row in data]
 
-        # extract data using Pydantic class
-        results = [DetailedBuildingSchema.from_orm(row) for row in data]
-        
-        # check if list has single element
-        if len(results) == 1:
-            # check if roof material exists from Fuseki server
-            if not has_bindings(ngd_roof_material_results):
-                ngd_roof_material_results = {'roof_material': results[0].roof_material}
-            
-            if not has_bindings(ngd_solar_panel_presence_results):
-                ngd_solar_panel_presence_results = {'solar_panel_presence': results[0].solar_panel_presence}
+        if len(rows) == 1:
+            pg = rows[0]
 
-            if not has_bindings(ngd_roof_aspect_areas_results):
-                ngd_roof_aspect_areas_results = {
-                    'roof_aspect_area_facing_north_m2': results[0].roof_aspect_area_facing_north_m2,
-                    'roof_aspect_area_facing_north_east_m2': results[0].roof_aspect_area_facing_north_east_m2,
-                    'roof_aspect_area_facing_east_m2': results[0].roof_aspect_area_facing_east_m2,
-                    'roof_aspect_area_facing_south_east_m2': results[0].roof_aspect_area_facing_east_m2,
-                    'roof_aspect_area_facing_south_m2': results[0].roof_aspect_area_facing_south_m2,
-                    'roof_aspect_area_facing_south_west_m2': results[0].roof_aspect_area_facing_south_west_m2,
-                    'roof_aspect_area_facing_west_m2': results[0].roof_aspect_area_facing_west_m2,
-                    'roof_aspect_area_facing_north_west_m2': results[0].roof_aspect_area_facing_north_west_m2,
-                    'roof_aspect_area_indeterminable_m2': results[0].roof_aspect_area_indeterminable_m2
-                }
+            def or_pg(current, builder):
+                return current if has_bindings(current) else builder()
+
+            ngd_roof_material_results = or_pg(
+                ngd_roof_material_results, lambda: {"roof_material": pg.roof_material}
+            )
+            ngd_solar_panel_presence_results = or_pg(
+                ngd_solar_panel_presence_results,
+                lambda: {"solar_panel_presence": pg.solar_panel_presence},
+            )
+            ngd_roof_shape_results = or_pg(
+                ngd_roof_shape_results, lambda: {"roof_shape": pg.roof_shape}
+            )
+            ngd_roof_aspect_areas_results = or_pg(
+                ngd_roof_aspect_areas_results,
+                lambda: {
+                    "roof_aspect_area_facing_north_m2": pg.roof_aspect_area_facing_north_m2,
+                    "roof_aspect_area_facing_north_east_m2": pg.roof_aspect_area_facing_north_east_m2,
+                    "roof_aspect_area_facing_east_m2": pg.roof_aspect_area_facing_east_m2,
+                    "roof_aspect_area_facing_south_east_m2": pg.roof_aspect_area_facing_east_m2,
+                    "roof_aspect_area_facing_south_m2": pg.roof_aspect_area_facing_south_m2,
+                    "roof_aspect_area_facing_south_west_m2": pg.roof_aspect_area_facing_south_west_m2,
+                    "roof_aspect_area_facing_west_m2": pg.roof_aspect_area_facing_west_m2,
+                    "roof_aspect_area_facing_north_west_m2": pg.roof_aspect_area_facing_north_west_m2,
+                    "roof_aspect_area_indeterminable_m2": pg.roof_aspect_area_indeterminable_m2,
+                },
+            )
 
     return map_single_building_response(
         uprn,

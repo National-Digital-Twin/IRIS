@@ -193,6 +193,16 @@ def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> Non
     if results and results.get("results") and results["results"].get("bindings"):
         for result in results["results"]["bindings"]:
             building.roof_shape = get_value_from_result(result, "roofShape")
+    else:
+        sag_alignment = {
+            'Pitched': 'PitchedRoofShape',
+            'Flat' : 'FlatRoofShape',
+            'Mixed' : 'MixedRoofShape',
+            'Unknown': 'UnknownRoofShape',
+            None: None
+        }
+        if 'roof_shape' in results.keys():
+            building.roof_shape = sag_alignment[results['roof_shape']]
 
 
 def map_ngd_roof_aspect_area_facings_results(

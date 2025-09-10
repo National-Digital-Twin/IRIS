@@ -149,6 +149,7 @@ def get_all_ngd_attributes_pg() -> str:
         SELECT
             su.has_roof_solar_panels,
             su.roof_material,
+            su.roof_shape,
             su.roof_aspect_area_facing_north_m2,
             su.roof_aspect_area_facing_north_east_m2,
             su.roof_aspect_area_facing_east_m2,
@@ -164,6 +165,7 @@ def get_all_ngd_attributes_pg() -> str:
         SELECT 
             su.has_roof_solar_panels,
             su.roof_material,
+            su.roof_shape,
             su.roof_aspect_area_facing_north_m2,
             su.roof_aspect_area_facing_north_east_m2,
             su.roof_aspect_area_facing_east_m2,

@@ -70,6 +70,7 @@ class DetailedBuildingSchema(DetailedBuilding):
         return cls(
             solar_panel_presence=str(obj.has_roof_solar_panels),
             roof_material=obj.roof_material,
+            roof_shape=obj.roof_shape,
             roof_aspect_area_facing_north_m2=float(obj.roof_aspect_area_facing_north_m2),
             roof_aspect_area_facing_north_east_m2=float(obj.roof_aspect_area_facing_north_east_m2),
             roof_aspect_area_facing_east_m2=float(obj.roof_aspect_area_facing_east_m2),
