@@ -187,7 +187,7 @@ def map_ngd_solar_panel_presence_results(
             )
     else:
         if 'solar_panel_presence' in results.keys():
-            building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']==True else 'Unknown'
+            building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']=='True' else 'NoSolarPanels'
             
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
