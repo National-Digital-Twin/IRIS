@@ -43,7 +43,7 @@ def upgrade() -> None:
         """
         CREATE TABLE IF NOT EXISTS iris.country_region
         (
-            fid integer NOT NULL DEFAULT nextval('country_region_fid_seq'::regclass),
+            fid integer NOT NULL DEFAULT nextval('iris.country_region_fid_seq'::regclass),
             name character varying(100),
             area_code character varying(3),
             area_description character varying(50),
