@@ -186,9 +186,9 @@ export class EPCLayer extends AbstractBaseLayer {
 
         return `
             <div class="popup">
-                <h3>${properties.name} (${Math.ceil(percentageCompleteness)}% with EPCs)</h3>
+                <h3>${properties.name} EPC ratings (${Math.ceil(percentageCompleteness)}% with EPCs)</h3>
                 ${histogram}
-                <p class="footnote">* Mix of domestic and commercial buildings. Excluded from ${this.epcType} visualisation.</p>
+                <p class="footnote">*Excluded from ${this.epcType} visualisation.</p>
             </div>
         `;
     }
