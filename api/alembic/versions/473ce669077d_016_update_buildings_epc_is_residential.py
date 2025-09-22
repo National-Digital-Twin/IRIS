@@ -65,7 +65,8 @@ def upgrade() -> None:
         FROM iris.building a
         LEFT JOIN iris.epc_assessment b
           ON a.uprn = b.uprn
-        WHERE a.is_residential IS TRUE;
+        WHERE a.is_residential IS TRUE
+        WITH NO DATA;
         """
     )
 
