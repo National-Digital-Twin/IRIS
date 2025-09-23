@@ -50,6 +50,11 @@ GEOJSON_MATERIALIZED_VIEWS = [
 
 def upgrade() -> None:
     """Upgrade schema."""
+    
+    op.execute(sa.text("SET LOCAL application_name = 'alembic_016_is_residential';"))
+    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
+    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
+
 
     for mv in DEPENDENT_MATERIALIZED_VIEWS:
         op.execute(sa.text(f"DROP MATERIALIZED VIEW IF EXISTS {mv};"))
@@ -260,6 +265,10 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
+    
+    op.execute(sa.text("SET LOCAL application_name = 'alembic_016_is_residential';"))
+    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
+    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
 
     for mv in DEPENDENT_MATERIALIZED_VIEWS:
         op.execute(sa.text(f"DROP MATERIALIZED VIEW IF EXISTS {mv};"))

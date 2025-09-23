@@ -25,13 +25,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     
-    op.execute(
-        """
-        CREATE INDEX idx_structure_unit_uprn_not_null
-            ON iris.structure_unit (uprn)
-            WHERE uprn IS NOT NULL;
-        """
-    )
+    op.execute(sa.text("SET LOCAL application_name = 'alembic_015_is_residential';"))
+    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
+    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
+
     
     op.execute(
         """
@@ -65,14 +62,14 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     
+    op.execute(sa.text("SET LOCAL application_name = 'alembic_015_is_residential';"))
+    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
+    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
+
+    
     op.execute(
         """
         ALTER TABLE iris.building DROP COLUMN "is_residential";
         """
     )
     
-    op.execute(
-        """
-        DROP INDEX IF EXISTS iris.idx_structure_unit_uprn_not_null;
-        """
-    )
