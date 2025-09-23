@@ -26,8 +26,6 @@ def upgrade() -> None:
     """Upgrade schema."""
     
     op.execute(sa.text("SET LOCAL application_name = 'alembic_015_is_residential';"))
-    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
-    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
 
     
     op.execute(
@@ -36,36 +34,11 @@ def upgrade() -> None:
         """
     )
 
-    op.execute(
-        """
-        UPDATE iris.building AS b
-        SET is_residential = TRUE
-              WHERE EXISTS (
-                  SELECT 1 FROM iris.epc_assessment AS ea
-                  WHERE ea.uprn = b.uprn);
-    """
-    )
-    
-    op.execute(
-        """
-           UPDATE iris.building AS b
-           SET is_residential = TRUE
-           WHERE is_residential = FALSE AND EXISTS (
-                  SELECT 1
-                  FROM iris.structure_unit AS su
-                  WHERE su.uprn = b.uprn
-              );
-        """
-    )
-
 
 def downgrade() -> None:
     """Downgrade schema."""
     
     op.execute(sa.text("SET LOCAL application_name = 'alembic_015_is_residential';"))
-    op.execute(sa.text("SET LOCAL lock_timeout = '5s';"))
-    op.execute(sa.text("SET LOCAL statement_timeout = '1h';"))
-
     
     op.execute(
         """
