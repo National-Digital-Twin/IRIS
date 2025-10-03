@@ -29,7 +29,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class PrivacyNoticeComponent {
     @Output() back = new EventEmitter<void>();
-    constructor(private router: Router) {}
+    constructor(private readonly router: Router) {}
   
     onBack() {
       if (this.back.observers.length) {
