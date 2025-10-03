@@ -428,8 +428,11 @@ export class ShellComponent {
                 data: building,
             })
             .afterClosed()
-            .pipe(switchMap((reason) => (reason !== undefined ? this.#dataService.invalidateFlag(building, reason) : EMPTY)))
-            .subscribe();
+            .pipe(
+                filter((reason): reason is RemoveFlagModalResult => reason !== undefined),
+                switchMap((reason) => this.#dataService.invalidateFlag(building, reason))
+              )
+              .subscribe();
     }
 
     private createQueryParams(filter: Record<string, string[]>): Record<'filter', string | undefined> {
