@@ -425,7 +425,7 @@ export class ShellComponent {
     }
 
     public onFlag(buildings: BuildingModel[]): void {
-        const toFlag = buildings.filter((b) => typeof b.Flagged === 'undefined');
+        const toFlag = buildings.filter((b) => b.Flagged === undefined);
 
         this.#dialog
             .open<FlagModalComponent, FlagModalData, FlagModalResult>(FlagModalComponent, {
