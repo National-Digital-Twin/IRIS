@@ -13,7 +13,6 @@
 
   .privacy-page {
     padding: var(--pn-pad-top) var(--pn-pad-right) 16px 0;
-    max-width: 840px;
     box-sizing: border-box;
   }
   
