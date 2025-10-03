@@ -34,6 +34,7 @@ import { SpatialQueryService } from '@core/services/spatial-query.service';
 import { UserDetailsService } from '@core/services/user-details.service';
 import { UtilService } from '@core/services/utils.service';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
+import { PrivacyNoticeComponent } from '@components/privacy-notice/privacy-notice.component';
 import { Polygon } from 'geojson';
 import { EMPTY, filter, forkJoin, map, switchMap, take } from 'rxjs';
 
@@ -54,6 +55,7 @@ import { EMPTY, filter, forkJoin, map, switchMap, take } from 'rxjs';
         MatSlideToggleModule,
         MatMenuModule,
         MatDividerModule,
+        PrivacyNoticeComponent,
     ],
     templateUrl: './shell.component.html',
     styleUrl: './shell.component.scss',
@@ -84,6 +86,7 @@ export class ShellComponent {
     public title = 'IRIS';
     public userEmail = 'loading...';
     public menuOpened = false;
+    public showPrivacy = false;
 
     // get map state from route query params
     public bearing: InputSignal<number> = input<number, number>(0, { transform: numberAttribute });
