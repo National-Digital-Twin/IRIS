@@ -14,6 +14,12 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## [0.93.2] - 2025-10-08
+
+### Features
+
+- [DPAV-1818]: Display EPC completeness percentages alongside area names in analytics popups
+
 ## [0.93.1] - 2025-10-03
 
 ### Features
