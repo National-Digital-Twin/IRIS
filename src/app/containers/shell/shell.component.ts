@@ -34,6 +34,7 @@ import { SpatialQueryService } from '@core/services/spatial-query.service';
 import { UserDetailsService } from '@core/services/user-details.service';
 import { UtilService } from '@core/services/utils.service';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
+import { PrivacyNoticeComponent } from '@components/privacy-notice/privacy-notice.component';
 import { Polygon } from 'geojson';
 import { EMPTY, filter, forkJoin, map, switchMap, take } from 'rxjs';
 
@@ -54,6 +55,7 @@ import { EMPTY, filter, forkJoin, map, switchMap, take } from 'rxjs';
         MatSlideToggleModule,
         MatMenuModule,
         MatDividerModule,
+        PrivacyNoticeComponent,
     ],
     templateUrl: './shell.component.html',
     styleUrl: './shell.component.scss',
@@ -84,6 +86,7 @@ export class ShellComponent {
     public title = 'IRIS';
     public userEmail = 'loading...';
     public menuOpened = false;
+    public showPrivacy = false;
 
     // get map state from route query params
     public bearing: InputSignal<number> = input<number, number>(0, { transform: numberAttribute });
@@ -178,13 +181,14 @@ export class ShellComponent {
     }
 
     private replaceGlobalClasses(classToAdd: string, classesToRemove: string[]): void {
-        classesToRemove.forEach((classToRemove) => {
-            if (this.#document?.body?.classList?.contains(classToRemove)) {
-                this.#document?.body?.classList?.remove(classToRemove);
-            }
-        });
+        const body = this.#document?.body;
+        if (!body) return;
 
-        this.#document?.body?.classList.add(classToAdd);
+        for (const cls of classesToRemove) {
+            body.classList.remove(cls);
+        }
+
+        body.classList.add(classToAdd);
     }
 
     public handleColourBlindSwitchChange(event: MatSlideToggleChange): void {
@@ -209,11 +213,11 @@ export class ShellComponent {
         await this.#signoutService
             .voidSession()
             .then(() => {
-                window.location.href = this.#signoutService.signoutLinks?.redirectUrl?.href ?? '/';
+                globalThis.location.href = this.#signoutService.signoutLinks?.redirectUrl?.href ?? '/';
             })
             .catch((error) => {
                 console.error(error);
-                window.location.href = '/';
+                globalThis.location.href = '/';
             });
     }
 
@@ -396,7 +400,7 @@ export class ShellComponent {
     }
 
     public onFlag(buildings: BuildingModel[]): void {
-        const toFlag = buildings.filter((b) => typeof b.Flagged === 'undefined');
+        const toFlag = buildings.filter(b => b.Flagged === undefined);
 
         this.#dialog
             .open<FlagModalComponent, FlagModalData, FlagModalResult>(FlagModalComponent, {
@@ -405,8 +409,14 @@ export class ShellComponent {
                 data: toFlag,
             })
             .afterClosed()
-            .pipe(switchMap((flag) => (flag !== undefined && flag === true ? forkJoin(...toFlag.map((b) => this.#dataService.flagToInvestigate(b))) : EMPTY)))
-            .subscribe();
+            .pipe(
+                filter((confirmed): confirmed is true => confirmed === true),
+                switchMap(() =>
+                  toFlag.length
+                    ? forkJoin(toFlag.map(b => this.#dataService.flagToInvestigate(b)))
+                    : EMPTY
+                )
+              ).subscribe();
     }
 
     public onRemoveFlag(building: BuildingModel): void {
@@ -418,20 +428,21 @@ export class ShellComponent {
                 data: building,
             })
             .afterClosed()
-            .pipe(switchMap((reason) => (reason !== undefined ? this.#dataService.invalidateFlag(building, reason) : EMPTY)))
-            .subscribe();
+            .pipe(
+                filter((reason): reason is RemoveFlagModalResult => reason !== undefined),
+                switchMap((reason) => this.#dataService.invalidateFlag(building, reason))
+              )
+              .subscribe();
     }
 
     private createQueryParams(filter: Record<string, string[]>): Record<'filter', string | undefined> {
-        Object.keys(filter).forEach((key: string) => {
-            if (this.filterProps?.[key as FilterKeys]) {
-                delete this.filterProps[key as FilterKeys];
-            }
-        });
+        for (const key of Object.keys(filter)) {
+            delete this.filterProps[key as FilterKeys];
+          }
         const filterString = this.#filterService.createFilterString(filter, this.filterProps);
         const queryParams = {
-            filter: filterString !== '' ? filterString : undefined,
-        };
+            filter: filterString === '' ? undefined : filterString,
+          };
         return queryParams;
     }
 
