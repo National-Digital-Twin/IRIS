@@ -1,6 +1,6 @@
 import { HttpParams, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { AddressResponseHeader, AddressSearchData, AddressSearchResponse } from '@core/models/address-search-results.model';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
 import { map } from 'rxjs';
@@ -21,9 +21,8 @@ describe('AddressSearchService', () => {
             providers: [provideHttpClient(), provideHttpClientTesting(), AddressSearchService, { provide: RUNTIME_CONFIGURATION, useValue: runtimeConfig }],
         });
 
-        const injector = getTestBed();
         service = TestBed.inject(AddressSearchService);
-        httpMock = injector.get(HttpTestingController);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
