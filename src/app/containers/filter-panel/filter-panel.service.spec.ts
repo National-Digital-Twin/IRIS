@@ -1,27 +1,76 @@
 import { HttpParams, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { BACKEND_API_ENDPOINT } from '@core/tokens/backend-endpoint.token';
 import { SEARCH_ENDPOINT } from '@core/tokens/search-endpoint.token';
 import { map } from 'rxjs';
 import { FilterPanelService, panelNames } from './filter-panel.service';
 
 const filterData = {
-    postcode: ['PO11', 'PO12', 'PO13', 'PO14', 'PO15', 'PO16', 'PO17', 'PO18'],
-    built_form: ['Brick', 'Wood'],
-    inspection_year: ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'],
+    postcode: ['SW4', 'SW3', 'W14', 'SW8', 'SW1V', 'SW6', 'SW11', 'SW10', 'SW5'],
+    built_form: ['Detached', 'MidTerrace', 'EndTerrace', 'EnclosedEndTerrace', 'SemiDetached', 'EnclosedMidTerrace'],
+    inspection_year: [
+        '2022',
+        '2025',
+        '2010',
+        '2016',
+        '2008',
+        '2009',
+        '2021',
+        '2012',
+        '2023',
+        '2024',
+        '2011',
+        '2018',
+        '2020',
+        '2014',
+        '2019',
+        '2015',
+        '2013',
+        '2017',
+    ],
     energy_rating: ['EPC In Date', 'EPC Expired'],
-    window_glazing: ['Single', 'Double'],
-    wall_construction: ['Brick', 'Timber', 'Cavity', 'Plaster'],
-    wall_insulation: ['10mm', '20mm', '30mm', '40mm', '50mm'],
-    floor_construction: ['Carpet', 'Tiles'],
-    floor_insulation: ['Suspended', 'Concrete'],
-    roof_construction: ['Tiles', 'Straw'],
-    roof_insulation_location: ['Frame', 'Ceiling'],
-    roof_insulation_thickness: ['10mm', '20mm', '30mm', '40mm', '50mm'],
-    roof_material: ['Mixed', 'Unknown'],
-    has_roof_solar_panels: ['HasSolarPanels'],
-    roof_aspect_area_direction: ['North', 'NorthEast', 'SouthWest'],
+    fuel_type: ['Biomass', 'SmokelessCoal', 'Oil', 'Coal', 'Electricity', 'Other', 'NaturalFuelGas', 'LPG'],
+    window_glazing: ['TripleGlazing', 'SingleGlazing', 'DoubleGlazingAfter2002', 'DoubleGlazingBefore2002', 'DoubleGlazing', 'SecondaryGlazing'],
+    wall_construction: ['SystemBuilt', 'Cob', 'TimberFrame', 'GraniteOrWhinstone', 'SolidBrick', 'Sandstone', 'Wall', 'CavityWall'],
+    wall_insulation: ['ExternalInsulation', 'InsulatedWall', 'InternalInsulation'],
+    floor_construction: ['OtherPremisesBelowFloor', 'AnotherDwellingBelowFloor', 'Floor', 'SolidFloor', 'Suspended'],
+    floor_insulation: ['LimitedFloorInsulation', 'NoInsulationInFloor', 'InsulatedFloor'],
+    roof_construction: ['RoofRooms', 'OtherPremisesAbove', 'FlatRoof', 'AnotherDwellingAbove', 'PitchedRoof', 'ThatchedRoof'],
+    roof_insulation_location: [
+        'LimitedInsulation',
+        'InsulatedAssumed',
+        'InsulatedAtRafters',
+        'NoInsulationassumed',
+        'LimitedInsulationAssumed',
+        'NoInsulationInRoof',
+        'NoInsulationAssumedInRoof',
+        'CeilingInsulated',
+        'Insulated',
+        'ThatchedWithAdditionalInsulation',
+        'LoftInsulation',
+        'InsulatedWithThatched',
+    ],
+    roof_insulation_thickness: [
+        '300mm',
+        '200mm',
+        '300+mm',
+        '400+mm',
+        '0mm',
+        '400mm',
+        '100mm',
+        '350mm',
+        '12mm',
+        '25mm',
+        '250mm',
+        '75mm',
+        '50mm',
+        '150mm',
+        '270mm',
+    ],
+    roof_material: ['Metal', 'Unknown', 'GreenRoof', 'GlassOrPolycarbonate', 'TileOrStoneOrSlate', 'Mixed', 'WaterproofMembraneOrConcrete'],
+    has_roof_solar_panels: ['HasSolarPanels', 'NoSolarPanels'],
+    roof_aspect_area_direction: ['SouthEast', 'West', 'NorthEast', 'North', 'NorthWest', 'SouthWest', 'East', 'South'],
 };
 
 describe('DataService', () => {
@@ -39,9 +88,8 @@ describe('DataService', () => {
             ],
         });
 
-        const injector = getTestBed();
         service = TestBed.inject(FilterPanelService);
-        httpMock = injector.get(HttpTestingController);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     it('should be created', () => {
@@ -56,7 +104,7 @@ describe('DataService', () => {
                     map((result) => {
                         expect(result).toHaveLength(5);
                         panelNames.map((name, idx) => expect(result.at(idx)?.title).toEqual(name));
-                        [4, 1, 2, 2, 3].map((size, idx) => expect(result.at(idx)?.filters).toHaveLength(size));
+                        [5, 1, 2, 2, 6].map((size, idx) => expect(result.at(idx)?.filters).toHaveLength(size));
                     }),
                 )
                 .subscribe({
@@ -66,7 +114,7 @@ describe('DataService', () => {
 
             const params = new HttpParams().set('min_lat', '1').set('max_lat', '2').set('min_long', '3').set('max_long', '4');
 
-            const req = httpMock.expectOne(`/api/filters/buildings?${params.toString()}`);
+            const req = httpMock.expectOne(`/api/filter-summary?${params.toString()}`);
             expect(req.request.method).toBe('GET');
             req.flush(filterData);
         });

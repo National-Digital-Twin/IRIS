@@ -3,13 +3,13 @@
 // and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'app-privacy-notice',
+    selector: 'c477-privacy-notice',
     standalone: true,
     imports: [CommonModule, MatButtonModule, MatIconModule],
     template: `
@@ -28,10 +28,10 @@ import { Router } from '@angular/router';
     styleUrls: ['./privacy-notice.css'],
 })
 export class PrivacyNoticeComponent {
-    @Output() back = new EventEmitter<void>();
-    constructor(private readonly router: Router) {}
+    @Output() public back = new EventEmitter<void>();
+    private readonly router = inject(Router);
 
-    onBack() {
+    public onBack(): void {
         if (this.back.observers.length) {
             this.back.emit();
         } else {
@@ -39,7 +39,7 @@ export class PrivacyNoticeComponent {
         }
     }
 
-    privacyHtml = `
+    public privacyHtml = `
             <h1>Privacy Notice - IRIS</h1>
 
             <p>This privacy notice explains how the Department for Business and Trade (DBT) and the National Digital
