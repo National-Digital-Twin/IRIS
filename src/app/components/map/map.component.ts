@@ -170,8 +170,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
      * Map event listeners
      */
     private initMapEvents(): void {
-        this.#mapService.mapInstance.on('error', (error: Error) => console.log('[MAP]', 'Map Error', { error }));
-        this.#mapService.mapInstance.on('styleimagemissing', (error: Error) => console.log('[MAP]', 'Image Missing', { error }));
+        this.#mapService.mapInstance.on('error', (error) => console.log('[MAP]', 'Map Error', { error }));
+        this.#mapService.mapInstance.on('styleimagemissing', (error) => console.log('[MAP]', 'Image Missing', { error }));
 
         /* If the map style changes, re-add layers */
         this.#mapService.mapInstance.on('style.load', () => this.#mapService.addLayers().pipe(take(1)).subscribe());
@@ -398,7 +398,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
                 this.mapInstance.removeLayer(layerId);
             }
 
-            (layerGroup as any)[type] = false;
+            (layerGroup[type as keyof T] as boolean) = false;
         });
     }
 

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ClimateDataService } from '@core/services/climate-data.service';
-import { EPCDataService } from '@core/services/epc-data.service';
+import { EPCDataService, EPCType } from '@core/services/epc-data.service';
 import { ScriptLoaderService } from '@core/services/script-loader.service';
 import { AbstractBaseLayer } from './base-layer.abstract';
 import { BaseLayer } from './base-layer.interface';
@@ -65,12 +65,12 @@ export class LayerFactoryService {
         epcTypes.forEach((type) => {
             const layerId = `epc-${type}-layer`;
             const proxyLayer = new Proxy(new EPCLayer(this.#epcDataService), {
-                get(target, prop): any {
+                get(target, prop): unknown {
                     if (prop === 'id') {
                         return layerId;
                     }
                     if (prop === 'setEPCType') {
-                        return (epcType: string): void => target.setEPCType(epcType as any);
+                        return (epcType: EPCType): void => target.setEPCType(epcType);
                     }
                     return target[prop as keyof typeof target];
                 },

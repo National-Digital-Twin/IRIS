@@ -2,44 +2,44 @@
 // © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 // and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Component, EventEmitter, inject, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-privacy-notice',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
-  template: `
-    <div class="privacy-page">
-      <div class="privacy-header">
-        <button mat-icon-button class="privacy-back" aria-label="Back" (click)="onBack()">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
+    selector: 'c477-privacy-notice',
+    standalone: true,
+    imports: [CommonModule, MatButtonModule, MatIconModule],
+    template: `
+        <div class="privacy-page">
+            <div class="privacy-header">
+                <button mat-icon-button class="privacy-back" aria-label="Back" (click)="onBack()">
+                    <mat-icon>arrow_back</mat-icon>
+                </button>
 
-        <img class="privacy-logo" src="/assets/DBT_logo_black.svg" alt="Department for Business & Trade" />
-      </div>
+                <img class="privacy-logo" src="/assets/DBT_logo_black.svg" alt="Department for Business & Trade" />
+            </div>
 
-      <div class="privacy-html" [innerHTML]="privacyHtml"></div>
-    </div>
-  `,
-  styleUrls: ['./privacy-notice.css'],
+            <div class="privacy-html" [innerHTML]="privacyHtml"></div>
+        </div>
+    `,
+    styleUrls: ['./privacy-notice.css'],
 })
 export class PrivacyNoticeComponent {
-    @Output() back = new EventEmitter<void>();
-    constructor(private readonly router: Router) {}
-  
-    onBack() {
-      if (this.back.observers.length) {
-        this.back.emit();
-      } else {
-        this.router.navigateByUrl('/');
-      }
+    @Output() public back = new EventEmitter<void>();
+    private readonly router = inject(Router);
+
+    public onBack(): void {
+        if (this.back.observers.length) {
+            this.back.emit();
+        } else {
+            this.router.navigateByUrl('/');
+        }
     }
-    
-  privacyHtml = `
+
+    public privacyHtml = `
             <h1>Privacy Notice - IRIS</h1>
 
             <p>This privacy notice explains how the Department for Business and Trade (DBT) and the National Digital

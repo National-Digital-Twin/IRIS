@@ -76,7 +76,7 @@ export abstract class AbstractClimateLayer<ClimateProperties> extends AbstractBa
         await super.addLayerToMap();
     }
 
-    protected highlightPolygon(map: mapboxgl.Map, id: any, field: string): void {
+    protected highlightPolygon(map: mapboxgl.Map, id: string | number, field: string): void {
         map.setPaintProperty(this.id, 'fill-opacity', ['case', ['==', ['get', field], id], 0.9, 0.6]);
 
         const outlineLayerId = `${this.id}-outline`;

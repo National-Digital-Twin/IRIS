@@ -16,6 +16,7 @@ import { FlagModalComponent, FlagModalData, FlagModalResult } from '@components/
 import { InformationComponent } from '@components/information/information.component';
 import { MapComponent } from '@components/map/map.component';
 import { MinimapComponent } from '@components/minimap/minimap.component';
+import { PrivacyNoticeComponent } from '@components/privacy-notice/privacy-notice.component';
 import { RemoveFlagModalComponent, RemoveFlagModalData, RemoveFlagModalResult } from '@components/remove-flag-modal/remove-flag-modal.component';
 import { MainFiltersComponent } from '@containers/main-filters/main-filters.component';
 import { ResultsPanelComponent } from '@containers/results-panel/results-panel.component';
@@ -34,7 +35,6 @@ import { SpatialQueryService } from '@core/services/spatial-query.service';
 import { UserDetailsService } from '@core/services/user-details.service';
 import { UtilService } from '@core/services/utils.service';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
-import { PrivacyNoticeComponent } from '@components/privacy-notice/privacy-notice.component';
 import { Polygon } from 'geojson';
 import { EMPTY, filter, forkJoin, map, switchMap, take } from 'rxjs';
 
@@ -400,7 +400,7 @@ export class ShellComponent {
     }
 
     public onFlag(buildings: BuildingModel[]): void {
-        const toFlag = buildings.filter(b => b.Flagged === undefined);
+        const toFlag = buildings.filter((b) => b.Flagged === undefined);
 
         this.#dialog
             .open<FlagModalComponent, FlagModalData, FlagModalResult>(FlagModalComponent, {
@@ -411,12 +411,9 @@ export class ShellComponent {
             .afterClosed()
             .pipe(
                 filter((confirmed): confirmed is true => confirmed === true),
-                switchMap(() =>
-                  toFlag.length
-                    ? forkJoin(toFlag.map(b => this.#dataService.flagToInvestigate(b)))
-                    : EMPTY
-                )
-              ).subscribe();
+                switchMap(() => (toFlag.length ? forkJoin(toFlag.map((b) => this.#dataService.flagToInvestigate(b))) : EMPTY)),
+            )
+            .subscribe();
     }
 
     public onRemoveFlag(building: BuildingModel): void {
@@ -430,19 +427,19 @@ export class ShellComponent {
             .afterClosed()
             .pipe(
                 filter((reason): reason is RemoveFlagModalResult => reason !== undefined),
-                switchMap((reason) => this.#dataService.invalidateFlag(building, reason))
-              )
-              .subscribe();
+                switchMap((reason) => this.#dataService.invalidateFlag(building, reason)),
+            )
+            .subscribe();
     }
 
     private createQueryParams(filter: Record<string, string[]>): Record<'filter', string | undefined> {
         for (const key of Object.keys(filter)) {
             delete this.filterProps[key as FilterKeys];
-          }
+        }
         const filterString = this.#filterService.createFilterString(filter, this.filterProps);
         const queryParams = {
             filter: filterString === '' ? undefined : filterString,
-          };
+        };
         return queryParams;
     }
 

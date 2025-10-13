@@ -1,9 +1,10 @@
 import { InjectionToken, WritableSignal } from '@angular/core';
 import { URLStateModel } from '@core/models/url-state.model';
 import { Feature } from 'geojson';
+import mapboxgl from 'mapbox-gl';
 import { Observable } from 'rxjs';
 
-export const MAP_SERVICE = new InjectionToken<MapService<any>>('MAP_SERVICE');
+export const MAP_SERVICE = new InjectionToken<MapService<mapboxgl.Map>>('MAP_SERVICE');
 
 export type MapBounds = {
     getSouth: () => number;

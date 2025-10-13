@@ -99,7 +99,7 @@
                 <button mat-menu-item class="control" aria-label="privacy notice button" (click)="showPrivacy = true">
                     <mat-icon aria-label="privacy notice">lock</mat-icon>
                     <span>Privacy notice</span>
-                  </button>
+                </button>
                 <button mat-menu-item class="control" aria-label="sign out button" (click)="handleSignout()">
                     <mat-icon aria-label="sign out">logout</mat-icon>
                     <span>Sign out</span>
@@ -110,59 +110,54 @@
         <div class="content" [class.privacy-mode]="showPrivacy">
             @if (showPrivacy) {
                 <div class="content-scroll">
-                    <app-privacy-notice (back)="showPrivacy = false" />
+                    <c477-privacy-notice (back)="showPrivacy = false" />
                 </div>
             } @else {
-              @if (loading()) {
-                <c477-loading-screen />
-              } @else {
-                <c477-main-filters
-                  [filterProps]="filterProps"
-                  (clearAllFilters)="clearAllFilters()"
-                  (setRouteParams)="setFilterParams($event)"
-                  (setAdvancedFilters)="setAdvancedFilters($event)"
-                  (addressSelected)="setSelectedBuildingTOID($event)"
-                />
-          
-                <c477-results-panel
-                  (flag)="onFlag($event)"
-                  (removeFlag)="onRemoveFlag($event)"
-                  (resultsPanelCollapsed)="resultsPanelCollapsed = $event"
-                />
-          
-                <c477-details-panel
-                  (closePanel)="closeDetails()"
-                  (downloadData)="downloadData($event)"
-                  (flag)="onFlag($event)"
-                  (removeFlag)="onRemoveFlag($event)"
-                  [resultsPanelCollapsed]="resultsPanelCollapsed"
-                />
-              }
-              <div class="map-container">
-                <c477-map
-                  [spatialFilterEnabled]="spatialFilterEnabled()"
-                  [mapConfig]="mapConfig"
-                  (setRouteParams)="setRouteMapParams($event)"
-                  (deleteSpatialFilter)="deleteSpatialFilter()"
-                  (downloadAddresses)="downloadAddresses()"
-                  (resetMapView)="resetMapView()"
-                  (resetNorth)="resetNorth()"
-                  (tilt2D)="tilt2D($event)"
-                  (zoomIn)="zoomIn()"
-                  (zoomOut)="zoomOut()"
-                  (setSearchArea)="setSearchArea($event)"
-                  (setSelectedBuildingTOID)="setSelectedBuildingTOID($event)"
-                  (setMinimapData)="minimapData = $event"
-                  (toggleMinimap)="showMinimap = !showMinimap"
-                  [filtersExist]="filtersExist()"
-                />
-              </div>
-              @if (showMinimap) {
-                <c477-minimap [minimapData]="minimapData" />
-              }
+                @if (loading()) {
+                    <c477-loading-screen />
+                } @else {
+                    <c477-main-filters
+                        [filterProps]="filterProps"
+                        (clearAllFilters)="clearAllFilters()"
+                        (setRouteParams)="setFilterParams($event)"
+                        (setAdvancedFilters)="setAdvancedFilters($event)"
+                        (addressSelected)="setSelectedBuildingTOID($event)"
+                    />
+
+                    <c477-results-panel (flag)="onFlag($event)" (removeFlag)="onRemoveFlag($event)" (resultsPanelCollapsed)="resultsPanelCollapsed = $event" />
+
+                    <c477-details-panel
+                        (closePanel)="closeDetails()"
+                        (downloadData)="downloadData($event)"
+                        (flag)="onFlag($event)"
+                        (removeFlag)="onRemoveFlag($event)"
+                        [resultsPanelCollapsed]="resultsPanelCollapsed"
+                    />
+                }
+                <div class="map-container">
+                    <c477-map
+                        [spatialFilterEnabled]="spatialFilterEnabled()"
+                        [mapConfig]="mapConfig"
+                        (setRouteParams)="setRouteMapParams($event)"
+                        (deleteSpatialFilter)="deleteSpatialFilter()"
+                        (downloadAddresses)="downloadAddresses()"
+                        (resetMapView)="resetMapView()"
+                        (resetNorth)="resetNorth()"
+                        (tilt2D)="tilt2D($event)"
+                        (zoomIn)="zoomIn()"
+                        (zoomOut)="zoomOut()"
+                        (setSearchArea)="setSearchArea($event)"
+                        (setSelectedBuildingTOID)="setSelectedBuildingTOID($event)"
+                        (setMinimapData)="minimapData = $event"
+                        (toggleMinimap)="showMinimap = !showMinimap"
+                        [filtersExist]="filtersExist()"
+                    />
+                </div>
+                @if (showMinimap) {
+                    <c477-minimap [minimapData]="minimapData" />
+                }
             }
-          </div>
-          
+        </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
 

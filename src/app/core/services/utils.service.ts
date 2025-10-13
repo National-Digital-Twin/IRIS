@@ -299,23 +299,6 @@ export class UtilService {
         }
     }
 
-    public calculateModalRating(epcData: any): string {
-        const ratings = [
-            { rating: 'A', count: epcData.a_rating },
-            { rating: 'B', count: epcData.b_rating },
-            { rating: 'C', count: epcData.c_rating },
-            { rating: 'D', count: epcData.d_rating },
-            { rating: 'E', count: epcData.e_rating },
-            { rating: 'F', count: epcData.f_rating },
-            { rating: 'G', count: epcData.g_rating },
-        ];
-
-        ratings.sort((a, b) => b.count - a.count);
-
-        // Return the most common rating
-        return ratings[0].count > 0 ? ratings[0].rating : 'None';
-    }
-
     public filterBuildingsWithinBounds(buildings: BuildingMap, spatialQueryBounds?: mapboxgl.Point[]): BuildingMap {
         /** get all features within current map bounds */
         const currentMapFeatures = this.#mapService.queryFeatures();
