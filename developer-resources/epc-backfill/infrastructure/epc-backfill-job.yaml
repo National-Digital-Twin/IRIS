@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epc-backfill-job
+  namespace: iris
+spec:
+  template:
+    spec:
+      containers:
+        - name: iris/epc-backfill-python
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/epc-backfill-python:latest
+          resources:
+            requests:
+              ephemeral-storage: "2Gi"
+              memory: 512Mi
+              cpu: 0.5
+            limits:
+              memory: 1Gi
+          env:
+            - name: DB_HOST
+              value: { REPLACE_ME }
+            - name: DB_PORT
+              value: { REPLACE_ME }
+            - name: DB_NAME
+              value: { REPLACE_ME }
+            - name: DB_USERNAME
+              value: { REPLACE_ME }
+            - name: DB_PASSWORD
+              value: { REPLAC_ME }
+            - name: CSV_PATH
+              value: { REPLACE_ME }
+      restartPolicy: OnFailure
+      securityContext:
+        fsGroup: 999
+  backoffLimit: 4
