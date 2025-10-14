@@ -1,0 +1,26 @@
+<div class="widget-header">
+    <div class="widget-title">
+        Percentage of buildings with
+        <mat-form-field appearance="outline" class="inline-select">
+            <mat-select [value]="selectedCharacteristic()" (selectionChange)="onCharacteristicChange($event.value)">
+                @for (option of characteristicOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+        per
+        <c477-region-selector [selectedRegions]="selectedRegions()" (selectedRegionsChange)="onRegionChange($event)"></c477-region-selector>
+    </div>
+</div>
+
+<div class="chart-wrapper">
+    @if (loading()) {
+        <div class="chart-skeleton"></div>
+    } @else {
+        <plotly-plot [data]="chartData()" [layout]="chartLayout" [config]="chartConfig"></plotly-plot>
+    }
+</div>
+
+<!-- SPDX-License-Identifier: Apache-2.0
+© Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
+and is legally attributed to the Department for Business and Trade (UK) as the governing entity. -->
