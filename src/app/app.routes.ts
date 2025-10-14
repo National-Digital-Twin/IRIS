@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { DashboardPageComponent } from '@containers/dashboard/dashboard-page.component';
 import { mapStateGuard } from '@core/guards/map-state.guard';
 import { ShellComponent } from './containers/shell/shell.component';
 
@@ -7,6 +8,16 @@ export const routes: Routes = [
         path: '',
         component: ShellComponent,
         canActivate: [mapStateGuard],
+    },
+    {
+        path: 'dashboards/national',
+        component: DashboardPageComponent,
+        data: { type: 'national' },
+    },
+    {
+        path: 'dashboards/area',
+        component: DashboardPageComponent,
+        data: { type: 'area' },
     },
 ];
 
