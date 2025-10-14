@@ -16,6 +16,7 @@ import { FlagModalComponent, FlagModalData, FlagModalResult } from '@components/
 import { InformationComponent } from '@components/information/information.component';
 import { MapComponent } from '@components/map/map.component';
 import { MinimapComponent } from '@components/minimap/minimap.component';
+import { PrivacyNoticeComponent } from '@components/privacy-notice/privacy-notice.component';
 import { RemoveFlagModalComponent, RemoveFlagModalData, RemoveFlagModalResult } from '@components/remove-flag-modal/remove-flag-modal.component';
 import { MainFiltersComponent } from '@containers/main-filters/main-filters.component';
 import { ResultsPanelComponent } from '@containers/results-panel/results-panel.component';
@@ -55,6 +56,7 @@ import { EMPTY, Observable, filter, forkJoin, map, of, switchMap, take } from 'r
         MatSlideToggleModule,
         MatMenuModule,
         MatDividerModule,
+        PrivacyNoticeComponent,
     ],
     templateUrl: './shell.component.html',
     styleUrl: './shell.component.scss',
@@ -86,6 +88,7 @@ export class ShellComponent {
     public title = 'IRIS';
     public userEmail = 'loading...';
     public menuOpened = false;
+    public showPrivacy = false;
 
     private _enhancedWardDataCache: FeatureCollection<Geometry, GeoJsonProperties>[] | null = null;
 
@@ -203,13 +206,14 @@ export class ShellComponent {
     }
 
     private replaceGlobalClasses(classToAdd: string, classesToRemove: string[]): void {
-        classesToRemove.forEach((classToRemove) => {
-            if (this.#document?.body?.classList?.contains(classToRemove)) {
-                this.#document?.body?.classList?.remove(classToRemove);
-            }
-        });
+        const body = this.#document?.body;
+        if (!body) return;
 
-        this.#document?.body?.classList.add(classToAdd);
+        for (const cls of classesToRemove) {
+            body.classList.remove(cls);
+        }
+
+        body.classList.add(classToAdd);
     }
 
     public handleColourBlindSwitchChange(event: MatSlideToggleChange): void {
@@ -234,11 +238,11 @@ export class ShellComponent {
         await this.#signoutService
             .voidSession()
             .then(() => {
-                window.location.href = this.#signoutService.signoutLinks?.redirectUrl?.href ?? '/';
+                globalThis.location.href = this.#signoutService.signoutLinks?.redirectUrl?.href ?? '/';
             })
             .catch((error) => {
                 console.error(error);
-                window.location.href = '/';
+                globalThis.location.href = '/';
             });
     }
 
@@ -421,7 +425,7 @@ export class ShellComponent {
     }
 
     public onFlag(buildings: BuildingModel[]): void {
-        const toFlag = buildings.filter((b) => typeof b.Flagged === 'undefined');
+        const toFlag = buildings.filter((b) => b.Flagged === undefined);
 
         this.#dialog
             .open<FlagModalComponent, FlagModalData, FlagModalResult>(FlagModalComponent, {
@@ -430,7 +434,10 @@ export class ShellComponent {
                 data: toFlag,
             })
             .afterClosed()
-            .pipe(switchMap((flag) => (flag !== undefined && flag === true ? forkJoin(...toFlag.map((b) => this.#dataService.flagToInvestigate(b))) : EMPTY)))
+            .pipe(
+                filter((confirmed): confirmed is true => confirmed === true),
+                switchMap(() => (toFlag.length ? forkJoin(toFlag.map((b) => this.#dataService.flagToInvestigate(b))) : EMPTY)),
+            )
             .subscribe();
     }
 
@@ -443,19 +450,20 @@ export class ShellComponent {
                 data: building,
             })
             .afterClosed()
-            .pipe(switchMap((reason) => (reason !== undefined ? this.#dataService.invalidateFlag(building, reason) : EMPTY)))
+            .pipe(
+                filter((reason): reason is RemoveFlagModalResult => reason !== undefined),
+                switchMap((reason) => this.#dataService.invalidateFlag(building, reason)),
+            )
             .subscribe();
     }
 
     private createQueryParams(filter: Record<string, string[]>): Record<'filter', string | undefined> {
-        Object.keys(filter).forEach((key: string) => {
-            if (this.filterProps?.[key as FilterKeys]) {
-                delete this.filterProps[key as FilterKeys];
-            }
-        });
+        for (const key of Object.keys(filter)) {
+            delete this.filterProps[key as FilterKeys];
+        }
         const filterString = this.#filterService.createFilterString(filter, this.filterProps);
         const queryParams = {
-            filter: filterString !== '' ? filterString : undefined,
+            filter: filterString === '' ? undefined : filterString,
         };
         return queryParams;
     }

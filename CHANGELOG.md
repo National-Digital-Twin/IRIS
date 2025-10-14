@@ -12,7 +12,13 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
  - **Pre-release versions** – Use suffixes such as `-alpha`, `-beta`, `-rc.1` (e.g., `2.1.0-beta.1`).
  - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
- ---
+---
+
+## [0.93.5] - 2025-10-14
+
+### Features
+
+- [DPAV-1818]: IRIS privacy notice
 
 ## [0.92.1] - 2025-07-22
 

@@ -81,7 +81,12 @@
 
 .mat-sidenav-content {
     overflow: hidden;
-}
+    display: flex;
+    flex-direction: column;
+
+    height: 100%;
+    min-height: 0;
+  }
 
 .accessibility-controls-heading {
     display: flex;
@@ -124,16 +129,33 @@
 
 .content {
     overflow: hidden;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+
     width: 100%;
-    height: 100%;
-
+    min-height: 0;
+  
     .map-container {
-        width: 100%;
-        height: 100%;
-
-        /** force mapbox logo to display */
-        .mapboxgl-ctrl-bottom-left .mapboxgl-ctrl {
-            display: block !important;
-        }
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+  
+      .mapboxgl-ctrl-bottom-left .mapboxgl-ctrl {
+        display: block !important;
+      }
     }
-}
+  }
+
+  .content.privacy-mode {
+    background: #ffffff;
+  }
+  
+  .content.privacy-mode .content-scroll {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    -webkit-overflow-scrolling: touch;
+  }
