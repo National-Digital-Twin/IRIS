@@ -9,6 +9,8 @@ from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from pydantic import BaseModel
 
+from api.utils import get_nullable_float
+
 from .ies_models import IesThing
 
 print(pydantic.VERSION)
@@ -61,7 +63,7 @@ class DetailedBuilding(Building):
     roof_aspect_area_facing_west_m2: Optional[float] = None
     roof_aspect_area_facing_north_west_m2: Optional[float] = None
     roof_aspect_area_indeterminable_m2: Optional[float] = None
-    
+
 
 class DetailedBuildingSchema(DetailedBuilding):
 
@@ -71,15 +73,33 @@ class DetailedBuildingSchema(DetailedBuilding):
             solar_panel_presence=str(obj.has_roof_solar_panels),
             roof_material=obj.roof_material,
             roof_shape=obj.roof_shape,
-            roof_aspect_area_facing_north_m2=float(obj.roof_aspect_area_facing_north_m2),
-            roof_aspect_area_facing_north_east_m2=float(obj.roof_aspect_area_facing_north_east_m2),
-            roof_aspect_area_facing_east_m2=float(obj.roof_aspect_area_facing_east_m2),
-            roof_aspect_area_facing_south_east_m2=float(obj.roof_aspect_area_facing_south_east_m2),
-            roof_aspect_area_facing_south_m2=float(obj.roof_aspect_area_facing_south_m2),
-            roof_aspect_area_facing_south_west_m2=float(obj.roof_aspect_area_facing_south_west_m2),
-            roof_aspect_area_facing_west_m2=float(obj.roof_aspect_area_facing_west_m2),
-            roof_aspect_area_facing_north_west_m2=float(obj.roof_aspect_area_facing_north_west_m2),
-            roof_aspect_area_indeterminable_m2=float(obj.roof_aspect_area_indeterminable_m2)
+            roof_aspect_area_facing_north_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_north_m2
+            ),
+            roof_aspect_area_facing_north_east_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_north_east_m2
+            ),
+            roof_aspect_area_facing_east_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_east_m2
+            ),
+            roof_aspect_area_facing_south_east_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_south_east_m2
+            ),
+            roof_aspect_area_facing_south_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_south_m2
+            ),
+            roof_aspect_area_facing_south_west_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_south_west_m2
+            ),
+            roof_aspect_area_facing_west_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_west_m2
+            ),
+            roof_aspect_area_facing_north_west_m2=get_nullable_float(
+                obj.roof_aspect_area_facing_north_west_m2
+            ),
+            roof_aspect_area_indeterminable_m2=get_nullable_float(
+                obj.roof_aspect_area_indeterminable_m2
+            ),
         )
 
 
