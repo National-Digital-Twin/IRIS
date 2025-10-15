@@ -7,7 +7,6 @@ pass_through_headers = [
     "Authorization",
 ]
 
-
 def get_headers(headers):
     forward_headers = {}
     for header in pass_through_headers:
@@ -16,6 +15,5 @@ def get_headers(headers):
             forward_headers[header] = hv
     return forward_headers
 
-
-def has_bindings(r):
+def has_bindings(r): 
     return bool(r and r.get("results") and r.get("results").get("bindings"))
