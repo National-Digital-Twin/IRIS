@@ -14,7 +14,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "b55e05000f66"
 down_revision: Union[str, None] = "b0c5faee6d07"
@@ -37,7 +36,7 @@ def upgrade() -> None:
                 b.is_residential,
                 ea.lodgement_date,
                 ea.epc_rating,
-                ea.sap_score,
+                ea.sap_rating,
                 ea.expiry_date,
                 COALESCE(su_epc.type, su_build.type) AS type,
                 COALESCE(su_epc.built_form, su_build.built_form) AS built_form,

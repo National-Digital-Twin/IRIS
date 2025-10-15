@@ -14,7 +14,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "b0c5faee6d07"
 down_revision: Union[str, None] = "37989279ce33"
@@ -29,7 +28,7 @@ def upgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.epc_assessment
-        ADD COLUMN IF NOT EXISTS sap_score INTEGER;
+        ADD COLUMN IF NOT EXISTS sap_rating INTEGER;
         """
     )
     op.execute(
@@ -75,7 +74,7 @@ def downgrade() -> None:
     op.execute(
         """
         ALTER TABLE iris.epc_assessment
-        DROP COLUMN IF EXISTS sap_score;
+        DROP COLUMN IF EXISTS sap_rating;
         """
     )
 

@@ -8,7 +8,7 @@ The CSV files used are from a previous import, they require the columns:
 | --------------- | --------------------------------------- | ------------- |
 | `UPRN`          | Unique Property Reference Number        | `10033219288` |
 | `SAPBand`       | EPC rating band (A-G)                   | `C`           |
-| `SAPScore`      | SAP numeric score                       | `72`          |
+| `SAPRating`      | SAP numeric score                       | `72`          |
 | `LodgementDate` | Certificate lodgement date (YYYY-MM-DD) | `2008-10-01`  |
 
 **Note:** Rows with missing or empty values for `SAPBand`, `SAPScore`, `UPRN`, or `LodgementDate` will be skipped.
@@ -49,7 +49,6 @@ CSV_PATH=/path/to/file.csv python update_from_csv.py
 | `DB_PASSWORD`       | No       | `postgres`  | PostgreSQL password                                           |
 | `DB_NAME`           | No       | `iris`      | Database name                                                 |
 | `DB_PORT`           | No       | `5432`      | PostgreSQL port                                               |
-| `DISABLE_FK_CHECKS` | No       | `false`     | Set to `true` to disable foreign key checks (testing only)    |
 
 ### AWS Credentials
 

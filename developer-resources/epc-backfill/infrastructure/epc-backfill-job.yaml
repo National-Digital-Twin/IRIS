@@ -6,8 +6,9 @@ metadata:
 spec:
   template:
     spec:
+      serviceAccountName: s3-csv-postgres-importer-sa
       containers:
-        - name: iris/epc-backfill-python
+        - name: epc-backfill-python
           image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/epc-backfill-python:latest
           resources:
             requests:
@@ -17,19 +18,21 @@ spec:
             limits:
               memory: 1Gi
           env:
+            - name: AWS_ROLE_ARN
+              value: "arn:aws:iam::537124944113:role/s3-csv-postgres-importer-role"
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
             - name: DB_HOST
-              value: { REPLACE_ME }
-            - name: DB_PORT
-              value: { REPLACE_ME }
+              value: "{REPLACE ME}"
             - name: DB_NAME
-              value: { REPLACE_ME }
+              value: "{REPLACE ME}"
             - name: DB_USERNAME
-              value: { REPLACE_ME }
+              value: "{REPLACE ME}"
             - name: DB_PASSWORD
-              value: { REPLAC_ME }
+              value: "{REPLACE ME}"
             - name: CSV_PATH
-              value: { REPLACE_ME }
-      restartPolicy: OnFailure
+              value: "{REPLACE ME}"
+      restartPolicy: Never
       securityContext:
         fsGroup: 999
   backoffLimit: 4

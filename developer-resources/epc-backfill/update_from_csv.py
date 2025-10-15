@@ -11,8 +11,9 @@ from datetime import datetime
 from pathlib import Path
 
 import boto3
-import psycopg2
+import sqlalchemy as sa
 from smart_open import open as smart_open
+from sqlalchemy import text
 
 logging.basicConfig(
     level=logging.INFO,
@@ -88,48 +89,52 @@ def list_csv_files(path):
         return list_local_csv_files(path)
 
 
-def process_batch(conn, batch):
+def process_batch(engine, batch):
     """Process a batch of EPC data."""
     if not batch:
         return 0
 
-    cur = conn.cursor()
+    with engine.begin() as conn:
+        raw_conn = conn.connection
 
-    cur.execute(
+        conn.execute(
+            text(
+                """
+            CREATE TEMP TABLE epc_temp (
+                uprn TEXT,
+                lodgement_date DATE,
+                sap_rating INTEGER
+            ) ON COMMIT DROP;
         """
-        CREATE TEMP TABLE epc_temp (
-            uprn TEXT,
-            lodgement_date DATE,
-            sap_score INTEGER
-        ) ON COMMIT DROP;
-    """
-    )
+            )
+        )
 
-    buffer = io.StringIO()
-    for row in batch:
-        buffer.write(f"{row['uprn']}\t{row['lodgement_date']}\t{row['sap_score']}\n")
-    buffer.seek(0)
+        buffer = io.StringIO()
+        for row in batch:
+            buffer.write(
+                f"{row['uprn']}\t{row['lodgement_date']}\t{row['sap_rating']}\n"
+            )
+        buffer.seek(0)
 
-    cur.copy_from(
-        buffer,
-        "epc_temp",
-        columns=["uprn", "lodgement_date", "sap_score"],
-    )
+        raw_conn.cursor().copy_from(
+            buffer,
+            "epc_temp",
+            columns=["uprn", "lodgement_date", "sap_rating"],
+        )
 
-    cur.execute(
-        """
-        UPDATE iris.epc_assessment ea
-        SET sap_score = et.sap_score
-        FROM epc_temp et
-        WHERE ea.uprn = et.uprn AND ea.lodgement_date = et.lodgement_date;
-        """
-    )
-
-    conn.commit()
-    cur.close()
+        conn.execute(
+            text(
+                """
+            UPDATE iris.epc_assessment ea
+            SET sap_rating = et.sap_rating
+            FROM epc_temp et
+            WHERE ea.uprn = et.uprn AND ea.lodgement_date = et.lodgement_date;
+            """
+            )
+        )
 
 
-def process_csv_file(csv_path, db_conn):
+def process_csv_file(csv_path, engine):
     logger.info(f"Processing {csv_path}")
 
     batch = []
@@ -155,8 +160,8 @@ def process_csv_file(csv_path, db_conn):
 
             uprn = row.get("UPRN", "").strip()
             lodgement_date = parse_date(row.get("LodgementDate", ""))
-            sap_score = parse_int(row.get("SAPScore", ""))
-            if not uprn or not lodgement_date or sap_score is None:
+            sap_rating = parse_int(row.get("SAPRating", ""))
+            if not uprn or not lodgement_date or sap_rating is None:
                 file_stats["skipped"] += 1
                 continue
 
@@ -164,12 +169,12 @@ def process_csv_file(csv_path, db_conn):
                 {
                     "uprn": uprn,
                     "lodgement_date": lodgement_date,
-                    "sap_score": sap_score,
+                    "sap_rating": sap_rating,
                 }
             )
 
             if len(batch) >= BATCH_SIZE:
-                process_batch(db_conn, batch)
+                process_batch(engine, batch)
                 file_stats["processed"] += len(batch)
                 logger.info(
                     f"  Batch: {file_stats['processed']:,} processed, {file_stats['skipped']:,} skipped"
@@ -177,7 +182,7 @@ def process_csv_file(csv_path, db_conn):
                 batch = []
 
     if batch:
-        process_batch(db_conn, batch)
+        process_batch(engine, batch)
         file_stats["processed"] += len(batch)
 
     logger.info(
@@ -201,35 +206,19 @@ def main():
     db_password = os.getenv("DB_PASSWORD", "postgres")
     db_name = os.getenv("DB_NAME", "iris")
 
-    # For testing the script locally, to avoid building fk constraints
-    disable_fk_checks = os.getenv("DISABLE_FK_CHECKS", "false").lower() == "true"
-
     if not all([csv_path, db_host, db_user, db_password]):
         logger.error(
             "Missing one or more required environment variables: CSV_PATH, DB_HOST, DB_USERNAME, DB_PASSWORD"
         )
         sys.exit(1)
 
-    conn = psycopg2.connect(
-        host=db_host,
-        port=db_port,
-        dbname=db_name,
-        user=db_user,
-        password=db_password,
+    engine = sa.create_engine(
+        f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     )
-    conn.autocommit = False
-
-    if disable_fk_checks:
-        logger.warning("Foreign key checks are DISABLED - use only for testing!")
-        cur = conn.cursor()
-        cur.execute("SET session_replication_role = replica;")
-        conn.commit()
-        cur.close()
 
     csv_files = list_csv_files(csv_path)
     if not csv_files:
         logger.warning("No CSV files found")
-        conn.close()
         return
 
     stats = {"processed": 0, "skipped": 0}
@@ -239,7 +228,7 @@ def main():
     for csv_file in csv_files:
         file_start = datetime.now()
         try:
-            file_stats = process_csv_file(csv_file, conn)
+            file_stats = process_csv_file(csv_file, engine)
             stats["processed"] += file_stats["processed"]
             stats["skipped"] += file_stats["skipped"]
 
@@ -250,10 +239,7 @@ def main():
             )
         except Exception as e:
             logger.error(f"Failed to process {csv_file}: {e}")
-            conn.rollback()
             continue
-
-    conn.close()
 
     elapsed = (datetime.now() - start_time).total_seconds()
     logger.info("=" * 60)
