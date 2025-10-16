@@ -21,13 +21,17 @@ def get_building(uprn: str) -> str:
             ?epc_result ies:isParticipantIn ?epc_assessment .
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
-            ?_bf a ?builtForm .
-            ?builtForm a building:BuiltForm .
-            ?_bf ies:isStateOf ?structureUnit .
+            OPTIONAL {{
+                ?_bf a ?builtForm .
+                ?builtForm a building:BuiltForm .
+                ?_bf ies:isStateOf ?structureUnit .
+            }}
 
-            ?_sut a ?structureUnitType .
-            ?structureUnitType a building:StructureUnitType .
-            ?_sut ies:isStateOf ?structureUnit .
+            OPTIONAL {{
+                ?_sut a ?structureUnitType .
+                ?structureUnitType a building:StructureUnitType .
+                ?_sut ies:isStateOf ?structureUnit .
+            }}
         }}
         LIMIT 1
     """
@@ -48,13 +52,17 @@ def get_roof_for_building(uprn: str) -> str:
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
 
-            ?_rc a ?roofConstruction .
-            ?roofConstruction a building:RoofConstruction .
-            ?_rc ies:isPartOf ?structureUnitState .
+            OPTIONAL {{
+                ?_rc a ?roofConstruction .
+                ?roofConstruction a building:RoofConstruction .
+                ?_rc ies:isPartOf ?structureUnitState .
+            }}
 
-            ?_ri a ?roofInsulation .
-            ?roofInsulation a building:RoofInsulationLocation .
-            ?_ri ies:isPartOf ?structureUnitState .
+            OPTIONAL {{
+                ?_ri a ?roofInsulation .
+                ?roofInsulation a building:RoofInsulationLocation .
+                ?_ri ies:isPartOf ?structureUnitState .
+            }}
 
             OPTIONAL {{
                 ?_rit a ?roofInsulationThickness .
@@ -81,13 +89,17 @@ def get_floor_for_building(uprn: str) -> str:
         ?structureUnitState a building:StructureUnitState .
         ?structureUnitState ies:isStateOf ?structureUnit .
 
-        ?_fc a ?floorConstruction .
-        ?floorConstruction a building:FloorConstruction .
-        ?_fc ies:isPartOf ?structureUnitState .
+        OPTIONAL {{
+            ?_fc a ?floorConstruction .
+            ?floorConstruction a building:FloorConstruction .
+            ?_fc ies:isPartOf ?structureUnitState .
+        }}
 
-        ?_fi a ?floorInsulation .
-        ?floorInsulation a building:FloorInsulation .
-        ?_fi ies:isPartOf ?structureUnitState .
+        OPTIONAL {{
+            ?_fi a ?floorInsulation .
+            ?floorInsulation a building:FloorInsulation .
+            ?_fi ies:isPartOf ?structureUnitState .
+        }}
 
         }}
         LIMIT 1
@@ -109,17 +121,23 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
 
-            ?_wc a ?wallConstruction .
-            ?wallConstruction a building:WallConstruction .
-            ?_wc ies:isPartOf ?structureUnitState .
+            OPTIONAL {{
+                ?_wc a ?wallConstruction .
+                ?wallConstruction a building:WallConstruction .
+                ?_wc ies:isPartOf ?structureUnitState .
+            }}
 
-            ?_wi a ?wallInsulation .
-            ?wallInsulation a building:WallInsulation .
-            ?_wi ies:isPartOf ?structureUnitState .
+            OPTIONAL {{
+                ?_wi a ?wallInsulation .
+                ?wallInsulation a building:WallInsulation .
+                ?_wi ies:isPartOf ?structureUnitState .
+            }}
 
-            ?_wg a ?windowGlazing .
-            ?windowGlazing a building:GlazingType .
-            ?_wg ies:isPartOf ?structureUnitState .
+            OPTIONAL {{
+                ?_wg a ?windowGlazing .
+                ?windowGlazing a building:GlazingType .
+                ?_wg ies:isPartOf ?structureUnitState .
+            }}
 
         }}
         LIMIT 1
@@ -143,6 +161,7 @@ def get_fueltype_for_building(uprn: str) -> str:
             }}
         }}
     """
+
 
 def get_all_ngd_attributes_pg() -> str:
     return """
