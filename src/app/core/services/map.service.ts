@@ -29,9 +29,10 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
 
     public currentMapBounds = signal<LngLatBounds | undefined>(undefined);
 
-    private readonly mapLoaded = new AsyncSubject<boolean>();
+    private mapLoaded: AsyncSubject<boolean>;
 
     constructor() {
+        this.mapLoaded = new AsyncSubject<boolean>();
         this.mapLoaded$ = this.mapLoaded.asObservable();
     }
 
@@ -169,9 +170,10 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
     }
 
     public destroyMap(): void {
-        if (this.mapInstance) {
-            this.mapInstance.remove();
-        }
+        this.mapInstance?.remove();
+        this.drawControl = undefined;
+        this.mapLoaded = new AsyncSubject<boolean>();
+        this.mapLoaded$ = this.mapLoaded.asObservable();
     }
 
     private hookEvents(): void {

@@ -35,14 +35,18 @@ export class DashboardPageComponent implements OnInit {
     public selectedArea = signal<GeoJSON.Feature<Polygon> | undefined>(undefined);
 
     public ngOnInit(): void {
-        // Read dashboard type from route data
         const routeData = this.#route.snapshot.data;
         if (routeData['type']) {
             this.dashboardType.set(routeData['type']);
-        }
 
-        // TODO: If type is 'area', get selectedArea from route params or state
-        // For now, keeping placeholder from original code
+            if (routeData['type'] === 'area') {
+                const state = history.state;
+                if (state?.selectedArea) {
+                    this.selectedArea.set(state.selectedArea as GeoJSON.Feature<Polygon>);
+                    console.log('selectedArea', this.selectedArea());
+                }
+            }
+        }
     }
 
     public handleReturnToMapView(): void {
