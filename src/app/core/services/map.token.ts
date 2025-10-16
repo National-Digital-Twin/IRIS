@@ -1,6 +1,6 @@
 import { InjectionToken, WritableSignal } from '@angular/core';
 import { URLStateModel } from '@core/models/url-state.model';
-import { Feature } from 'geojson';
+import { Feature, FeatureCollection, Geometry } from 'geojson';
 import mapboxgl from 'mapbox-gl';
 import { Observable } from 'rxjs';
 
@@ -17,6 +17,9 @@ export type MapDraw = {
     getMode: () => string;
     changeMode: (mode: string) => void;
     deleteAll: () => void;
+    add: (geojson: Feature | FeatureCollection | Geometry) => string[];
+    set: (featureCollection: FeatureCollection) => string[];
+    getAll: () => FeatureCollection;
 };
 
 export type MapLatLng = {

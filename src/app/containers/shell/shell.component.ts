@@ -1,5 +1,5 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, Input, InputSignal, NgZone, computed, effect, inject, input, numberAttribute } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, Input, InputSignal, NgZone, computed, effect, inject, input, numberAttribute, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -10,6 +10,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Params, Router } from '@angular/router';
+import { DashboardAreaSelectionDialogComponent } from '@components/dashboard-area-selection-dialog/dashboard-area-selection-dialog.component';
 import { DetailsPanelComponent } from '@components/details-panel/details-panel.component';
 import { DownloadWarningComponent } from '@components/download-warning/download-warning.component';
 import { FlagModalComponent, FlagModalData, FlagModalResult } from '@components/flag-modal/flag.modal.component';
@@ -77,6 +78,7 @@ export class ShellComponent {
     readonly #signoutService = inject(SignoutService);
     readonly #zone = inject(NgZone);
 
+    public mapComponent = viewChild<MapComponent>(MapComponent);
     public filterProps: FilterProps = {};
     public mapConfig!: URLStateModel;
     public minimapData?: MinimapData;
@@ -496,6 +498,33 @@ export class ShellComponent {
 
     public filtersExist(): boolean {
         return (this.filterProps && Object.keys(this.filterProps).length > 0) || this.#spatialQueryService.spatialFilterEnabled();
+    }
+
+    public handleNavigateToAreaDashboard(polygon: GeoJSON.Feature<Polygon>): void {
+        // If spatial filter already exists, navigate directly
+        if (this.spatialFilterEnabled()) {
+            this.#zone.run(() => {
+                this.#router.navigate(['/dashboards/area'], {
+                    state: { selectedArea: polygon },
+                });
+            });
+            return;
+        }
+
+        this.#dialog
+            .open<DashboardAreaSelectionDialogComponent, void, 'yes' | 'no'>(DashboardAreaSelectionDialogComponent)
+            .afterClosed()
+            .subscribe((response) => {
+                if (response === 'yes') {
+                    this.#zone.run(() => {
+                        this.#router.navigate(['/dashboards/area'], {
+                            state: { selectedArea: polygon },
+                        });
+                    });
+                } else {
+                    this.mapComponent()?.deleteSearchArea();
+                }
+            });
     }
 }
 

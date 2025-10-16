@@ -118,10 +118,17 @@
                 <mat-icon>bar_chart</mat-icon>
             </button>
             <mat-menu #dashboardsMenu="matMenu" xPosition="before" [overlapTrigger]="false" class="layers-menu">
-                <a mat-menu-item disabled matTooltip="Not implemented yet">
-                    <mat-icon svgIcon="polyline"></mat-icon>
-                    <span>Draw area</span>
-                </a>
+                @if (hasSpatialFilter) {
+                    <button mat-menu-item (click)="handleDashboardAreaClick()">
+                        <mat-icon>map</mat-icon>
+                        <span>Area view</span>
+                    </button>
+                } @else {
+                    <button mat-menu-item (click)="handleDashboardAreaClick()">
+                        <mat-icon svgIcon="polyline"></mat-icon>
+                        <span>Draw area</span>
+                    </button>
+                }
                 <a mat-menu-item routerLink="/dashboards/national">
                     <mat-icon>public</mat-icon>
                     <span>National view</span>

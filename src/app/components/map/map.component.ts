@@ -29,6 +29,7 @@ import { FilterableBuildingService } from '@core/services/filterable-building.se
 import { LayerFactoryService } from '@core/services/layers/layer-factory.service';
 import { MAP_SERVICE, MapDraw } from '@core/services/map.token';
 import { SETTINGS, SettingsService } from '@core/services/settings.service';
+import { SpatialQueryService } from '@core/services/spatial-query.service';
 import { UiStateService } from '@core/services/ui-state.service';
 import { UtilService } from '@core/services/utils.service';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
@@ -56,12 +57,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     readonly #mapService = inject(MAP_SERVICE);
     readonly #runtimeConfig = inject(RUNTIME_CONFIGURATION);
     readonly #settings = inject(SettingsService);
+    readonly #spatialQueryService = inject(SpatialQueryService);
     readonly #uiStateService = inject(UiStateService);
     readonly #utilsService = inject(UtilService);
 
     public bearing: number = 0;
     public drawActive: boolean = false;
     public twoDimensions: boolean = false;
+    private isDrawingForDashboard: boolean = false;
 
     public layersMenuOpen: boolean = false;
     public layerStates: LayerState = this.getDefaultLayerState();
@@ -120,6 +123,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     public setMinimapData: OutputEmitterRef<MinimapData> = output();
     public toggleMinimap: OutputEmitterRef<null> = output();
     public downloadAddresses: OutputEmitterRef<null> = output();
+    public navigateToAreaDashboard: OutputEmitterRef<GeoJSON.Feature<Polygon>> = output();
 
     public readonly theme$ = toObservable(this.#settings.get(SETTINGS.Theme)).pipe(takeUntilDestroyed());
 
@@ -180,6 +184,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         /** Spatial search events */
         this.#mapService.mapInstance.on('draw.create', this.onDrawCreate.bind(this));
         this.#mapService.mapInstance.on('draw.update', this.onDrawUpdate.bind(this));
+        this.#mapService.mapInstance.on('draw.modechange', this.onDrawModeChange.bind(this));
 
         /** Select building event */
         this.#mapService.mapInstance.on(
@@ -248,8 +253,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
      * Add draw tool to the map
      */
     private addControls(): void {
-        /** add draw control to map instance */
         this.drawControl = this.#mapService.addDrawControl();
+
+        const existingPolygon = this.#spatialQueryService.spatialFilterGeom();
+        if (existingPolygon) {
+            this.drawControl.add(existingPolygon);
+        }
     }
 
     public setDrawMode(mode: string): void {
@@ -277,6 +286,18 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     public changeDimensions(): void {
         this.twoDimensions = !this.twoDimensions;
         this.tilt2D.emit(this.twoDimensions);
+    }
+
+    public handleDashboardAreaClick(): void {
+        const spatialGeom = this.#spatialQueryService.spatialFilterGeom();
+        if (spatialGeom) {
+            this.navigateToAreaDashboard.emit(spatialGeom);
+        } else {
+            this.deleteSearchArea();
+            this.isDrawingForDashboard = true;
+            this.drawActive = true;
+            this.updateMode('draw_polygon');
+        }
     }
 
     public toggleEpcLayer(type: 'region' | 'county' | 'district' | 'ward'): void {
@@ -421,8 +442,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    private deleteSearchArea(): void {
+    public deleteSearchArea(): void {
         this.drawActive = false;
+        this.isDrawingForDashboard = false;
         this.drawControl?.deleteAll();
         this.deleteSpatialFilter.emit(null);
     }
@@ -433,7 +455,15 @@ export class MapComponent implements AfterViewInit, OnDestroy {
      */
     private onDrawCreate(e: MapboxDraw.DrawCreateEvent): void {
         this.drawActive = false;
-        this.setSearchArea.emit(e.features[0] as GeoJSON.Feature<Polygon>);
+        const polygon = e.features[0] as GeoJSON.Feature<Polygon>;
+
+        if (this.isDrawingForDashboard) {
+            this.isDrawingForDashboard = false;
+            this.navigateToAreaDashboard.emit(polygon);
+            this.setSearchArea.emit(polygon);
+        } else {
+            this.setSearchArea.emit(polygon);
+        }
     }
 
     /**
@@ -442,6 +472,19 @@ export class MapComponent implements AfterViewInit, OnDestroy {
      */
     private onDrawUpdate(e: MapboxDraw.DrawUpdateEvent): void {
         this.setSearchArea.emit(e.features[0] as GeoJSON.Feature<Polygon>);
+    }
+
+    /**
+     * Handle draw mode changes (including cancellation with ESC)
+     * @param e Mapbox draw mode change event
+     */
+    private onDrawModeChange(e: { mode: string }): void {
+        // If we exit draw_polygon mode without creating a feature, it means the user cancelled (ESC)
+        if (e.mode === 'simple_select' && this.drawActive) {
+            this.drawActive = false;
+            this.isDrawingForDashboard = false;
+            this.#changeDetectorRef.detectChanges();
+        }
     }
 
     private updateMinimap(): void {
