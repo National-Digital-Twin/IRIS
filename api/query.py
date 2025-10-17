@@ -32,7 +32,7 @@ def get_building(uprn: str) -> str:
                 ?structureUnitType a building:StructureUnitType .
                 ?_sut ies:isStateOf ?structureUnit .
             }}
-        }}
+        }} ORDER BY DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -51,6 +51,10 @@ def get_roof_for_building(uprn: str) -> str:
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
+            
+            ?epc_result building:lodgementDate ?lodgementDate .
+            ?epc_result ies:isParticipantIn ?epc_assessment .
+            ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
             OPTIONAL {{
                 ?_rc a ?roofConstruction .
@@ -69,7 +73,7 @@ def get_roof_for_building(uprn: str) -> str:
                 ?roofInsulationThickness a building:RoofInsulationThickness .
                 ?_rit ies:isPartOf ?structureUnitState .
             }}
-        }}
+        }} ORDER BY DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -88,6 +92,10 @@ def get_floor_for_building(uprn: str) -> str:
         ?structureUnit a building:StructureUnit .
         ?structureUnitState a building:StructureUnitState .
         ?structureUnitState ies:isStateOf ?structureUnit .
+        
+        ?epc_result building:lodgementDate ?lodgementDate .
+        ?epc_result ies:isParticipantIn ?epc_assessment .
+        ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
         OPTIONAL {{
             ?_fc a ?floorConstruction .
@@ -101,7 +109,7 @@ def get_floor_for_building(uprn: str) -> str:
             ?_fi ies:isPartOf ?structureUnitState .
         }}
 
-        }}
+        }} ORDER BY DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -120,6 +128,10 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
+            
+            ?epc_result building:lodgementDate ?lodgementDate .
+            ?epc_result ies:isParticipantIn ?epc_assessment .
+            ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
 
             OPTIONAL {{
                 ?_wc a ?wallConstruction .
@@ -139,7 +151,7 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
                 ?_wg ies:isPartOf ?structureUnitState .
             }}
 
-        }}
+        }} ORDER BY DESC(?lodgementDate)
         LIMIT 1
     """
 
@@ -159,7 +171,8 @@ def get_fueltype_for_building(uprn: str) -> str:
                 ?structureUnitState building:isServicedBy ?heatingSystem .
                 ?heatingSystem building:isOperableWithFuel ?fuelType .
             }}
-        }}
+        }} ORDER BY DESC(?lodgementDate)
+        LIMIT 1
     """
 
 
@@ -194,7 +207,15 @@ def get_all_ngd_attributes_pg() -> str:
             su.roof_aspect_area_facing_west_m2,
             su.roof_aspect_area_facing_north_west_m2,
             su.roof_aspect_area_indeterminable_m2
-        FROM iris.epc_assessment ea
+        FROM (
+            SELECT
+                *
+            FROM
+                iris.epc_assessment
+            ORDER BY
+                lodgement_date desc nulls last,
+                id desc
+            LIMIT 1) ea
         JOIN iris.structure_unit su ON su.epc_assessment_id = ea.id
         WHERE ea.uprn = :uprn
         LIMIT 1;
@@ -312,12 +333,34 @@ def get_buildings_in_bounding_box_query() -> str:
             WHERE point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
                 AND ST_Intersects(point, ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid))
         )
-        SELECT fb.uprn, fb.first_line_of_address,
-            fb.toid, fb.point, ea.epc_rating,
-            su.type AS structure_unit_type
-        FROM filtered_buildings fb
-        LEFT JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
-        LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
+        SELECT
+            fb.uprn,
+            fb.first_line_of_address,
+            fb.toid,
+            fb.point,
+            ea.epc_rating,
+            su.type as structure_unit_type
+        FROM
+            filtered_buildings fb
+        LEFT JOIN LATERAL (
+            SELECT
+                id,
+                uprn,
+                epc_rating,
+                lodgement_date
+            FROM
+                iris.epc_assessment
+            WHERE
+                uprn = fb.uprn
+            ORDER BY
+                lodgement_date desc nulls last,
+                id desc
+            LIMIT 1
+        ) ea ON
+            TRUE
+        LEFT JOIN iris.structure_unit su
+        ON
+            su.epc_assessment_id = ea.id;
     """
 
 
@@ -329,7 +372,8 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
             WHERE point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
                 AND ST_Intersects(point, ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid))
         )
-        SELECT fb.uprn, fb.toid, fb.post_code,
+        SELECT
+            fb.uprn, fb.toid, fb.post_code,
             su.built_form, su.fuel_type,
             ea.lodgement_date, su.window_glazing,
             su.wall_construction, su.wall_insulation,
@@ -345,9 +389,27 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
             su.roof_aspect_area_facing_west_m2,
             su.roof_construction, su.roof_insulation,
             su.roof_insulation_thickness
-        FROM filtered_buildings fb
-        LEFT JOIN iris.epc_assessment ea ON fb.uprn = ea.uprn
-        LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id;
+        FROM
+            filtered_buildings fb
+        LEFT JOIN LATERAL (
+            SELECT
+                id,
+                uprn,
+                epc_rating,
+                lodgement_date
+            FROM
+                iris.epc_assessment
+            WHERE
+                uprn = fb.uprn
+            ORDER BY
+                lodgement_date desc nulls last,
+                id desc
+            LIMIT 1
+        ) ea ON
+            TRUE
+        LEFT JOIN iris.structure_unit su
+        ON
+            su.epc_assessment_id = ea.id;
     """
 
 
