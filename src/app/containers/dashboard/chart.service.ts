@@ -14,23 +14,6 @@ export interface ChartConfig<T = unknown> {
 export class ChartService {
     readonly #config = inject(RUNTIME_CONFIGURATION);
 
-    public readonly allRegions = [
-        'East Midlands',
-        'East of England',
-        'London',
-        'Mid and West Wales',
-        'North East',
-        'North Wales',
-        'North West',
-        'South East',
-        'South Wales Central',
-        'South Wales East',
-        'South Wales West',
-        'South West',
-        'West Midlands',
-        'Yorkshire & Humber',
-    ];
-
     public get epcColors(): Record<string, string> {
         return this.#config.epcColours;
     }

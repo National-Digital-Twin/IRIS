@@ -1,12 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, effect } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { RegionCharacteristicData } from '@core/services/dashboard.service';
+import { BackendBuildingAttributesResponse, RegionCharacteristicData } from '@core/services/dashboard.service';
 import { PlotlyModule } from 'angular-plotly.js';
 import type { Data, Layout } from 'plotly.js-dist-min';
 import { BaseChartComponent } from '../base-chart.component';
 import { RegionSelectorComponent } from '../shared/region-selector.component';
+
+interface CharacteristicOption {
+    value: keyof BackendBuildingAttributesResponse;
+    label: string;
+}
 
 @Component({
     selector: 'c477-characteristics-chart',
@@ -16,44 +21,72 @@ import { RegionSelectorComponent } from '../shared/region-selector.component';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CharacteristicsChartComponent extends BaseChartComponent {
-    public readonly characteristicOptions = [
-        { value: 'double glazing', label: 'Double Glazing' },
-        { value: 'single glazing', label: 'Single Glazing' },
-        { value: 'cavity wall', label: 'Cavity Wall' },
-        { value: 'solar panels', label: 'Solar Panels' },
-        { value: 'pitched roof', label: 'Pitched Roof' },
-        { value: 'solid floor', label: 'Solid Floor' },
-        { value: 'roof insulation 150mm', label: 'Roof Insulation 150mm' },
-        { value: 'roof insulation 200mm', label: 'Roof Insulation 200mm' },
-        { value: 'roof insulation 250mm', label: 'Roof Insulation 250mm' },
+    public readonly characteristicOptions: CharacteristicOption[] = [
+        { value: 'percentage_double_glazing', label: 'Double Glazing' },
+        { value: 'percentage_single_glazing', label: 'Single Glazing' },
+        { value: 'percentage_cavity_wall', label: 'Cavity Wall' },
+        { value: 'percentage_roof_solar_panels', label: 'Solar Panels' },
+        { value: 'percentage_pitched_roof', label: 'Pitched Roof' },
+        { value: 'percentage_solid_floor', label: 'Solid Floor' },
+        { value: 'percentage_roof_insulation_thickness_150mm', label: 'Roof Insulation 150mm' },
+        { value: 'percentage_roof_insulation_thickness_200mm', label: 'Roof Insulation 200mm' },
+        { value: 'percentage_roof_insulation_thickness_250mm', label: 'Roof Insulation 250mm' },
     ];
 
     public chartData = signal<Data[]>([]);
-    public chartLayout: Partial<Layout> = {};
+    public chartLayout = signal<Partial<Layout>>({});
     public loading = signal(true);
 
-    public selectedCharacteristic = signal('double glazing');
-    public selectedRegions = signal<string[]>(['East Midlands', 'North East', 'West Midlands', 'North West']);
+    public selectedCharacteristic = signal<keyof BackendBuildingAttributesResponse>('percentage_double_glazing');
+    public availableRegions = signal<string[]>([]);
+    public selectedRegions = signal<string[]>([]);
 
-    public onCharacteristicChange(characteristic: string): void {
-        this.selectedCharacteristic.set(characteristic);
-        this.loadData();
-    }
+    private readonly buildingAttributesByRegion = signal<BackendBuildingAttributesResponse[] | null>(null);
 
-    public onRegionChange(regions: string[]): void {
-        this.selectedRegions.set(regions);
-        this.loadData();
+    private readonly characteristicData = computed<RegionCharacteristicData[]>(() => {
+        const apiResponse = this.buildingAttributesByRegion();
+        if (!apiResponse) {
+            return [];
+        }
+
+        const fieldName = this.selectedCharacteristic();
+        return apiResponse.map((data) => ({
+            region_name: data.region_name,
+            percentage: Number(data[fieldName]) || 0,
+        }));
+    });
+
+    constructor() {
+        super();
+        effect(() => {
+            const regions = this.selectedRegions();
+            const characteristic = this.selectedCharacteristic();
+            const data = this.characteristicData();
+
+            if (!data.length) {
+                return;
+            }
+
+            const label = this.characteristicOptions.find((o) => o.value === characteristic)?.label ?? String(characteristic);
+            const built = this.buildChart(label, data, regions);
+            this.chartData.set(built.data);
+            this.chartLayout.set(built.layout);
+            this.loading.set(false);
+        });
     }
 
     protected loadData(): void {
         this.loading.set(true);
 
-        const sub = this.dashboardService.getBuildingCharacteristics(this.selectedCharacteristic()).subscribe((response) => {
-            const { data, layout } = this.buildChart(this.selectedCharacteristic(), response.regions, this.selectedRegions());
+        const polygon = this.selectedArea?.geometry;
+        const sub = this.dashboardService.getAllBuildingAttributesPerRegion(polygon).subscribe((apiResponse) => {
+            this.buildingAttributesByRegion.set(apiResponse);
 
-            this.chartData.set(data);
-            this.chartLayout = layout;
-            this.loading.set(false);
+            const regions = apiResponse.map((r) => r.region_name);
+            this.availableRegions.set(regions);
+
+            // Just show the first 4 regions to avoid too many bars
+            this.selectedRegions.set(regions.slice(0, Math.min(4, regions.length)));
         });
 
         this.subscriptions.add(sub);
@@ -69,7 +102,7 @@ export class CharacteristicsChartComponent extends BaseChartComponent {
                 x: sortedRegions.map((r) => r.region_name),
                 y: sortedRegions.map((r) => r.percentage),
                 marker: { color: '#5729CE' },
-                text: sortedRegions.map((r) => `${Math.round(r.percentage)}%`),
+                text: sortedRegions.map((r) => `${r.percentage > 9 ? Math.round(r.percentage) : r.percentage}%`),
                 textposition: 'auto',
                 textfont: { color: 'white', size: 14, family: 'Roboto, sans-serif' },
                 hovertemplate: '<b>%{x}</b><br>%{y:.1f}% of buildings have ' + characteristic + '<extra></extra>',

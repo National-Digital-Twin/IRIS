@@ -1,7 +1,11 @@
 <div class="widget-header">
     <div class="widget-title">
         EPC ratings by
-        <c477-region-selector [selectedRegions]="selectedRegions()" (selectedRegionsChange)="onRegionChange($event)"></c477-region-selector>
+        <c477-region-selector
+            [selectedRegions]="selectedRegions()"
+            [availableRegions]="availableRegions()"
+            (selectedRegionsChange)="selectedRegions.set($event)"
+        ></c477-region-selector>
     </div>
 </div>
 
@@ -9,7 +13,7 @@
     @if (loading()) {
         <div class="chart-skeleton"></div>
     } @else {
-        <plotly-plot [data]="chartData()" [layout]="chartLayout" [config]="chartConfig"></plotly-plot>
+        <plotly-plot [data]="chartData()" [layout]="chartLayout()" [config]="chartConfig"></plotly-plot>
     }
 </div>
 

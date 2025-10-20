@@ -19,17 +19,23 @@
             <c477-overall-epc-chart [selectedArea]="selectedArea()"></c477-overall-epc-chart>
         </section>
 
-        <section class="widget-card">
-            <c477-epc-region-chart [selectedArea]="selectedArea()"></c477-epc-region-chart>
-        </section>
+        @if (dashboardType() === 'national') {
+            <section class="widget-card">
+                <c477-epc-region-chart [selectedArea]="selectedArea()"></c477-epc-region-chart>
+            </section>
+        }
 
-        <section class="widget-card">
-            <c477-characteristics-chart [selectedArea]="selectedArea()"></c477-characteristics-chart>
-        </section>
+        @if (dashboardType() === 'national') {
+            <section class="widget-card">
+                <c477-characteristics-chart [selectedArea]="selectedArea()"></c477-characteristics-chart>
+            </section>
+        }
 
-        <section class="widget-card">
-            <c477-sap-timeline-chart [selectedArea]="selectedArea()"></c477-sap-timeline-chart>
-        </section>
+        @if (dashboardType() === 'area') {
+            <section class="widget-card">
+                <c477-sap-timeline-chart [selectedArea]="selectedArea()"></c477-sap-timeline-chart>
+            </section>
+        }
     </div>
 </div>
 

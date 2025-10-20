@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface RegionCharacteristicData {
@@ -15,7 +15,7 @@ export interface BuildingCharacteristicsResponse {
 
 export interface TimelineDataPoint {
     date: Date;
-    avg_sap_score: number;
+    avg_sap_rating: number;
 }
 
 export interface SAPTimelineResponse {
@@ -44,7 +44,7 @@ export interface OverallEPCResponse {
     ratings: EPCRatingTotal[];
 }
 
-interface BackendBuildingAttributesResponse {
+export interface BackendBuildingAttributesResponse {
     region_name: string;
     percentage_roof_solar_panels: number;
     percentage_double_glazing: number;
@@ -59,7 +59,7 @@ interface BackendBuildingAttributesResponse {
 
 interface BackendSAPTimelineResponse {
     lodgement_date: string;
-    avg_sap_score: number;
+    avg_sap_rating: number;
 }
 
 interface BackendEPCRegionData {
@@ -104,49 +104,43 @@ export class DashboardService {
         'South Wales West PER': 'South Wales West',
     };
 
-    public getBuildingCharacteristics(characteristic: string): Observable<BuildingCharacteristicsResponse> {
-        const characteristicFieldMap: Record<string, string> = {
-            'solar panels': 'percentage_roof_solar_panels',
-            'double glazing': 'percentage_double_glazing',
-            'single glazing': 'percentage_single_glazing',
-            'cavity wall': 'percentage_cavity_wall',
-            'pitched roof': 'percentage_pitched_roof',
-            'solid floor': 'percentage_solid_floor',
-            'roof insulation 150mm': 'percentage_roof_insulation_thickness_150mm',
-            'roof insulation 200mm': 'percentage_roof_insulation_thickness_200mm',
-            'roof insulation 250mm': 'percentage_roof_insulation_thickness_250mm',
-        };
-
-        const fieldName = characteristicFieldMap[characteristic.toLowerCase()];
-
-        if (!fieldName) {
-            return of({ characteristic, regions: [] });
+    public getAllBuildingAttributesPerRegion(polygon?: GeoJSON.Polygon): Observable<BackendBuildingAttributesResponse[]> {
+        const params: Record<string, string> = {};
+        if (polygon) {
+            params.polygon = JSON.stringify(polygon);
         }
 
-        return this.#http.get<BackendBuildingAttributesResponse[]>('/api/dashboard/building-attributes-percentage', { withCredentials: true }).pipe(
-            map((results) => ({
-                characteristic,
-                regions: results.map((data) => ({
-                    region_name: this.REGION_NAME_MAP[data.region_name] || data.region_name,
-                    percentage: (data[fieldName as keyof BackendBuildingAttributesResponse] as number) || 0,
-                })),
-            })),
-        );
+        return this.#http
+            .get<BackendBuildingAttributesResponse[]>('/api/dashboard/building-attributes-percentage-per-region', { params, withCredentials: true })
+            .pipe(
+                map((results) =>
+                    results.map((data) => ({
+                        ...data,
+                        region_name: this.REGION_NAME_MAP[data.region_name] || data.region_name,
+                    })),
+                ),
+            );
     }
 
-    public getSAPTimeline(): Observable<SAPTimelineResponse> {
-        return this.#http.get<BackendSAPTimelineResponse[]>('/api/dashboard/sap-score-overtime', { withCredentials: true }).pipe(
+    public getSAPTimeline(polygon: GeoJSON.Polygon): Observable<SAPTimelineResponse> {
+        const params = { polygon: JSON.stringify(polygon) };
+        return this.#http.get<BackendSAPTimelineResponse[]>('/api/dashboard/sap-rating-overtime', { params, withCredentials: true }).pipe(
             map((results) => ({
                 timeline: results.map((data) => ({
                     date: new Date(data.lodgement_date),
-                    avg_sap_score: data.avg_sap_score,
+                    avg_sap_rating: data.avg_sap_rating,
                 })),
             })),
         );
     }
 
-    public getEPCByRegion(): Observable<EPCRegionData[]> {
-        return this.#http.get<BackendEPCRegionData[]>('/api/dashboard/epc-ratings-per-region', { withCredentials: true }).pipe(
+    public getEPCByRegion(polygon?: GeoJSON.Polygon): Observable<EPCRegionData[]> {
+        const params: Record<string, string> = {};
+        if (polygon) {
+            params.polygon = JSON.stringify(polygon);
+        }
+
+        return this.#http.get<BackendEPCRegionData[]>('/api/dashboard/epc-ratings-per-region', { params, withCredentials: true }).pipe(
             map((results) =>
                 results.map((data) => ({
                     region_name: this.REGION_NAME_MAP[data.region_name] || data.region_name,
@@ -163,8 +157,13 @@ export class DashboardService {
         );
     }
 
-    public getOverallEPC(): Observable<OverallEPCResponse> {
-        return this.#http.get<BackendEPCRatings[]>('/api/dashboard/epc-ratings', { withCredentials: true }).pipe(
+    public getOverallEPC(polygon?: GeoJSON.Polygon): Observable<OverallEPCResponse> {
+        const params: Record<string, string> = {};
+        if (polygon) {
+            params.polygon = JSON.stringify(polygon);
+        }
+
+        return this.#http.get<BackendEPCRatings[]>('/api/dashboard/epc-ratings', { params, withCredentials: true }).pipe(
             map((results) => {
                 const data = results[0];
                 const total = data.epc_a + data.epc_b + data.epc_c + data.epc_d + data.epc_e + data.epc_f + data.epc_g;
