@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { ChartService } from '../../chart.service';
 
 @Component({
     selector: 'c477-region-selector',
@@ -11,7 +10,7 @@ import { ChartService } from '../../chart.service';
         <mat-form-field appearance="outline" class="inline-select">
             <mat-select multiple [value]="selectedRegions" (selectionChange)="onSelectionChange($event.value)">
                 <mat-select-trigger>region</mat-select-trigger>
-                @for (region of allRegions; track region) {
+                @for (region of availableRegions; track region) {
                     <mat-option [value]="region" [disabled]="selectedRegions.length === 1 && selectedRegions.includes(region)">
                         {{ region }}
                     </mat-option>
@@ -23,13 +22,8 @@ import { ChartService } from '../../chart.service';
 })
 export class RegionSelectorComponent {
     @Input() public selectedRegions: string[] = [];
+    @Input() public availableRegions: string[] = [];
     @Output() public selectedRegionsChange = new EventEmitter<string[]>();
-
-    readonly #chartService = inject(ChartService);
-
-    public get allRegions(): string[] {
-        return this.#chartService.allRegions;
-    }
 
     public onSelectionChange(regions: string[]): void {
         this.selectedRegionsChange.emit(regions);

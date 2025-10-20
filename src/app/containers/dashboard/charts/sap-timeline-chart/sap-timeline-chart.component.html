@@ -6,7 +6,7 @@
     @if (loading()) {
         <div class="chart-skeleton"></div>
     } @else {
-        <plotly-plot [data]="chartData()" [layout]="chartLayout" [config]="chartConfig"></plotly-plot>
+        <plotly-plot [data]="chartData()" [layout]="chartLayout()" [config]="chartConfig"></plotly-plot>
     }
 </div>
 

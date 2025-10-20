@@ -57,7 +57,8 @@ export class OverallEpcChartComponent extends BaseChartComponent {
     protected loadData(): void {
         this.loading.set(true);
 
-        const sub = this.dashboardService.getOverallEPC().subscribe((response) => {
+        const polygon = this.selectedArea?.geometry;
+        const sub = this.dashboardService.getOverallEPC(polygon).subscribe((response) => {
             this.#overallEPCResponse = response;
             const { data: donutData, layout: donutLayout } = this.buildDonutChart(response);
             const { data: barData, layout: barLayout } = this.buildBarChart(response);

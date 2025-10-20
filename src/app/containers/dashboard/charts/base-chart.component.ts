@@ -1,4 +1,4 @@
-import { Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Directive, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { DashboardService } from '@core/services/dashboard.service';
 import { Polygon } from 'geojson';
 import type { Config } from 'plotly.js-dist-min';
@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { ChartService } from '../chart.service';
 
 @Directive()
-export abstract class BaseChartComponent implements OnInit, OnDestroy {
+export abstract class BaseChartComponent implements OnInit, OnChanges, OnDestroy {
     @Input() public selectedArea?: GeoJSON.Feature<Polygon>;
 
     protected readonly dashboardService = inject(DashboardService);
@@ -21,6 +21,12 @@ export abstract class BaseChartComponent implements OnInit, OnDestroy {
 
     public ngOnInit(): void {
         this.loadData();
+    }
+
+    public ngOnChanges(changes: SimpleChanges): void {
+        if (changes['selectedArea'] && !changes['selectedArea'].firstChange) {
+            this.loadData();
+        }
     }
 
     public ngOnDestroy(): void {

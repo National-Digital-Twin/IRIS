@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, signal } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { EPCRegionData } from '@core/services/dashboard.service';
@@ -17,25 +17,41 @@ import { RegionSelectorComponent } from '../shared/region-selector.component';
 })
 export class EpcRegionChartComponent extends BaseChartComponent {
     public chartData = signal<Data[]>([]);
-    public chartLayout: Partial<Layout> = {};
+    public chartLayout = signal<Partial<Layout>>({});
     public loading = signal(true);
+    public availableRegions = signal<string[]>([]);
 
-    public selectedRegions = signal<string[]>(['North West', 'North East', 'West Midlands', 'East Midlands']);
+    public selectedRegions = signal<string[]>([]);
+    private readonly epcRegionData = signal<EPCRegionData[] | null>(null);
 
-    public onRegionChange(regions: string[]): void {
-        this.selectedRegions.set(regions);
-        this.loadData();
+    constructor() {
+        super();
+        effect(() => {
+            const data = this.epcRegionData();
+            const regions = this.selectedRegions();
+            if (!data || regions.length === 0) {
+                return;
+            }
+
+            const built = this.buildChart(data, regions);
+            this.chartData.set(built.data);
+            this.chartLayout.set(built.layout);
+            this.loading.set(false);
+        });
     }
 
     protected loadData(): void {
         this.loading.set(true);
 
-        const sub = this.dashboardService.getEPCByRegion().subscribe((regionData) => {
-            const { data, layout } = this.buildChart(regionData, this.selectedRegions());
+        const polygon = this.selectedArea?.geometry;
+        const sub = this.dashboardService.getEPCByRegion(polygon).subscribe((regionData) => {
+            this.epcRegionData.set(regionData);
 
-            this.chartData.set(data);
-            this.chartLayout = layout;
-            this.loading.set(false);
+            const regions = regionData.map((r) => r.region_name);
+            this.availableRegions.set(regions);
+
+            // Just show the first 4 regions to avoid too many bars
+            this.selectedRegions.set(regions.slice(0, Math.min(4, regions.length)));
         });
 
         this.subscriptions.add(sub);
