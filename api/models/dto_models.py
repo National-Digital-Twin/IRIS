@@ -342,6 +342,20 @@ class PercentageBuildingAttributesPerRegion(BaseModel):
         )
 
 
+class FuelTypesByBuildingType(BaseModel):
+    building_type: str
+    fuel_type: str
+    count: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            building_type=obj.building_type,
+            fuel_type=obj.fuel_type,
+            count=obj.count,
+        )
+
+
 class AverageSapRatingPerLodgementDate(BaseModel):
     lodgement_date: datetime.date
     avg_sap_rating: float

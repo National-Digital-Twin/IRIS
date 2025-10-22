@@ -600,6 +600,39 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
     return query, params
 
 
+def get_fuel_types_by_building_type_query(polygon: str = None):
+    where_conditions = []
+    params = {}
+
+    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+
+    if polygon:
+        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        params["polygon"] = polygon
+
+    where_conditions.append("type IS NOT NULL")
+    where_conditions.append("fuel_type IS NOT NULL")
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    query = f"""
+        WITH active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
+            FROM iris.analytics
+            {where_clause}
+            ORDER BY uprn, lodgement_date DESC
+        )
+        SELECT type AS building_type,
+               fuel_type,
+               COUNT(*) as count
+        FROM active_epcs
+        GROUP BY type, fuel_type
+        ORDER BY type, count DESC;
+    """
+
+    return query, params
+
+
 def get_avg_sap_rating_overtime_query(polygon: str):
     params = {"polygon": polygon}
 

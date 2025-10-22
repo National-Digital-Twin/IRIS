@@ -45,6 +45,7 @@ from models.dto_models import (
     FilterSummary,
     FlaggedBuilding,
     FlagHistory,
+    FuelTypesByBuildingType,
     PercentageBuildingAttributesPerRegion,
     SimpleBuilding,
 )
@@ -73,6 +74,7 @@ from query import (
     get_flag_history,
     get_flagged_buildings,
     get_floor_for_building,
+    get_fuel_types_by_building_type_query,
     get_fueltype_for_building,
     get_ngd_roof_aspect_areas_for_building,
     get_ngd_roof_material_for_building,
@@ -463,6 +465,21 @@ async def get_sap_rating_overtime(
     query, params = get_avg_sap_rating_overtime_query(polygon=polygon)
     results = await db.execute(text(query), params)
     mapped_results = [AverageSapRatingPerLodgementDate.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get(
+    "/dashboard/fuel-types-by-building-type",
+    response_model=List[FuelTypesByBuildingType],
+)
+async def get_fuel_types_by_building_type(
+    db: AsyncSession = Depends(get_db),
+    polygon: Optional[GeoJSONPolygon] = Query(None),
+):
+    query, params = get_fuel_types_by_building_type_query(polygon=polygon)
+    results = await db.execute(text(query), params)
+    mapped_results = [FuelTypesByBuildingType.from_orm(row) for row in results]
 
     return mapped_results
 
