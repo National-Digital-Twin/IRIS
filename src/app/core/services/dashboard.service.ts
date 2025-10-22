@@ -57,6 +57,12 @@ export interface BackendBuildingAttributesResponse {
     percentage_cavity_wall: number;
 }
 
+export interface BackendFuelTypesByBuildingTypeResponse {
+    building_type: string;
+    fuel_type: string;
+    count: number;
+}
+
 interface BackendSAPTimelineResponse {
     lodgement_date: string;
     avg_sap_rating: number;
@@ -182,6 +188,15 @@ export class DashboardService {
                 };
             }),
         );
+    }
+
+    public getFuelTypesByBuildingType(polygon?: GeoJSON.Polygon): Observable<BackendFuelTypesByBuildingTypeResponse[]> {
+        const params: Record<string, string> = {};
+        if (polygon) {
+            params.polygon = JSON.stringify(polygon);
+        }
+
+        return this.#http.get<BackendFuelTypesByBuildingTypeResponse[]>('/api/dashboard/fuel-types-by-building-type', { params, withCredentials: true });
     }
 }
 

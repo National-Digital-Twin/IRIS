@@ -29,6 +29,10 @@ export class ChartService {
         return { family: 'Roboto, sans-serif' };
     }
 
+    public get colorway(): string[] {
+        return ['#3670B3', '#002244', '#FFCF06', '#E02720', '#62BA5A'];
+    }
+
     public sortRegionsAlphabetically<T extends { region_name: string }>(regions: T[]): T[] {
         return [...regions].sort((a, b) => a.region_name.localeCompare(b.region_name));
     }
