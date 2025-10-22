@@ -65,7 +65,6 @@ class DetailedBuilding(Building):
 
 
 class DetailedBuildingSchema(DetailedBuilding):
-
     @classmethod
     def from_orm(cls, obj):
         return cls(
@@ -274,3 +273,82 @@ class FilterSummary(BaseModel):
     roof_construction: set[str] = set()
     roof_insulation_location: set[str] = set()
     roof_insulation_thickness: set[str] = set()
+
+
+class CountOfEpcRatings(BaseModel):
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class CountOfEpcRatingsPerRegion(CountOfEpcRatings):
+    region_name: str
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            region_name=obj.region_name,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
+class PercentageBuildingAttributesPerRegion(BaseModel):
+    region_name: str
+    percentage_roof_solar_panels: float
+    percentage_double_glazing: float
+    percentage_single_glazing: float
+    percentage_solid_floor: float
+    percentage_roof_insulation_thickness_150mm: float
+    percentage_roof_insulation_thickness_200mm: float
+    percentage_roof_insulation_thickness_250mm: float
+    percentage_pitched_roof: float
+    percentage_cavity_wall: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            region_name=obj.region_name,
+            percentage_roof_solar_panels=obj.percentage_roof_solar_panels,
+            percentage_double_glazing=obj.percentage_double_glazing,
+            percentage_single_glazing=obj.percentage_single_glazing,
+            percentage_solid_floor=obj.percentage_solid_floor,
+            percentage_roof_insulation_thickness_150mm=obj.percentage_roof_insulation_thickness_150mm,
+            percentage_roof_insulation_thickness_200mm=obj.percentage_roof_insulation_thickness_200mm,
+            percentage_roof_insulation_thickness_250mm=obj.percentage_roof_insulation_thickness_250mm,
+            percentage_pitched_roof=obj.percentage_pitched_roof,
+            percentage_cavity_wall=obj.percentage_cavity_wall,
+        )
+
+
+class AverageSapRatingPerLodgementDate(BaseModel):
+    lodgement_date: datetime.date
+    avg_sap_rating: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            lodgement_date=obj.lodgement_date,
+            avg_sap_rating=obj.avg_sap_rating,
+        )

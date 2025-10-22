@@ -45,13 +45,13 @@ def get_roof_for_building(uprn: str) -> str:
         PREFIX building: <http://ies.data.gov.uk/ontology/ies-building1#>
         PREFIX data: <http://ndtp.co.uk/data#>
 
-        SELECT ?uprn ?roofConstruction ?roofInsulation ?roofInsulationThickness 
+        SELECT ?uprn ?roofConstruction ?roofInsulation ?roofInsulationThickness
         WHERE {{
             ?structureUnit ies:isIdentifiedBy data:UPRN_{uprn} .
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
-            
+
             ?epc_result building:lodgementDate ?lodgementDate .
             ?epc_result ies:isParticipantIn ?epc_assessment .
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
@@ -92,7 +92,7 @@ def get_floor_for_building(uprn: str) -> str:
         ?structureUnit a building:StructureUnit .
         ?structureUnitState a building:StructureUnitState .
         ?structureUnitState ies:isStateOf ?structureUnit .
-        
+
         ?epc_result building:lodgementDate ?lodgementDate .
         ?epc_result ies:isParticipantIn ?epc_assessment .
         ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
@@ -128,7 +128,7 @@ def get_walls_and_windows_for_building(uprn: str) -> str:
             ?structureUnit a building:StructureUnit .
             ?structureUnitState a building:StructureUnitState .
             ?structureUnitState ies:isStateOf ?structureUnit .
-            
+
             ?epc_result building:lodgementDate ?lodgementDate .
             ?epc_result ies:isParticipantIn ?epc_assessment .
             ?epc_assessment building:assessedStateForEnergyPerformance ?structureUnitState .
@@ -218,7 +218,7 @@ def get_all_ngd_attributes_pg() -> str:
         FROM iris.structure_unit su
         WHERE su.uprn = :uprn
         UNION
-        SELECT 
+        SELECT
             su.has_roof_solar_panels,
             su.roof_material,
             su.roof_shape,
@@ -439,24 +439,24 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
 
 def get_statistics_for_wards() -> str:
     return """
-        PREFIX stats: <http://ndtp.co.uk/stats#> 
+        PREFIX stats: <http://ndtp.co.uk/stats#>
 
-        SELECT ?wardName ?EPC_Rating_A ?EPC_Rating_B ?EPC_Rating_C ?EPC_Rating_D ?EPC_Rating_E ?EPC_Rating_F ?EPC_Rating_G ?No_EPC_Rating 
-        WHERE { 
-            GRAPH <http://ndtp.co.uk/epc-ward-statistics> { 
-                ?stats a stats:EPCWardStats ; 
-                            stats:wardName ?wardName ; 
-                            stats:EPC_Rating_A ?EPC_Rating_A ; 
-                            stats:EPC_Rating_B ?EPC_Rating_B ; 
-                            stats:EPC_Rating_C ?EPC_Rating_C ; 
-                            stats:EPC_Rating_D ?EPC_Rating_D ; 
-                            stats:EPC_Rating_E ?EPC_Rating_E ; 
-                            stats:EPC_Rating_F ?EPC_Rating_F ; 
-                            stats:EPC_Rating_G ?EPC_Rating_G ; 
-                            stats:No_EPC_Rating ?No_EPC_Rating . 
-            } 
-        } 
-        ORDER BY ?wardName 
+        SELECT ?wardName ?EPC_Rating_A ?EPC_Rating_B ?EPC_Rating_C ?EPC_Rating_D ?EPC_Rating_E ?EPC_Rating_F ?EPC_Rating_G ?No_EPC_Rating
+        WHERE {
+            GRAPH <http://ndtp.co.uk/epc-ward-statistics> {
+                ?stats a stats:EPCWardStats ;
+                            stats:wardName ?wardName ;
+                            stats:EPC_Rating_A ?EPC_Rating_A ;
+                            stats:EPC_Rating_B ?EPC_Rating_B ;
+                            stats:EPC_Rating_C ?EPC_Rating_C ;
+                            stats:EPC_Rating_D ?EPC_Rating_D ;
+                            stats:EPC_Rating_E ?EPC_Rating_E ;
+                            stats:EPC_Rating_F ?EPC_Rating_F ;
+                            stats:EPC_Rating_G ?EPC_Rating_G ;
+                            stats:No_EPC_Rating ?No_EPC_Rating .
+            }
+        }
+        ORDER BY ?wardName
     """
 
 
@@ -517,3 +517,133 @@ def get_flag_history(uprn: str) -> str:
                 }}
         }}
     """
+
+
+def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None):
+    where_conditions = []
+    params = {}
+
+    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+
+    if polygon:
+        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        params["polygon"] = polygon
+
+    if per_region:
+        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    query = f"""
+        WITH active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
+            FROM iris.analytics
+            {where_clause}
+            ORDER BY uprn, lodgement_date DESC
+        )
+        SELECT {"region_name," if per_region else ""}
+                COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
+                COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
+                COUNT(*) FILTER (WHERE epc_rating = 'C') AS epc_c,
+                COUNT(*) FILTER (WHERE epc_rating = 'D') AS epc_d,
+                COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
+                COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
+                COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
+        FROM active_epcs
+        {"GROUP BY region_name" if per_region else ""};
+    """
+
+    return query, params
+
+
+def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None):
+    where_conditions = []
+    params = {}
+
+    def percentage_column(filter, alias):
+        return f"""
+        ROUND(
+            100.0 * AVG(CASE WHEN {filter} THEN 1 ELSE 0 END)::numeric,
+            2
+        ) AS {alias}
+    """
+
+    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+
+    if polygon:
+        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        params["polygon"] = polygon
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    query = f"""
+        WITH active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
+            FROM iris.analytics
+            {where_clause}
+            ORDER BY uprn, lodgement_date DESC
+        )
+        SELECT region_name,
+                {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")},
+                {percentage_column("window_glazing = 'DoubleGlazing'", "percentage_double_glazing")},
+                {percentage_column("window_glazing = 'SingleGlazing'", "percentage_single_glazing")},
+                {percentage_column("floor_construction = 'SolidFloor'", "percentage_solid_floor")},
+                {percentage_column("roof_insulation_thickness = '150mm'", "percentage_roof_insulation_thickness_150mm")},
+                {percentage_column("roof_insulation_thickness = '200mm'", "percentage_roof_insulation_thickness_200mm")},
+                {percentage_column("roof_insulation_thickness = '250mm'", "percentage_roof_insulation_thickness_250mm")},
+                {percentage_column("roof_construction = 'PitchedRoof'", "percentage_pitched_roof")},
+                {percentage_column("wall_construction = 'CavityWall'", "percentage_cavity_wall")}
+        FROM active_epcs
+        GROUP BY region_name;
+    """
+
+    return query, params
+
+
+def get_avg_sap_rating_overtime_query(polygon: str):
+    params = {"polygon": polygon}
+
+    query = """
+        WITH all_certs AS (
+            -- Get all certificates with their validity period
+            SELECT
+                uprn,
+                lodgement_date,
+                sap_rating,
+                expiry_date
+            FROM iris.analytics
+            WHERE lodgement_date IS NOT NULL
+              AND expiry_date IS NOT NULL
+              AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
+        ),
+        months_to_check AS (
+            -- Get all months where there was certificate activity
+            SELECT DISTINCT DATE_TRUNC('month', lodgement_date)::date as month
+            FROM all_certs
+        ),
+        snapshot_per_month AS (
+            -- For each month and UPRN, get the latest certificate active at that time
+            SELECT
+                m.month,
+                c.uprn,
+                c.sap_rating,
+                ROW_NUMBER() OVER (
+                    PARTITION BY m.month, c.uprn
+                    ORDER BY c.lodgement_date DESC
+                ) as rn
+            FROM months_to_check m
+            JOIN all_certs c
+                ON c.lodgement_date <= m.month
+                AND c.expiry_date >= m.month
+        )
+        -- Average the latest active certificate per UPRN for each month
+        SELECT
+            month as lodgement_date,
+            AVG(sap_rating) as avg_sap_rating
+        FROM snapshot_per_month
+        WHERE rn = 1
+        GROUP BY month
+        ORDER BY month ASC;
+    """
+
+    return query, params
