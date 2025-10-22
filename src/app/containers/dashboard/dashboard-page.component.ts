@@ -6,6 +6,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Polygon } from 'geojson';
 import { DashboardType } from './chart.service';
+import { BuildingFuelChartComponent } from './charts/building-fuel-chart/building-fuel-chart.component';
 import { CharacteristicsChartComponent } from './charts/characteristics-chart/characteristics-chart.component';
 import { EpcRegionChartComponent } from './charts/epc-region-chart/epc-region-chart.component';
 import { OverallEpcChartComponent } from './charts/overall-epc-chart/overall-epc-chart.component';
@@ -23,6 +24,7 @@ import { SapTimelineChartComponent } from './charts/sap-timeline-chart/sap-timel
         EpcRegionChartComponent,
         CharacteristicsChartComponent,
         SapTimelineChartComponent,
+        BuildingFuelChartComponent,
     ],
     templateUrl: './dashboard-page.component.html',
     styleUrl: './dashboard-page.component.scss',
@@ -43,7 +45,6 @@ export class DashboardPageComponent implements OnInit {
                 const state = history.state;
                 if (state?.selectedArea) {
                     this.selectedArea.set(state.selectedArea as GeoJSON.Feature<Polygon>);
-                    console.log('selectedArea', this.selectedArea());
                 }
             }
         }

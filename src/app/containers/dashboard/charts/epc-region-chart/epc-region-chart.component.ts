@@ -66,7 +66,7 @@ export class EpcRegionChartComponent extends BaseChartComponent {
         const data: Data[] = ratings.map((rating) => ({
             type: 'bar',
             name: rating,
-            x: regionNames,
+            x: regionNames.map((r) => r.replace(/\s+/g, '<br>')),
             y: sortedData.map((r) => r[`epc_${rating.toLowerCase()}` as keyof EPCRegionData] || 0),
             marker: { color: this.chartService.epcColors[rating] },
             hoverlabel: this.chartService.commonHoverStyle,
@@ -103,10 +103,8 @@ export class EpcRegionChartComponent extends BaseChartComponent {
             legend: {
                 orientation: 'h',
                 x: 0.5,
-                y: -0.3,
+                y: -0.5,
                 xanchor: 'center',
-                yanchor: 'top',
-                traceorder: 'reversed',
             },
         };
 

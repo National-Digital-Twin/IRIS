@@ -31,6 +31,10 @@
             </section>
         }
 
+        <section class="widget-card">
+            <c477-building-fuel-chart [selectedArea]="selectedArea()"></c477-building-fuel-chart>
+        </section>
+
         @if (dashboardType() === 'area') {
             <section class="widget-card">
                 <c477-sap-timeline-chart [selectedArea]="selectedArea()"></c477-sap-timeline-chart>
