@@ -75,6 +75,7 @@ def upgrade() -> None:
             TABLESPACE pg_default;
     """
     )
+    
     """ Create id for english_region"""
     op.execute(
         """
