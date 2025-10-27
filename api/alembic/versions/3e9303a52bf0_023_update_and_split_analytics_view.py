@@ -5,7 +5,7 @@
 """023_update_and_split_analytics_view
 
 Revision ID: 3e9303a52bf0
-Revises: 29a78cfac78a
+Revises: 47ed09fc85cc
 Create Date: 2025-10-24 13:57:09.344870
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "3e9303a52bf0"
-down_revision: Union[str, None] = "29a78cfac78a"
+down_revision: Union[str, None] = "47ed09fc85cc"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
