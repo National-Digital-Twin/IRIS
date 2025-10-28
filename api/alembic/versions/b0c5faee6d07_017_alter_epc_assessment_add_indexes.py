@@ -41,7 +41,7 @@ def upgrade() -> None:
     # Add composite unique index for upserts on (uprn, lodgement_date)
     op.execute(
         """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_epc_uprn_lodgement
+        CREATE UNIQUE INDEX IF NOT EXISTS epc_uprn_lodgement_date_idx
         ON iris.epc_assessment(uprn, lodgement_date);
         """
     )
@@ -49,7 +49,7 @@ def upgrade() -> None:
     # Add index on expiry_date for filtering active/expired certificates
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_epc_expiry_date
+        CREATE INDEX IF NOT EXISTS epc_expiry_date_idx
         ON iris.epc_assessment(expiry_date);
         """
     )
@@ -57,7 +57,7 @@ def upgrade() -> None:
     # Add missing index on structure_unit.uprn for join performance
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_structure_unit_uprn ON iris.structure_unit(uprn);
+        CREATE INDEX IF NOT EXISTS structure_unit_uprn_idx ON iris.structure_unit(uprn);
         """
     )
 
@@ -67,7 +67,7 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.idx_epc_uprn_lodgement;
+        DROP INDEX IF EXISTS iris.epc_uprn_lodgement_date_idx;
         """
     )
 

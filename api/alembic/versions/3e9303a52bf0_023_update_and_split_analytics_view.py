@@ -23,25 +23,25 @@ depends_on: Union[str, Sequence[str], None] = None
 def _create_indices(view: str) -> None:
     op.execute(
         f"""
-        CREATE INDEX IF NOT EXISTS uprn_ix ON iris.{view}(uprn);
+        CREATE INDEX IF NOT EXISTS {view}_uprn_idx ON iris.{view}(uprn);
         """
     )
 
     op.execute(
         f"""
-        CREATE INDEX IF NOT EXISTS point_ix ON iris.{view} USING GIST(point);
+        CREATE INDEX IF NOT EXISTS {view}_point_idx ON iris.{view} USING GIST(point);
         """
     )
 
     op.execute(
         f"""
-        CREATE INDEX IF NOT EXISTS region_name_ix ON iris.{view}(region_name);
+        CREATE INDEX IF NOT EXISTS {view}_region_name_idx ON iris.{view}(region_name);
         """
     )
 
     op.execute(
         f"""
-        CREATE INDEX IF NOT EXISTS lodgement_date_ix ON iris.{view}(lodgement_date);
+        CREATE INDEX IF NOT EXISTS {view}_lodgement_date_idx ON iris.{view}(lodgement_date);
         """
     )
 
@@ -116,19 +116,19 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS county_name_ix ON iris.building_epc_analytics(county_name);
+        CREATE INDEX IF NOT EXISTS building_epc_analytics_county_name_idx ON iris.building_epc_analytics(county_name);
         """
     )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS district_name_ix ON iris.building_epc_analytics(district_name);
+        CREATE INDEX IF NOT EXISTS building_epc_analytics_district_name_idx ON iris.building_epc_analytics(district_name);
         """
     )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS ward_name_ix ON iris.building_epc_analytics(ward_name);
+        CREATE INDEX IF NOT EXISTS building_epc_analytics_ward_name_idx ON iris.building_epc_analytics(ward_name);
         """
     )
 
@@ -207,13 +207,13 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS uprn_ix ON iris.building_weather_analytics(uprn);
+        CREATE INDEX IF NOT EXISTS building_weather_analytics_uprn_idx ON iris.building_weather_analytics(uprn);
         """
     )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS point_ix ON iris.building_weather_analytics USING GIST(point);
+        CREATE INDEX IF NOT EXISTS building_weather_analytics_point_idx ON iris.building_weather_analytics USING GIST(point);
         """
     )
 

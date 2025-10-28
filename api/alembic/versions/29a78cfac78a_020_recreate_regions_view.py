@@ -12,53 +12,51 @@ Create Date: 2025-10-23 15:45:36.986302
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = '29a78cfac78a'
-down_revision: Union[str, None] = 'f7639f884c24'
+revision: str = "29a78cfac78a"
+down_revision: Union[str, None] = "f7639f884c24"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     """ Add simplified geometry column to english_region table"""
     op.execute(
         """
         ALTER TABLE iris.english_region ADD COLUMN IF NOT EXISTS geom_simplified geometry;
     """
     )
-    
+
     """ Update column to add simplified geometry"""
     op.execute(
         """
         UPDATE iris.english_region SET geom_simplified = ST_Simplify(geometry, 0.0001);
     """
     )
-    
+
     """ Create index for simplified geometry column"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_english_region_geom_simplified ON iris.english_region USING gist (geom_simplified);
+        CREATE INDEX IF NOT EXISTS english_region_geom_simplified_idx ON iris.english_region USING gist (geom_simplified);
     """
     )
-    
+
     """ Recreate materialised views for regions"""
     op.execute(
         """
         DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc;
     """
     )
-    
+
     op.execute(
         """
         DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc_data;
     """
     )
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc_data
@@ -90,7 +88,7 @@ def upgrade() -> None:
         WITH NO DATA;
     """
     )
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -106,20 +104,20 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
+
     """ Recreate materialised views for regions"""
     op.execute(
         """
         DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc;
     """
     )
-    
+
     op.execute(
         """
         DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc_data;
     """
     )
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc_data
@@ -143,7 +141,7 @@ def downgrade() -> None:
         WITH NO DATA;
     """
     )
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -155,13 +153,13 @@ def downgrade() -> None:
             WITH NO DATA;
     """
     )
-    
+
     op.execute(
         """
-        DROP INDEX IF EXISTS idx_english_region_geom_simplified;
+        DROP INDEX IF EXISTS english_region_geom_simplified_idx;
     """
     )
-    
+
     op.execute(
         """
         ALTER TABLE iris.english_region DROP COLUMN IF EXISTS geom_simplified geometry;

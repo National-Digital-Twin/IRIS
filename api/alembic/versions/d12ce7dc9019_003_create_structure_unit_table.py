@@ -50,7 +50,7 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX idx_structure_unit_epc ON iris.structure_unit(epc_assessment_id);
+        CREATE INDEX structure_unit_epc_assessment_id_idx ON iris.structure_unit(epc_assessment_id);
     """
     )
 
@@ -59,7 +59,7 @@ def downgrade() -> None:
     """Downgrade schema."""
     op.execute(
         """
-        DROP INDEX IF EXISTS idx_structure_unit_epc;
+        DROP INDEX IF EXISTS structure_unit_epc_assessment_id_idx;
     """
     )
 

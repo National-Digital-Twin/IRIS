@@ -80,25 +80,25 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS uprn_ix ON iris.analytics(uprn);
+        CREATE INDEX IF NOT EXISTS analytics_uprn_idx ON iris.analytics(uprn);
         """
     )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS point_ix ON iris.analytics USING GIST(point);
+        CREATE INDEX IF NOT EXISTS analytics_point_idx ON iris.analytics USING GIST(point);
         """
     )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS region_name_ix ON iris.analytics(region_name);
+        CREATE INDEX IF NOT EXISTS analytics_region_name_idx ON iris.analytics(region_name);
         """
     )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS lodgement_date_ix ON iris.analytics(lodgement_date);
+        CREATE INDEX IF NOT EXISTS analytics_lodgement_date_idx ON iris.analytics(lodgement_date);
         """
     )
 

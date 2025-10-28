@@ -14,7 +14,6 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "f7639f884c24"
 down_revision: Union[str, None] = "b55e05000f66"
@@ -238,9 +237,7 @@ def _recreate_epc_dependants() -> None:
 
 def _set_application_name() -> None:
     op.execute(
-        sa.text(
-            "SET LOCAL application_name = 'alembic_019_update_building_epc_view';"
-        )
+        sa.text("SET LOCAL application_name = 'alembic_019_update_building_epc_view';")
     )
 
 
@@ -251,7 +248,7 @@ def upgrade() -> None:
     _drop_epc_dependants()
     op.execute(
         """
-        DROP INDEX IF EXISTS idx_building_epc_geom;
+        DROP INDEX IF EXISTS building_epc_point_idx;
         """
     )
     op.execute(
@@ -286,7 +283,7 @@ def upgrade() -> None:
     )
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_building_epc_geom
+        CREATE INDEX IF NOT EXISTS building_epc_point_idx
             ON iris.building_epc
             USING GIST (point);
         """
@@ -301,7 +298,7 @@ def downgrade() -> None:
     _drop_epc_dependants()
     op.execute(
         """
-        DROP INDEX IF EXISTS idx_building_epc_geom;
+        DROP INDEX IF EXISTS building_epc_point_idx;
         """
     )
     op.execute(
@@ -325,10 +322,9 @@ def downgrade() -> None:
     )
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_building_epc_geom
+        CREATE INDEX IF NOT EXISTS building_epc_point_idx
             ON iris.building_epc
             USING GIST (point);
         """
     )
     _recreate_epc_dependants()
-

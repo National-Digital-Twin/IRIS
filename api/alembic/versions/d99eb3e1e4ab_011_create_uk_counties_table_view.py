@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
@@ -12,12 +12,10 @@ Create Date: 2025-08-27 16:38:28.857698
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'd99eb3e1e4ab'
-down_revision: Union[str, None] = '993c0cf8ea04'
+revision: str = "d99eb3e1e4ab"
+down_revision: Union[str, None] = "993c0cf8ea04"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -36,7 +34,6 @@ def downgrade() -> None:
     # ### end Alembic commands ###
 
 
-
 def upgrade() -> None:
     """Upgrade schema."""
     """ Create id for iris.boundary_line_ceremonial_counties"""
@@ -50,8 +47,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-   
-    
+
     """ Create table for iris.boundary_line_ceremonial_counties"""
     op.execute(
         """
@@ -65,20 +61,17 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Create geo index for boundary_line_ceremonial_counties"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS boundary_line_ceremonial_counties_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS boundary_line_ceremonial_counties_geometry_idx
             ON iris.boundary_line_ceremonial_counties USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    
- 
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.boundary_line_ceremonial_counties_epc_data
@@ -102,7 +95,7 @@ def upgrade() -> None:
         WITH NO DATA;
     """
     )
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -130,7 +123,7 @@ def downgrade() -> None:
     )
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.boundary_line_ceremonial_counties_geometry_geom_idx;
+        DROP INDEX IF EXISTS iris.boundary_line_ceremonial_counties_geometry_idx;
     """
     )
 

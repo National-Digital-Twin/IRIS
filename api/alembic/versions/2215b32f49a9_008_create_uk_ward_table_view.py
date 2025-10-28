@@ -12,12 +12,10 @@ Create Date: 2025-08-19 16:01:44.272631
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = '2215b32f49a9'
-down_revision: Union[str, None] = 'a75353f01fa0'
+revision: str = "2215b32f49a9"
+down_revision: Union[str, None] = "a75353f01fa0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -28,7 +26,7 @@ def upgrade() -> None:
     """ Create lookup table building_epc"""
     op.execute(
         """   
-   	CREATE INDEX IF NOT EXISTS idx_building_uprn ON iris.building(uprn);
+   	CREATE INDEX IF NOT EXISTS building_uprn_idx ON iris.building(uprn);
     """
     )
     op.execute(
@@ -39,15 +37,15 @@ def upgrade() -> None:
         LEFT JOIN iris.epc_assessment b
         ON a.uprn = b.uprn;
     """
-    )        
+    )
 
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS idx_building_epc_geom
+        CREATE INDEX IF NOT EXISTS building_epc_idx
         ON iris.building_epc
         USING GIST (point);
     """
-    )  
+    )
     """ Create id for iris.district_borough_unitary_ward"""
     op.execute(
         """
@@ -59,8 +57,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-   
-    
+
     """ Create table for iris.district_borough_unitary_ward"""
     op.execute(
         """
@@ -87,12 +84,11 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Create geo index for district_borough_unitary_ward"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS district_borough_unitary_ward_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS district_borough_unitary_ward_geometry_idx
             ON iris.district_borough_unitary_ward USING gist
             (geometry)
             TABLESPACE pg_default;
@@ -135,18 +131,17 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Create geo index for unitary_electoral_division"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS unitary_electoral_division_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS unitary_electoral_division_geometry_idx
             ON iris.unitary_electoral_division USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    
+
     """ Create table uk_ward"""
     op.execute(
         """
@@ -160,14 +155,13 @@ def upgrade() -> None:
     """ Create geo index for uk_ward"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS uk_ward__geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS uk_ward_geometry_idx
             ON iris.uk_ward USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_ward_epc_data
@@ -191,7 +185,7 @@ def upgrade() -> None:
         WITH NO DATA;
     """
     )
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -215,7 +209,7 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.uk_ward_shape_geom_idx;
+        DROP INDEX IF EXISTS iris.uk_ward_geometry_idx;
     """
     )
 

@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
@@ -12,12 +12,10 @@ Create Date: 2025-08-27 10:55:17.873861
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = '993c0cf8ea04'
-down_revision: Union[str, None] = '8f985d72a651'
+revision: str = "993c0cf8ea04"
+down_revision: Union[str, None] = "8f985d72a651"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -35,8 +33,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-   
-    
+
     """ Create table for iris.district_borough_unitary"""
     op.execute(
         """
@@ -63,20 +60,17 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Create geo index for district_borough_unitary"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS district_borough_unitary_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS district_borough_unitary_geometry_idx
             ON iris.district_borough_unitary USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    
- 
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.district_borough_unitary_epc_data
@@ -100,7 +94,7 @@ def upgrade() -> None:
         WITH NO DATA;
     """
     )
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -128,7 +122,7 @@ def downgrade() -> None:
     )
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.district_borough_unitary_geometry_geom_idx;
+        DROP INDEX IF EXISTS iris.district_borough_unitary_geometry_idx;
     """
     )
 

@@ -37,7 +37,7 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE INDEX point_ix
+        CREATE INDEX building_point_idx
         ON iris.building
         USING GIST (point);
     """

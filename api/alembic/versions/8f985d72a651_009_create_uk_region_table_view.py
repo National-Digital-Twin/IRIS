@@ -12,15 +12,12 @@ Create Date: 2025-08-26 13:48:42.927690
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = '8f985d72a651'
-down_revision: Union[str, None] = '2215b32f49a9'
+revision: str = "8f985d72a651"
+down_revision: Union[str, None] = "2215b32f49a9"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
 
 
 def upgrade() -> None:
@@ -36,8 +33,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-   
-    
+
     """ Create table for iris.scotland_and_wales_region"""
     op.execute(
         """
@@ -64,18 +60,17 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Create geo index for district_borough_unitary_ward"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS scotland_and_wales_region_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS scotland_and_wales_region_geometry_idx
             ON iris.scotland_and_wales_region USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    
+
     """ Create id for english_region"""
     op.execute(
         """
@@ -113,18 +108,17 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Create geo index for english_region"""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS english_region_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS english_region_geometry_idx
             ON iris.english_region USING gist
             (geometry)
             TABLESPACE pg_default;
     """
     )
-    
+
     """ Create table uk_region"""
     op.execute(
         """
@@ -135,8 +129,7 @@ def upgrade() -> None:
             SELECT * FROM iris.english_region;
     """
     )
-    
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.uk_region_epc_data
@@ -160,7 +153,7 @@ def upgrade() -> None:
         WITH NO DATA;
     """
     )
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -180,12 +173,6 @@ def downgrade() -> None:
     op.execute(
         """
         DROP MATERIALIZED VIEW IF EXISTS iris.uk_region_epc;
-    """
-    )
-
-    op.execute(
-        """
-        DROP INDEX IF EXISTS iris.uk_region_geometry_geom_idx;
     """
     )
 

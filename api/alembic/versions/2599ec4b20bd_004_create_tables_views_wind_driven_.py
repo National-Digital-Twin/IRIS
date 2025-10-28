@@ -12,19 +12,17 @@ Create Date: 2025-08-11 17:38:06.036314
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = '2599ec4b20bd'
-down_revision: Union[str, None] = 'd12ce7dc9019'
+revision: str = "2599ec4b20bd"
+down_revision: Union[str, None] = "d12ce7dc9019"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     """ Create table for wind-driven rain."""
     op.execute(
         """
@@ -36,7 +34,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-    
+
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS iris.wind_driven_rain_projections
@@ -59,25 +57,25 @@ def upgrade() -> None:
         )
     """
     )
-    
+
     op.execute(
         """
         ALTER SEQUENCE iris.wind_driven_rain_projections_objectid_seq
             OWNED BY iris.wind_driven_rain_projections.objectid;
     """
     )
-    
+
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS wind_driven_rain_projections__shape_geom
+        CREATE INDEX IF NOT EXISTS wind_driven_rain_projections_shape_idx
             ON iris.wind_driven_rain_projections USING gist
             (shape)
             TABLESPACE pg_default;
     """
     )
-    
+
     """Create views for wind-driven rain."""
-    
+
     op.execute(
         """
         CREATE OR REPLACE VIEW iris.median_projections_per_shape
@@ -105,7 +103,7 @@ def upgrade() -> None:
             GROUP BY x_coord, y_coord;
     """
     )
-    
+
     op.execute(
         """
         CREATE MATERIALIZED VIEW IF NOT EXISTS iris.wind_driven_rain_projections_geojson
@@ -116,7 +114,6 @@ def upgrade() -> None:
         WITH DATA;
     """
     )
-    
 
 
 def downgrade() -> None:
@@ -136,7 +133,7 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.annual_index_of_wind_driven_rain___projections__5km__shape_geom;
+        DROP INDEX IF EXISTS iris.wind_driven_rain_projections_shape_idx;
     """
     )
 

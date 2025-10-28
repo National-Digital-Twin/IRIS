@@ -12,19 +12,17 @@ Create Date: 2025-09-10 10:40:29.793570
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'cc816c325e2a'
-down_revision: Union[str, None] = 'cf408e1ffd0e'
+revision: str = "cc816c325e2a"
+down_revision: Union[str, None] = "cf408e1ffd0e"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     """ Create table for country regions."""
     op.execute(
         """
@@ -36,8 +34,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-    
-    
+
     """ Create table for country_region."""
     op.execute(
         """
@@ -65,7 +62,6 @@ def upgrade() -> None:
     """
     )
 
-
     """ Alter sequence owner."""
     op.execute(
         """
@@ -73,12 +69,11 @@ def upgrade() -> None:
             OWNED BY iris.country_region.fid;
     """
     )
-    
-    
+
     """ Create index for country_region table."""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS country_region_geometry_geom_idx
+        CREATE INDEX IF NOT EXISTS country_region_geometry_idx
             ON iris.country_region USING gist
             (geometry)
             TABLESPACE pg_default;
@@ -91,7 +86,7 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.country_region_geometry_geom_idx;    """
+        DROP INDEX IF EXISTS iris.country_region_geometry_idx;    """
     )
 
     op.execute(

@@ -12,19 +12,17 @@ Create Date: 2025-08-14 15:19:20.548773
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'bbd1a2348c7b'
-down_revision: Union[str, None] = '2599ec4b20bd'
+revision: str = "bbd1a2348c7b"
+down_revision: Union[str, None] = "2599ec4b20bd"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     """ Create sequence for icing days table primary key."""
     op.execute(
         """
@@ -36,8 +34,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-    
-    
+
     """ Create table for icing days."""
     op.execute(
         """
@@ -50,8 +47,7 @@ def upgrade() -> None:
             )
     """
     )
-    
-    
+
     """ Alter sequence owner."""
     op.execute(
         """
@@ -59,19 +55,17 @@ def upgrade() -> None:
             OWNED BY iris.annual_count_of_icing_days_1991_2020.objectid;
     """
     )
-    
-    
+
     """ Create index for icing days table."""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS annual_count_of_icing_days_1991_2020_shape_geom_idx
+        CREATE INDEX IF NOT EXISTS annual_count_of_icing_days_1991_2020_shape_idx
             ON iris.annual_count_of_icing_days_1991_2020 USING gist
             (shape)
             TABLESPACE pg_default;
     """
     )
-    
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -96,7 +90,7 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.annual_count_of_icing_days_1991_2020_shape_geom_idx;
+        DROP INDEX IF EXISTS iris.annual_count_of_icing_days_1991_2020_shape_idx;
     """
     )
 
@@ -111,3 +105,4 @@ def downgrade() -> None:
         DROP SEQUENCE IF EXISTS iris.annual_count_of_icing_days_1991_2020_objectid_seq;
     """
     )
+

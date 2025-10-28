@@ -12,19 +12,17 @@ Create Date: 2025-08-18 10:52:55.528477
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'a75353f01fa0'
-down_revision: Union[str, None] = 'bbd1a2348c7b'
+revision: str = "a75353f01fa0"
+down_revision: Union[str, None] = "bbd1a2348c7b"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     """ Create table for hot summer days."""
     op.execute(
         """
@@ -36,8 +34,7 @@ def upgrade() -> None:
             CACHE 1;
     """
     )
-    
-    
+
     """ Create table for hot summer days."""
     op.execute(
         """
@@ -75,7 +72,6 @@ def upgrade() -> None:
     """
     )
 
-
     """ Alter sequence owner."""
     op.execute(
         """
@@ -83,19 +79,17 @@ def upgrade() -> None:
             OWNED BY iris.annual_count_of_hot_summer_days_projections_12km.objectid;
     """
     )
-    
-    
+
     """ Create index for hot summer days table."""
     op.execute(
         """
-        CREATE INDEX IF NOT EXISTS annual_count_of_hot_summer_days_projections_12km_shape_geom_idx
+        CREATE INDEX IF NOT EXISTS annual_count_of_hot_summer_days_projections_12km_shape_idx
             ON iris.annual_count_of_hot_summer_days_projections_12km USING gist
             (shape)
             TABLESPACE pg_default;
     """
     )
-    
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -105,8 +99,7 @@ def upgrade() -> None:
             FROM iris.annual_count_of_hot_summer_days_projections_12km;
     """
     )
-    
-    
+
     """ Create materialized view containing GeoJSON."""
     op.execute(
         """
@@ -137,7 +130,7 @@ def downgrade() -> None:
 
     op.execute(
         """
-        DROP INDEX IF EXISTS iris.annual_count_of_hot_summer_days_projections_12km_shape_geom_idx;    """
+        DROP INDEX IF EXISTS iris.annual_count_of_hot_summer_days_projections_12km_shape_idx;    """
     )
 
     op.execute(
