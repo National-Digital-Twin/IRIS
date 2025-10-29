@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { TimelineDataPoint } from '@core/services/dashboard.service';
+import { TimelineAvgSAPDataPoint } from '@core/services/dashboard.service';
 import { PlotlyModule } from 'angular-plotly.js';
 import type { Config, Data, Layout } from 'plotly.js-dist-min';
 import { BaseChartComponent } from '../base-chart.component';
@@ -38,7 +38,7 @@ export class SapTimelineChartComponent extends BaseChartComponent {
         this.subscriptions.add(sub);
     }
 
-    private buildChart(timeline: TimelineDataPoint[]): { data: Data[]; layout: Partial<Layout> } {
+    private buildChart(timeline: TimelineAvgSAPDataPoint[]): { data: Data[]; layout: Partial<Layout> } {
         const ratings = timeline.map((t) => t.avg_sap_rating);
         const minRating = Math.min(...ratings);
         const maxRating = Math.max(...ratings);

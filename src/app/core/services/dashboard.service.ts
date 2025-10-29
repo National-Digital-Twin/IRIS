@@ -13,13 +13,13 @@ export interface BuildingCharacteristicsResponse {
     regions: RegionCharacteristicData[];
 }
 
-export interface TimelineDataPoint {
+export interface TimelineAvgSAPDataPoint {
     date: Date;
     avg_sap_rating: number;
 }
 
 export interface SAPTimelineResponse {
-    timeline: TimelineDataPoint[];
+    timeline: TimelineAvgSAPDataPoint[];
 }
 
 export interface EPCRegionData {
