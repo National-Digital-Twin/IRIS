@@ -77,7 +77,12 @@ export abstract class AbstractBaseLayer implements BaseLayer {
                         this.mapService.mapInstance.off('click', layerConfig.id, this.boundClickHandler);
                     }
 
-                    this.boundClickHandler = this.onLayerClick.bind(this);
+                    this.boundClickHandler = (event: MapMouseEvent): void => {
+                        if (this.mapService.isDrawing() || !this.onLayerClick) {
+                            return;
+                        }
+                        this.onLayerClick(event);
+                    };
                     this.mapService.mapInstance.on('click', layerConfig.id, this.boundClickHandler);
                 }
             }

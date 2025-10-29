@@ -30,6 +30,7 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
     public currentMapBounds = signal<LngLatBounds | undefined>(undefined);
 
     private mapLoaded: AsyncSubject<boolean>;
+    private _isDrawing: boolean = false;
 
     constructor() {
         this.mapLoaded = new AsyncSubject<boolean>();
@@ -211,6 +212,22 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
             minLng: bounds.getWest(),
             maxLng: bounds.getEast(),
         };
+    }
+
+    public setDrawing(isDrawing: boolean): void {
+        if (!isDrawing && this._isDrawing) {
+            // delay to avoid immediate click event when drawing is completed
+            // don't create a timeout if we're not drawing though as this causes a race condition
+            setTimeout(() => {
+                this._isDrawing = false;
+            }, 0);
+        } else {
+            this._isDrawing = true;
+        }
+    }
+
+    public isDrawing(): boolean {
+        return this._isDrawing;
     }
 
     public addDrawControl(): MapboxDraw {
