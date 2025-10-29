@@ -100,7 +100,7 @@ export class BuildingFuelChartComponent extends BaseChartComponent {
         if (this.fuelTypeLabels[fuelType]) {
             return this.fuelTypeLabels[fuelType];
         }
-        return fuelType.replace(/([A-Z])/g, ' $1').trim();
+        return fuelType.replaceAll(/([A-Z])/g, ' $1').trim();
     }
 
     private buildChart(data: FuelTypeData[]): { data: Data[]; layout: Partial<Layout> } {

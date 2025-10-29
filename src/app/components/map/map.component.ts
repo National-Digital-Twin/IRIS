@@ -408,7 +408,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     }
 
     private hideLayerGroup<T extends Record<string, boolean>>(layerGroup: T, prefix: string, suffix: string): void {
-        Object.keys(layerGroup).forEach((type) => {
+        const keys = Object.keys(layerGroup);
+        for (const type of keys) {
             const layerId = `${prefix}-${type}${suffix}`;
             const layerFactoryLayer = this.#layerFactory.getLayer(layerId);
             const layerEnabled = layerGroup[type as keyof T];
@@ -421,7 +422,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
             }
 
             (layerGroup[type as keyof T] as boolean) = false;
-        });
+        }
     }
 
     private hideSingleLayerWithOutline(layerId: string, outlineLayerId: string, getState: () => boolean, setState: (value: boolean) => void): void {
@@ -556,13 +557,13 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         const shouldShowLayers = this.showLayersAndControls();
         const visibleLayers = this.#layerFactory.getVisibleLayers();
 
-        visibleLayers.forEach((layer) => {
+        for (const layer of visibleLayers) {
             if (shouldShowLayers) {
                 this.#mapService.mapInstance.setLayoutProperty(layer.id, 'visibility', 'visible');
             } else {
                 this.#mapService.mapInstance.setLayoutProperty(layer.id, 'visibility', 'none');
             }
-        });
+        }
     }
 
     @HostListener('document:click', ['$event'])
