@@ -66,7 +66,7 @@ export class EpcRegionChartComponent extends BaseChartComponent {
         const data: Data[] = ratings.map((rating) => ({
             type: 'bar',
             name: rating,
-            x: regionNames.map((r) => r.replace(/\s+/g, '<br>')),
+            x: regionNames.map((r) => r.replaceAll(' ', '<br>')),
             y: sortedData.map((r) => r[`epc_${rating.toLowerCase()}` as keyof EPCRegionData] || 0),
             marker: { color: this.chartService.epcColors[rating] },
             hoverlabel: this.chartService.commonHoverStyle,
