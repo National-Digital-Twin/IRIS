@@ -3,6 +3,11 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 
+LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED = (
+    "lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE"
+)
+
+
 def get_building(uprn: str) -> str:
     return f"""
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -523,7 +528,7 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     where_conditions = []
     params = {}
 
-    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+    where_conditions.append(LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED)
 
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
@@ -537,7 +542,7 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     query = f"""
         WITH active_epcs AS (
             SELECT DISTINCT ON (uprn) *
-            FROM iris.analytics
+            FROM iris.building_epc_analytics
             {where_clause}
             ORDER BY uprn, lodgement_date DESC
         )
@@ -568,7 +573,7 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
         ) AS {alias}
     """
 
-    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+    where_conditions.append(LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED)
 
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
@@ -579,7 +584,7 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
     query = f"""
         WITH active_epcs AS (
             SELECT DISTINCT ON (uprn) *
-            FROM iris.analytics
+            FROM iris.building_epc_analytics
             {where_clause}
             ORDER BY uprn, lodgement_date DESC
         )
@@ -604,7 +609,7 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     where_conditions = []
     params = {}
 
-    where_conditions.append("lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE")
+    where_conditions.append(LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED)
 
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
@@ -618,7 +623,7 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     query = f"""
         WITH active_epcs AS (
             SELECT DISTINCT ON (uprn) *
-            FROM iris.analytics
+            FROM iris.building_epc_analytics
             {where_clause}
             ORDER BY uprn, lodgement_date DESC
         )
@@ -644,7 +649,7 @@ def get_avg_sap_rating_overtime_query(polygon: str):
                 lodgement_date,
                 sap_rating,
                 expiry_date
-            FROM iris.analytics
+            FROM iris.building_epc_analytics
             WHERE lodgement_date IS NOT NULL
               AND expiry_date IS NOT NULL
               AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
