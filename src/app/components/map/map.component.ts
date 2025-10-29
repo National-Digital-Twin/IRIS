@@ -266,7 +266,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
             case 'polygon': {
                 this.deleteSearchArea();
                 this.drawActive = true;
-                this.#mapService.setDrawing(true);
+                this.#mapService.startDrawing();
                 this.updateMode('draw_polygon');
                 break;
             }
@@ -297,7 +297,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
             this.deleteSearchArea();
             this.isDrawingForDashboard = true;
             this.drawActive = true;
-            this.#mapService.setDrawing(true);
+            this.#mapService.startDrawing();
             this.updateMode('draw_polygon');
         }
     }
@@ -448,7 +448,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     public deleteSearchArea(): void {
         this.drawActive = false;
         this.isDrawingForDashboard = false;
-        this.#mapService.setDrawing(false);
+        this.#mapService.stopDrawing();
         this.drawControl?.deleteAll();
         this.deleteSpatialFilter.emit(null);
     }
@@ -459,7 +459,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
      */
     private onDrawCreate(e: MapboxDraw.DrawCreateEvent): void {
         this.drawActive = false;
-        this.#mapService.setDrawing(false);
+        this.#mapService.stopDrawing();
         const polygon = e.features[0] as GeoJSON.Feature<Polygon>;
 
         if (this.isDrawingForDashboard) {
@@ -488,7 +488,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         if (e.mode === 'simple_select' && this.drawActive) {
             this.drawActive = false;
             this.isDrawingForDashboard = false;
-            this.#mapService.setDrawing(false);
+            this.#mapService.stopDrawing();
             this.#changeDetectorRef.detectChanges();
         }
     }
