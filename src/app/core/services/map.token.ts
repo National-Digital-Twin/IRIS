@@ -35,8 +35,8 @@ export interface MapService<T> {
 
     setup: (config: URLStateModel) => void;
 
-    setDrawing: (isDrawing: boolean) => void;
-
+    startDrawing: () => void;
+    stopDrawing: () => void;
     isDrawing: () => boolean;
 
     addMapSource(name: string, source: unknown): T;

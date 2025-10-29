@@ -214,15 +214,17 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
         };
     }
 
-    public setDrawing(isDrawing: boolean): void {
-        if (!isDrawing && this._isDrawing) {
+    public startDrawing(): void {
+        this._isDrawing = true;
+    }
+
+    public stopDrawing(): void {
+        if (this._isDrawing) {
             // delay to avoid immediate click event when drawing is completed
             // don't create a timeout if we're not drawing though as this causes a race condition
             setTimeout(() => {
                 this._isDrawing = false;
             }, 0);
-        } else {
-            this._isDrawing = true;
         }
     }
 
