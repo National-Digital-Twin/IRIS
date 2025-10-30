@@ -357,7 +357,8 @@ def get_buildings_in_bounding_box_query() -> str:
         WITH filtered_buildings AS (
             SELECT uprn, first_line_of_address, toid, point
             FROM iris.building
-            WHERE point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
+            WHERE is_residential = true AND
+                point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
                 AND ST_Intersects(point, ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid))
         )
         SELECT
@@ -396,7 +397,8 @@ def get_filterable_buildings_in_bounding_box_query() -> str:
         WITH filtered_buildings AS (
             SELECT uprn, toid, post_code, point
             FROM iris.building
-            WHERE point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
+            WHERE is_residential = true
+                AND point && ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid)
                 AND ST_Intersects(point, ST_MakeEnvelope(:min_long, :min_lat, :max_long, :max_lat, :srid))
         )
         SELECT
