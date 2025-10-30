@@ -3,9 +3,7 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 
-LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED = (
-    "lodgement_date IS NOT NULL AND expiry_date >= CURRENT_DATE"
-)
+EPC_ACTIVE_TRUE = "epc_active = true"
 
 
 def get_building(uprn: str) -> str:
@@ -528,7 +526,7 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     where_conditions = []
     params = {}
 
-    where_conditions.append(LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED)
+    where_conditions.append(EPC_ACTIVE_TRUE)
 
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
@@ -540,12 +538,6 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
-        WITH active_epcs AS (
-            SELECT DISTINCT ON (uprn) *
-            FROM iris.building_epc_analytics
-            {where_clause}
-            ORDER BY uprn, lodgement_date DESC
-        )
         SELECT {"region_name," if per_region else ""}
                 COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
                 COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
@@ -554,7 +546,8 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
                 COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
                 COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
                 COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
-        FROM active_epcs
+        FROM iris.building_epc_analytics
+        {where_clause}
         {"GROUP BY region_name" if per_region else ""};
     """
 
@@ -573,7 +566,7 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
         ) AS {alias}
     """
 
-    where_conditions.append(LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED)
+    where_conditions.append(EPC_ACTIVE_TRUE)
 
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
@@ -582,12 +575,6 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
-        WITH active_epcs AS (
-            SELECT DISTINCT ON (uprn) *
-            FROM iris.building_epc_analytics
-            {where_clause}
-            ORDER BY uprn, lodgement_date DESC
-        )
         SELECT region_name,
                 {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")},
                 {percentage_column("window_glazing = 'DoubleGlazing'", "percentage_double_glazing")},
@@ -598,7 +585,8 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
                 {percentage_column("roof_insulation_thickness = '250mm'", "percentage_roof_insulation_thickness_250mm")},
                 {percentage_column("roof_construction = 'PitchedRoof'", "percentage_pitched_roof")},
                 {percentage_column("wall_construction = 'CavityWall'", "percentage_cavity_wall")}
-        FROM active_epcs
+        FROM iris.building_epc_analytics
+        {where_clause}
         GROUP BY region_name;
     """
 
@@ -609,7 +597,7 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     where_conditions = []
     params = {}
 
-    where_conditions.append(LODGEMENT_DATE_NOT_NULL_AND_EPC_NOT_EXPIRED)
+    where_conditions.append(EPC_ACTIVE_TRUE)
 
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
@@ -621,16 +609,11 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
-        WITH active_epcs AS (
-            SELECT DISTINCT ON (uprn) *
-            FROM iris.building_epc_analytics
-            {where_clause}
-            ORDER BY uprn, lodgement_date DESC
-        )
         SELECT type AS building_type,
                fuel_type,
                COUNT(*) as count
-        FROM active_epcs
+        FROM iris.building_epc_analytics
+        {where_clause}
         GROUP BY type, fuel_type
         ORDER BY type, count DESC;
     """
