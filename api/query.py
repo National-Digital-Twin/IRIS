@@ -670,3 +670,111 @@ def get_avg_sap_rating_overtime_query(polygon: str):
     """
 
     return query, params
+
+
+def get_buildings_affected_by_extreme_weather_data_query(polygon: str):
+    params = {}
+    filter_buildings_where_clause = ""
+
+    if polygon:
+        params["polygon"] = polygon
+        filter_buildings_where_clause = (
+            "WHERE ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
+        )
+
+    query = f"""
+        WITH filtered_buildings AS (
+            SELECT uprn, point, icing_days, hsd_40_median, wdr_40_median_0, wdr_40_median_45, wdr_40_median_90,
+                wdr_40_median_135, wdr_40_median_180, wdr_40_median_225, wdr_40_median_270, wdr_40_median_315
+            FROM iris.building_weather_analytics
+            {filter_buildings_where_clause}
+        ), buildings_affected_by_icing_days AS (
+            SELECT uprn, true AS affected
+            FROM filtered_buildings
+            WHERE icing_days > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY icingdays
+                )
+                FROM iris.annual_count_of_icing_days_1991_2020
+            )
+        ),
+        buildings_affected_by_hsds AS (
+            SELECT uprn, true AS affected
+            FROM filtered_buildings
+            WHERE hsd_40_median > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY hsd_40_median
+                )
+                FROM iris.annual_count_of_hot_summer_days_projections_12km
+            )
+        ),
+        buildings_affected_by_wdrp AS (
+            SELECT uprn, true AS affected
+            FROM filtered_buildings
+            WHERE wdr_40_median_0 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 0
+            )
+            OR wdr_40_median_45 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 45
+            )
+            OR wdr_40_median_90 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 90
+            )
+            OR wdr_40_median_135 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 135
+            )
+            OR wdr_40_median_180 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 180
+            )
+            OR wdr_40_median_225 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 225
+            )
+            OR wdr_40_median_270 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 270
+            )
+            OR wdr_40_median_315 > (
+                SELECT percentile_cont(0.7) WITHIN GROUP (
+                    ORDER BY wdr_40_median
+                )
+                FROM iris.wind_driven_rain_projections
+                WHERE wall_orientation = 315
+            )
+        )
+        SELECT COUNT(*) AS number_of_buildings, babi.affected AS affected_by_icing_days, babh.affected AS affected_by_hsds, babw.affected AS affected_by_wdr
+        FROM filtered_buildings fb
+        LEFT JOIN buildings_affected_by_icing_days babi ON fb.uprn = babi.uprn
+        LEFT JOIN buildings_affected_by_hsds babh ON fb.uprn = babh.uprn
+        LEFT JOIN buildings_affected_by_wdrp babw ON fb.uprn = babw.uprn
+        WHERE NOT (babi.affected IS NULL AND babh.affected IS NULL AND babw.affected IS NULL)
+        GROUP BY babi.affected, babh.affected, babw.affected
+    """
+
+    return query, params

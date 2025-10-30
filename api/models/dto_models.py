@@ -366,3 +366,19 @@ class AverageSapRatingPerLodgementDate(BaseModel):
             lodgement_date=obj.lodgement_date,
             avg_sap_rating=obj.avg_sap_rating,
         )
+
+
+class BuildingsAffectedByExtremeWeather(BaseModel):
+    number_of_buildings: int
+    affected_by_icing_days: Optional[bool]
+    affected_by_hsds: Optional[bool]
+    affected_by_wdr: Optional[bool]
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            number_of_buildings=obj.number_of_buildings,
+            affected_by_icing_days=obj.affected_by_icing_days,
+            affected_by_hsds=obj.affected_by_hsds,
+            affected_by_wdr=obj.affected_by_wdr,
+        )
