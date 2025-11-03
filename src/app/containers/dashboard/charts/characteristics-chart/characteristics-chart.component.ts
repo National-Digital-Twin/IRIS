@@ -84,9 +84,7 @@ export class CharacteristicsChartComponent extends BaseChartComponent {
 
             const regions = apiResponse.map((r) => r.region_name);
             this.availableRegions.set(regions);
-
-            // Just show the first 4 regions to avoid too many bars
-            this.selectedRegions.set(regions.slice(0, Math.min(4, regions.length)));
+            this.selectedRegions.set(regions);
         });
 
         this.subscriptions.add(sub);
@@ -99,15 +97,14 @@ export class CharacteristicsChartComponent extends BaseChartComponent {
         const data: Data[] = [
             {
                 type: 'bar',
-                x: sortedRegions.map((r) => r.region_name),
+                x: sortedRegions.map((r) => r.region_name.replaceAll(' ', '<br>')),
                 y: sortedRegions.map((r) => r.percentage),
-                marker: { color: '#5729CE' },
+                marker: { color: '#3670B3' },
                 text: sortedRegions.map((r) => `${r.percentage > 9 ? Math.round(r.percentage) : r.percentage}%`),
                 textposition: 'auto',
-                textfont: { color: 'white', size: 14, family: 'Roboto, sans-serif' },
+                textfont: { ...this.chartService.commonFont, color: 'white', size: 14 },
                 hovertemplate: '<b>%{x}</b><br>%{y:.1f}% of buildings have ' + characteristic + '<extra></extra>',
                 hoverlabel: this.chartService.commonHoverStyle,
-                width: 0.5,
             },
         ];
 
@@ -117,7 +114,7 @@ export class CharacteristicsChartComponent extends BaseChartComponent {
             xaxis: {
                 title: { text: '' },
                 tickangle: 'auto',
-                tickfont: { size: 11, color: '#333' },
+                tickfont: { size: 11, color: '#999' },
                 automargin: true,
             },
             yaxis: {
