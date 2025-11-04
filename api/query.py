@@ -178,19 +178,19 @@ def get_fueltype_for_building(uprn: str) -> str:
 
                         BIND(STR(?structureUnitState) AS ?s)            # cast structure unit state URI to a string
                         BIND(REPLACE(?s, ".*_([0-9]{{8}})$", "$1") AS ?yyyymmdd)    # get last 8 digits
-                        
+
                         # check if we managed to pull the last 8 digits if the regex pattern matched
                         FILTER( ?yyyymmdd != ?s )
-                        
+
                         # split into year, month and day components
                         BIND(SUBSTR(?yyyymmdd,1,4) AS ?yyyy)
                         BIND(SUBSTR(?yyyymmdd,5,2) AS ?mm)
                         BIND(SUBSTR(?yyyymmdd,7,2) AS ?dd)
-                        
+
                         # check whether month and day are within expected intervals
                         FILTER ( xsd:integer(?mm) >= 1 && xsd:integer(?mm) <= 12 )
                         FILTER ( xsd:integer(?dd) >= 1 && xsd:integer(?dd) <= 31 )
-                        
+
                         # create the final date component
                         BIND( xsd:date(CONCAT(?yyyy, "-", ?mm, "-", ?dd)) AS ?lodgement )
                     }} ORDER BY DESC(?lodgement) LIMIT 1
@@ -623,50 +623,26 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     return query, params
 
 
-def get_avg_sap_rating_overtime_query(polygon: str):
-    params = {"polygon": polygon}
+def get_avg_sap_rating_overtime_query(polygon: str = None):
+    params = {}
 
-    query = """
-        WITH all_certs AS (
-            -- Get all certificates with their validity period
-            SELECT
-                uprn,
-                lodgement_date,
-                sap_rating,
-                expiry_date
-            FROM iris.building_epc_analytics
-            WHERE lodgement_date IS NOT NULL
-              AND expiry_date IS NOT NULL
-              AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
-        ),
-        months_to_check AS (
-            -- Get all months where there was certificate activity
-            SELECT DISTINCT DATE_TRUNC('month', lodgement_date)::date as month
-            FROM all_certs
-        ),
-        snapshot_per_month AS (
-            -- For each month and UPRN, get the latest certificate active at that time
-            SELECT
-                m.month,
-                c.uprn,
-                c.sap_rating,
-                ROW_NUMBER() OVER (
-                    PARTITION BY m.month, c.uprn
-                    ORDER BY c.lodgement_date DESC
-                ) as rn
-            FROM months_to_check m
-            JOIN all_certs c
-                ON c.lodgement_date <= m.month
-                AND c.expiry_date >= m.month
-        )
-        -- Average the latest active certificate per UPRN for each month
+    if polygon:
+        params["polygon"] = polygon
+        spatial_filter = "ST_Within(b.point, ST_GeomFromGeoJSON(:polygon))"
+    else:
+        spatial_filter = "false"
+
+    query = f"""
         SELECT
-            month as lodgement_date,
-            AVG(sap_rating) as avg_sap_rating
-        FROM snapshot_per_month
-        WHERE rn = 1
-        GROUP BY month
-        ORDER BY month ASC;
+            active.snapshot_date as date,
+            AVG(b.sap_rating) as national_avg_sap_rating,
+            AVG(b.sap_rating) FILTER (WHERE {spatial_filter}) as filtered_avg_sap_rating
+        FROM iris.building_epc_active_by_year active
+        JOIN iris.building_epc_analytics b
+            ON active.uprn = b.uprn
+            AND active.lodgement_date = b.lodgement_date
+        GROUP BY active.snapshot_date
+        ORDER BY active.snapshot_date ASC;
     """
 
     return query, params

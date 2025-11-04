@@ -357,14 +357,16 @@ class FuelTypesByBuildingType(BaseModel):
 
 
 class AverageSapRatingPerLodgementDate(BaseModel):
-    lodgement_date: datetime.date
-    avg_sap_rating: float
+    date: datetime.date
+    national_avg_sap_rating: float
+    filtered_avg_sap_rating: Optional[float]
 
     @classmethod
     def from_orm(cls, obj):
         return cls(
-            lodgement_date=obj.lodgement_date,
-            avg_sap_rating=obj.avg_sap_rating,
+            date=obj.date,
+            national_avg_sap_rating=obj.national_avg_sap_rating,
+            filtered_avg_sap_rating=obj.filtered_avg_sap_rating,
         )
 
 

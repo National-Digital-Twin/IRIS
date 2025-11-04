@@ -429,9 +429,6 @@ async def get_sap_rating_overtime(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
 ):
-    if not polygon:
-        raise HTTPException(status_code=400, detail="polygon is required")
-
     query, params = get_avg_sap_rating_overtime_query(polygon=polygon)
     results = await db.execute(text(query), params)
     mapped_results = [AverageSapRatingPerLodgementDate.from_orm(row) for row in results]
