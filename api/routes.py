@@ -26,6 +26,7 @@ from models.dto_models import (AverageSapRatingPerLodgementDate,
                                FilterableBuilding, FilterableBuildingSchema,
                                FilterSummary, FlaggedBuilding, FlagHistory,
                                FuelTypesByBuildingType,
+                               NumberOfInDateAndExpiredEpcs,
                                PercentageBuildingAttributesPerRegion,
                                SimpleBuilding)
 from models.ies_models import (EDH, ClassificationEmum, IesAccount,
@@ -47,6 +48,7 @@ from query import (get_all_ngd_attributes_pg,
                    get_ngd_roof_material_for_building,
                    get_ngd_roof_shape_for_building,
                    get_ngd_solar_panel_presence_for_building,
+                   get_number_of_in_date_and_expired_epcs_query,
                    get_percentage_of_buildings_attributes_per_region_query,
                    get_roof_for_building, get_statistics_for_wards,
                    get_walls_and_windows_for_building)
@@ -463,6 +465,20 @@ async def get_buildings_affected_by_extreme_weather(
     mapped_results = [
         BuildingsAffectedByExtremeWeather.from_orm(row) for row in results
     ]
+
+    return mapped_results
+
+
+@router.get(
+    "/dashboard/no-of-in-date-and-expired-epcs",
+    response_model=List[NumberOfInDateAndExpiredEpcs],
+)
+async def get_number_of_in_date_and_expired_epcs(
+    db: AsyncSession = Depends(get_db),
+):
+    query = get_number_of_in_date_and_expired_epcs_query()
+    results = await db.execute(text(query))
+    mapped_results = [NumberOfInDateAndExpiredEpcs.from_orm(row) for row in results]
 
     return mapped_results
 

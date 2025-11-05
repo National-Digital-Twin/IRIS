@@ -656,3 +656,32 @@ def get_buildings_affected_by_extreme_weather_data_query():
     """
 
     return query
+
+
+def get_number_of_in_date_and_expired_epcs_query():
+    query = """
+        WITH bounds AS (
+            SELECT
+                generate_series(
+                    date_trunc('year', CURRENT_DATE) - INTERVAL '10 years',
+                    date_trunc('year', CURRENT_DATE) + INTERVAL '1 year',
+                    INTERVAL '1 year'
+                )::date AS start_date
+        ), active_epcs AS (
+            SELECT DISTINCT ON (uprn) *
+            FROM iris.building_epc_analytics
+            CROSS JOIN bounds b
+            ORDER BY uprn, lodgement_date DESC
+        )
+        SELECT
+            b.start_date AS year,
+            SUM(CASE WHEN aes.expiry_date < b.start_date THEN 1 ELSE 0 END) AS expired,
+            SUM(CASE WHEN aes.expiry_date >= b.start_date THEN 1 ELSE 0 END) AS active
+            FROM active_epcs aes
+            CROSS JOIN bounds b
+            WHERE aes.lodgement_date <= b.start_date
+            GROUP BY b.start_date
+        ORDER BY b.start_date;
+    """
+
+    return query

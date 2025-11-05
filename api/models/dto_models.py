@@ -384,3 +384,13 @@ class BuildingsAffectedByExtremeWeather(BaseModel):
             affected_by_hsds=obj.affected_by_hsds,
             affected_by_wdr=obj.affected_by_wdr,
         )
+
+
+class NumberOfInDateAndExpiredEpcs(BaseModel):
+    year: datetime.date
+    expired: int
+    active: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(year=obj.year, expired=obj.expired, active=obj.active)
