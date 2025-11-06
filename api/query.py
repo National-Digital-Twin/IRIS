@@ -628,21 +628,19 @@ def get_avg_sap_rating_overtime_query(polygon: str = None):
 
     if polygon:
         params["polygon"] = polygon
-        spatial_filter = "ST_Within(b.point, ST_GeomFromGeoJSON(:polygon))"
+        spatial_filter = "ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
     else:
         spatial_filter = "false"
 
     query = f"""
         SELECT
-            active.snapshot_date as date,
-            AVG(b.sap_rating) as national_avg_sap_rating,
-            AVG(b.sap_rating) FILTER (WHERE {spatial_filter}) as filtered_avg_sap_rating
-        FROM iris.building_epc_active_by_year active
-        JOIN iris.building_epc_analytics b
-            ON active.uprn = b.uprn
-            AND active.lodgement_date = b.lodgement_date
-        GROUP BY active.snapshot_date
-        ORDER BY active.snapshot_date ASC;
+            unnest(active_snapshots) as date,
+            AVG(sap_rating) as national_avg_sap_rating,
+            AVG(sap_rating) FILTER (WHERE {spatial_filter}) as filtered_avg_sap_rating
+        FROM iris.building_epc_analytics
+        WHERE active_snapshots IS NOT NULL
+        GROUP BY date
+        ORDER BY date ASC;
     """
 
     return query, params
