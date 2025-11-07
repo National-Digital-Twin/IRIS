@@ -623,26 +623,32 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     return query, params
 
 
-def get_avg_sap_rating_overtime_query(polygon: str = None):
-    params = {}
+def get_national_avg_sap_rating_overtime_query():
+    """Get national average SAP rating over time using pre-calculated aggregates."""
+    query = """
+        SELECT
+            snapshot_date as date,
+            SUM(sum_sap_rating) / NULLIF(SUM(active_epc_count), 0) as avg_sap_rating
+        FROM iris.building_epc_analytics_aggregates
+        GROUP BY snapshot_date
+        ORDER BY snapshot_date ASC;
+    """
+    return query
 
-    if polygon:
-        params["polygon"] = polygon
-        spatial_filter = "ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
-    else:
-        spatial_filter = "false"
 
-    query = f"""
+def get_filtered_avg_sap_rating_overtime_query(polygon: str):
+    """Get filtered average SAP rating over time for a specific polygon area."""
+    params = {"polygon": polygon}
+    query = """
         SELECT
             unnest(active_snapshots) as date,
-            AVG(sap_rating) as national_avg_sap_rating,
-            AVG(sap_rating) FILTER (WHERE {spatial_filter}) as filtered_avg_sap_rating
+            AVG(sap_rating) as avg_sap_rating
         FROM iris.building_epc_analytics
         WHERE active_snapshots IS NOT NULL
+          AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
         GROUP BY date
         ORDER BY date ASC;
     """
-
     return query, params
 
 
@@ -658,28 +664,13 @@ def get_buildings_affected_by_extreme_weather_data_query():
 
 def get_number_of_in_date_and_expired_epcs_query():
     query = """
-        WITH bounds AS (
-            SELECT
-                generate_series(
-                    date_trunc('year', CURRENT_DATE) - INTERVAL '10 years',
-                    date_trunc('year', CURRENT_DATE) + INTERVAL '1 year',
-                    INTERVAL '1 year'
-                )::date AS start_date
-        ), active_epcs AS (
-            SELECT DISTINCT ON (uprn) *
-            FROM iris.building_epc_analytics
-            CROSS JOIN bounds b
-            ORDER BY uprn, lodgement_date DESC
-        )
         SELECT
-            b.start_date AS year,
-            SUM(CASE WHEN aes.expiry_date < b.start_date THEN 1 ELSE 0 END) AS expired,
-            SUM(CASE WHEN aes.expiry_date >= b.start_date THEN 1 ELSE 0 END) AS active
-            FROM active_epcs aes
-            CROSS JOIN bounds b
-            WHERE aes.lodgement_date <= b.start_date
-            GROUP BY b.start_date
-        ORDER BY b.start_date;
+            snapshot_date AS year,
+            SUM(active_epc_count) AS active,
+            SUM(expired_epc_count) AS expired
+        FROM iris.building_epc_analytics_aggregates
+        GROUP BY snapshot_date
+        ORDER BY snapshot_date;
     """
 
     return query

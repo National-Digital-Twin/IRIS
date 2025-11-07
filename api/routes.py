@@ -57,17 +57,18 @@ from models.ies_models import (
 from pydantic import AfterValidator, BaseModel
 from query import (
     get_all_ngd_attributes_pg,
-    get_avg_sap_rating_overtime_query,
     get_building,
     get_buildings_affected_by_extreme_weather_data_query,
     get_buildings_in_bounding_box_query,
     get_count_of_epc_rating_query,
     get_filterable_buildings_in_bounding_box_query,
+    get_filtered_avg_sap_rating_overtime_query,
     get_flag_history,
     get_flagged_buildings,
     get_floor_for_building,
     get_fuel_types_by_building_type_query,
     get_fueltype_for_building,
+    get_national_avg_sap_rating_overtime_query,
     get_ngd_roof_aspect_areas_for_building,
     get_ngd_roof_material_for_building,
     get_ngd_roof_shape_for_building,
@@ -460,11 +461,27 @@ async def get_sap_rating_overtime(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
 ):
-    query, params = get_avg_sap_rating_overtime_query(polygon=polygon)
-    results = await db.execute(text(query), params)
-    mapped_results = [AverageSapRatingPerLodgementDate.from_orm(row) for row in results]
+    national_query = get_national_avg_sap_rating_overtime_query()
+    national_results = await db.execute(text(national_query))
 
-    return mapped_results
+    results_by_date = {
+        row.date: AverageSapRatingPerLodgementDate(
+            date=row.date,
+            national_avg_sap_rating=row.avg_sap_rating,
+            filtered_avg_sap_rating=None,
+        )
+        for row in national_results
+    }
+
+    if polygon:
+        filtered_query, params = get_filtered_avg_sap_rating_overtime_query(polygon)
+        filtered_results = await db.execute(text(filtered_query), params)
+
+        for row in filtered_results:
+            if row.date in results_by_date:
+                results_by_date[row.date].filtered_avg_sap_rating = row.avg_sap_rating
+
+    return list(results_by_date.values())
 
 
 @router.get(
