@@ -10,14 +10,19 @@ from fastapi.testclient import TestClient
 
 from api.query import (
     get_building,
-    get_buildings_in_bounding_box_query,
-    get_filterable_buildings_in_bounding_box_query,
     get_floor_for_building,
+    get_fueltype_for_building,
+    get_ngd_roof_aspect_areas_for_building,
+    get_ngd_roof_material_for_building,
+    get_ngd_roof_shape_for_building,
+    get_ngd_solar_panel_presence_for_building,
     get_roof_for_building,
     get_walls_and_windows_for_building,
 )
 from api.routes import router
 from unit_tests.query_response_mocks import empty_query_response, mock_known_building
+from unittest.mock import AsyncMock
+import db as db_module
 
 
 @pytest.fixture(autouse=True)
@@ -33,9 +38,16 @@ def set_identity_api_url(monkeypatch):
 
 @pytest.fixture
 def client():
-    """Create a test client with the router mounted on a FastAPI app."""
+    async def mock_get_db():
+        mock_db_session = AsyncMock()
+        mock_db_result = AsyncMock()
+        mock_db_result.__iter__ = lambda self: iter([])
+        mock_db_session.execute.return_value = mock_db_result
+        yield mock_db_session
+
     app = FastAPI()
     app.include_router(router)
+    app.dependency_overrides[db_module.get_db] = mock_get_db
     return TestClient(app)
 
 
@@ -140,6 +152,7 @@ class TestGetBuildingsInBoundingBox:
         assert result["longitude"] == exp_long
         assert result["latitude"] == exp_lat
 
+
 ##TODO: reinstate this test with bounding box params
 #    def verify_query_run_with_correct_args(self, mock_query):
 #        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
@@ -196,6 +209,7 @@ class TestGetFilterableBuildingsInBoundingBox:
         #
         # self.verify_query_run_with_correct_args(mock_query)
 
+
 ##TODO: reinstate this test with bounding box params
 #    def verify_query_run_with_correct_args(self, mock_query):
 #        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
@@ -208,8 +222,6 @@ class TestGetFilterableBuildingsInBoundingBox:
 
 class TestGetBuildingByUprn:
     def test_successful_get_building(self, client, monkeypatch):
-        """Test successful retrieval of a building by UPRN"""
-        # Mock the run_sparql_query function
         uprn = 10023456789
         mock_query = MagicMock()
         mock_query.side_effect = mock_known_building
@@ -220,7 +232,6 @@ class TestGetBuildingByUprn:
         assert response.status_code == 200
         data = response.json()
 
-        # Check the data
         assert data["uprn"] == f"{uprn}"
         assert data["lodgement_date"] == "2024-03-30"
         assert data["built_form"] == "SemiDetached"
@@ -234,26 +245,28 @@ class TestGetBuildingByUprn:
         assert data["wall_insulation"] == "InsulatedWall"
         assert data["window_glazing"] == "DoubleGlazingBefore2002"
 
-        # Verify run_sparql_query was called with the correct params
-        assert mock_query.call_count == 4
+        assert mock_query.call_count == 9
         mock_query.assert_any_call(get_building(uprn), ANY)
         mock_query.assert_any_call(get_roof_for_building(uprn), ANY)
         mock_query.assert_any_call(get_floor_for_building(uprn), ANY)
         mock_query.assert_any_call(get_walls_and_windows_for_building(uprn), ANY)
-        call_args = mock_query.call_args[0]
-        assert str(uprn) in call_args[0]
+        mock_query.assert_any_call(get_fueltype_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_ngd_roof_material_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_ngd_solar_panel_presence_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_ngd_roof_shape_for_building(uprn), ANY)
+        mock_query.assert_any_call(get_ngd_roof_aspect_areas_for_building(uprn), ANY)
 
     def test_building_not_found(self, client, monkeypatch):
-        """Test when building is not found"""
-        # Mock the run_sparql_query function to return empty results
         mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         uprn = 99999999999
 
         response = client.get(f"/buildings/{uprn}")
 
-        assert response.status_code == 404
-        assert response.json() == {"detail": f"Building with UPRN {uprn} not found"}
+        assert response.status_code == 200
+        data = response.json()
+        assert data["uprn"] == str(uprn)
+        assert data["lodgement_date"] is None
 
 
 if __name__ == "__main__":

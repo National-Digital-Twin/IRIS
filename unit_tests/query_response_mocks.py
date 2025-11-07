@@ -408,5 +408,5 @@ def mock_known_building(query, headers):
     if query == get_walls_and_windows_for_building(uprn):
         return wall_window_query_response(uprn)
     else:
-        return "default response"
+        return empty_query_response()
 

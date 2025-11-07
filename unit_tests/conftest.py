@@ -6,6 +6,10 @@ import os
 import sys
 
 os.environ["IDENTITY_API_URL"] = "https://test.com"
+os.environ["ENVIRONMENT"] = "TEST"
+os.environ["DB_USERNAME"] = "test"
+os.environ["DB_PASSWORD"] = "test"
+os.environ["DB_HOST"] = "localhost"
 
 api_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../api"))
 if api_dir not in sys.path:

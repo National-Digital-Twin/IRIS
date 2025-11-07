@@ -12,6 +12,11 @@ from fastapi.testclient import TestClient
 import api.routes as routes
 from api.config import get_settings
 
+from fastapi import FastAPI
+from unittest.mock import AsyncMock
+import db as db_module
+
+
 # --- Dummy classes and helper functions for testing ---
 
 
@@ -67,10 +72,16 @@ class DummyAdapter:
 # --- Fixtures for FastAPI endpoints ---
 @pytest.fixture
 def client():
-    from fastapi import FastAPI
+    async def mock_get_db():
+        mock_db_session = AsyncMock()
+        mock_db_result = AsyncMock()
+        mock_db_result.__iter__ = lambda self: iter([])
+        mock_db_session.execute.return_value = mock_db_result
+        yield mock_db_session
 
     app = FastAPI()
     app.include_router(routes.router)
+    app.dependency_overrides[db_module.get_db] = mock_get_db
     return TestClient(app)
 
 

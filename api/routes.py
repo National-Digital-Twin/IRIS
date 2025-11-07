@@ -10,58 +10,87 @@ from typing import Annotated, List, Optional
 import requests
 from access import AccessClient
 from config import get_settings
-from db import get_db
+from db import execute_with_timeout, get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from mappers import (map_bounded_buildings_response,
-                     map_bounded_filterable_buildings_response,
-                     map_epc_statistics_response, map_filter_summary_response,
-                     map_flagged_buildings_response,
-                     map_single_building_response,
-                     map_structure_unit_flag_history_response)
-from models.dto_models import (AverageSapRatingPerLodgementDate,
-                               BuildingsAffectedByExtremeWeather,
-                               CountOfEpcRatings, CountOfEpcRatingsPerRegion,
-                               DetailedBuilding, DetailedBuildingSchema,
-                               EpcAndOsBuildingSchema, EpcStatistics,
-                               FilterableBuilding, FilterableBuildingSchema,
-                               FilterSummary, FlaggedBuilding, FlagHistory,
-                               FuelTypesByBuildingType,
-                               NumberOfInDateAndExpiredEpcs,
-                               PercentageBuildingAttributesPerRegion,
-                               SimpleBuilding)
-from models.ies_models import (EDH, ClassificationEmum, IesAccount,
-                               IesAssessment, IesAssessToBeFalse,
-                               IesAssessToBeTrue, IesClass, IesEntity,
-                               IesPerson, IesState, IesThing, ies)
+from mappers import (
+    map_bounded_buildings_response,
+    map_bounded_filterable_buildings_response,
+    map_epc_statistics_response,
+    map_filter_summary_response,
+    map_flagged_buildings_response,
+    map_single_building_response,
+    map_structure_unit_flag_history_response,
+)
+from models.dto_models import (
+    AverageSapRatingPerLodgementDate,
+    BuildingsAffectedByExtremeWeather,
+    CountOfEpcRatings,
+    CountOfEpcRatingsPerRegion,
+    DetailedBuilding,
+    DetailedBuildingSchema,
+    EpcAndOsBuildingSchema,
+    EpcStatistics,
+    FilterableBuilding,
+    FilterableBuildingSchema,
+    FilterSummary,
+    FlaggedBuilding,
+    FlagHistory,
+    FuelTypesByBuildingType,
+    NumberOfInDateAndExpiredEpcs,
+    PercentageBuildingAttributesPerRegion,
+    SimpleBuilding,
+)
+from models.ies_models import (
+    EDH,
+    ClassificationEmum,
+    IesAccount,
+    IesAssessment,
+    IesAssessToBeFalse,
+    IesAssessToBeTrue,
+    IesClass,
+    IesEntity,
+    IesPerson,
+    IesState,
+    IesThing,
+    ies,
+)
 from pydantic import AfterValidator, BaseModel
-from query import (get_all_ngd_attributes_pg,
-                   get_avg_sap_rating_overtime_query, get_building,
-                   get_buildings_affected_by_extreme_weather_data_query,
-                   get_buildings_in_bounding_box_query,
-                   get_count_of_epc_rating_query,
-                   get_filterable_buildings_in_bounding_box_query,
-                   get_flag_history, get_flagged_buildings,
-                   get_floor_for_building,
-                   get_fuel_types_by_building_type_query,
-                   get_fueltype_for_building,
-                   get_ngd_roof_aspect_areas_for_building,
-                   get_ngd_roof_material_for_building,
-                   get_ngd_roof_shape_for_building,
-                   get_ngd_solar_panel_presence_for_building,
-                   get_number_of_in_date_and_expired_epcs_query,
-                   get_percentage_of_buildings_attributes_per_region_query,
-                   get_roof_for_building, get_statistics_for_wards,
-                   get_walls_and_windows_for_building)
+from query import (
+    get_all_ngd_attributes_pg,
+    get_avg_sap_rating_overtime_query,
+    get_building,
+    get_buildings_affected_by_extreme_weather_data_query,
+    get_buildings_in_bounding_box_query,
+    get_count_of_epc_rating_query,
+    get_filterable_buildings_in_bounding_box_query,
+    get_flag_history,
+    get_flagged_buildings,
+    get_floor_for_building,
+    get_fuel_types_by_building_type_query,
+    get_fueltype_for_building,
+    get_ngd_roof_aspect_areas_for_building,
+    get_ngd_roof_material_for_building,
+    get_ngd_roof_shape_for_building,
+    get_ngd_solar_panel_presence_for_building,
+    get_number_of_in_date_and_expired_epcs_query,
+    get_percentage_of_buildings_attributes_per_region_query,
+    get_roof_for_building,
+    get_statistics_for_wards,
+    get_walls_and_windows_for_building,
+)
 from rdflib import Graph
 from requests import codes, exceptions
-from services.climate_service import (fetch_geojson_for_hot_summer_days,
-                                      fetch_geojson_for_icing_days,
-                                      fetch_geojson_for_wind_driven_rain)
+from services.climate_service import (
+    fetch_geojson_for_hot_summer_days,
+    fetch_geojson_for_icing_days,
+    fetch_geojson_for_wind_driven_rain,
+)
 from services.energy_performance_service import (
     fetch_geojson_for_energy_performance_by_counties,
     fetch_geojson_for_energy_performance_by_districts,
     fetch_geojson_for_energy_performance_by_regions,
-    fetch_geojson_for_energy_performance_by_wards)
+    fetch_geojson_for_energy_performance_by_wards,
+)
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_headers as get_forwarding_headers
@@ -526,9 +555,11 @@ async def get_filter_summary(
     req: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    detailed_buildings_in_bounding_box_results = await db.execute(
+    detailed_buildings_in_bounding_box_results = await execute_with_timeout(
+        db,
         text(get_filterable_buildings_in_bounding_box_query()),
-        {
+        timeout_seconds=60,
+        params={
             "min_long": min_long,
             "max_long": max_long,
             "min_lat": min_lat,
@@ -536,6 +567,7 @@ async def get_filter_summary(
             "srid": 4326,
         },
     )
+
     results = [
         FilterableBuildingSchema.from_orm(result)
         for result in detailed_buildings_in_bounding_box_results

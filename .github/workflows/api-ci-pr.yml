@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-name: Frontend CI on PR
+name: API CI on PR
 
 on:
   workflow_call:
@@ -11,8 +11,8 @@ on:
     paths:
       - "api/**"
       - "requirements.txt"
-      - ".github/workflows/frontend-ci-pr.yml"
-      - ".github/workflows/frontend-ci-pr-merge.yml"
+      - ".github/workflows/api-ci-pr.yml"
+      - ".github/workflows/api-ci-pr-merge.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: "fs"
           scan-ref: .
@@ -40,10 +40,33 @@ jobs:
           severity: "CRITICAL,HIGH"
         continue-on-error: true
 
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITHUB_ACCESS_TOKEN: ${{ secrets.GH_PACKAGES_PAT }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m pytest unit_tests/ -v
+
   docker-build-test-scan:
     name: Build, Docker Build, Test & Scan
     runs-on: ubuntu-latest
-    needs: security-scanning
+    needs: [security-scanning, unit-tests]
     timeout-minutes: 20
     env:
       GITHUB_ACCESS_TOKEN: ${{ secrets.GH_PACKAGES_PAT }}
@@ -57,7 +80,7 @@ jobs:
           docker build --secret id=pat_token,env=GITHUB_ACCESS_TOKEN -t iris/api:latest -f Dockerfile .
 
       - name: Run Trivy Scan on Docker Image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           image-ref: "iris/api:latest"
           format: "table"

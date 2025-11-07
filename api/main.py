@@ -3,10 +3,13 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 
+import asyncpg.exceptions
+import sqlalchemy.exc
 import uvicorn
 from config import get_settings
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from routes import router
 
 config_settings = get_settings()
@@ -32,6 +35,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(sqlalchemy.exc.DBAPIError)
+async def query_timeout_handler(request: Request, exc: sqlalchemy.exc.DBAPIError):
+    sqlstate = getattr(exc.orig, "sqlstate", None)
+    if sqlstate == asyncpg.exceptions.QueryCanceledError.sqlstate:
+        return JSONResponse(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            content={
+                "detail": "The request took too long to complete.",
+                "error": "QueryCanceledError",
+            },
+        )
+
+    raise exc
 
 
 app.include_router(router)
