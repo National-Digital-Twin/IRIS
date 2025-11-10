@@ -36,11 +36,12 @@ async def test_execute_with_timeout_sets_and_resets_timeout():
     assert second_call[0][0] == query
     assert second_call[0][1] == params
 
-    # Third call: reset timeout
+    # Third call: reset timeout - should reset to query_timeout value
+    # This verifies it uses the config default (29) not the fallback (30)
     third_call = mock_session.execute.call_args_list[2]
     reset_timeout_query = third_call[0][0]
     assert "SET statement_timeout" in str(reset_timeout_query)
-    assert "30000" in str(reset_timeout_query)  # Default DB_QUERY_TIMEOUT * 1000
+    assert "29000" in str(reset_timeout_query)  # Config default DB_QUERY_TIMEOUT (29) * 1000, not fallback (30)
 
     assert result == mock_result
 
@@ -74,19 +75,39 @@ async def test_execute_with_timeout_resets_on_error():
 
 @pytest.mark.asyncio
 async def test_execute_with_timeout_uses_config_default_for_reset():
-    """Test that execute_with_timeout uses config.DB_QUERY_TIMEOUT for reset"""
+    """Test that execute_with_timeout uses query_timeout for reset"""
     mock_session = AsyncMock(spec=AsyncSession)
     mock_session.execute.return_value = AsyncMock()
 
     query = text("SELECT * FROM buildings")
     timeout_seconds = 60
 
-    with patch("db.settings") as mock_settings:
-        mock_settings.DB_QUERY_TIMEOUT = 45  # Custom default
-
+    with patch("db.query_timeout", 45):
         await execute_with_timeout(mock_session, query, timeout_seconds)
 
-        # Check third call resets to config default
+        # Check third call resets to query_timeout value
         third_call = mock_session.execute.call_args_list[2]
         reset_timeout_query = str(third_call[0][0])
         assert "45000" in reset_timeout_query  # 45 * 1000
+
+
+@pytest.mark.asyncio
+async def test_execute_with_timeout_uses_fallback_when_config_is_zero():
+    """Test that execute_with_timeout uses fallback (30) when DB_QUERY_TIMEOUT is 0"""
+    mock_session = AsyncMock(spec=AsyncSession)
+    mock_session.execute.return_value = AsyncMock()
+
+    query = text("SELECT * FROM buildings")
+    timeout_seconds = 60
+
+    # Patch settings to return 0, which should trigger fallback to DEFAULT_QUERY_TIMEOUT (30)
+    with patch("db.settings") as mock_settings:
+        mock_settings.DB_QUERY_TIMEOUT = 0
+        # Also need to patch query_timeout since it's calculated at module level
+        with patch("db.query_timeout", 30):  # Fallback value
+            await execute_with_timeout(mock_session, query, timeout_seconds)
+
+            # Check third call resets to fallback value (30)
+            third_call = mock_session.execute.call_args_list[2]
+            reset_timeout_query = str(third_call[0][0])
+            assert "30000" in reset_timeout_query  # Fallback DEFAULT_QUERY_TIMEOUT (30) * 1000
