@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: postgres
+    schema: data_cleanser
+    tables:
+      # - name: os_places_dpa
+      # - name: os_places_lpi
+      - name: domestic_certificates_search_ew_refresh
+      # - name: england_wales_non_domestic_certificates
+      # - name: os_ngd_buildings_east_mids
+      # - name: recommendations
