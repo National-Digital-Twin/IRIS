@@ -61,6 +61,8 @@ from query import (
     get_buildings_affected_by_extreme_weather_data_query,
     get_buildings_in_bounding_box_query,
     get_count_of_epc_rating_query,
+    get_county_names_query,
+    get_district_names_query,
     get_filterable_buildings_in_bounding_box_query,
     get_filtered_avg_sap_rating_overtime_query,
     get_flag_history,
@@ -75,9 +77,11 @@ from query import (
     get_ngd_solar_panel_presence_for_building,
     get_number_of_in_date_and_expired_epcs_query,
     get_percentage_of_buildings_attributes_per_region_query,
+    get_region_names_query,
     get_roof_for_building,
     get_statistics_for_wards,
     get_walls_and_windows_for_building,
+    get_ward_names_query,
 )
 from rdflib import Graph
 from requests import codes, exceptions
@@ -414,8 +418,12 @@ def post_person(per: IesPerson):
 async def get_epc_ratings_for_dashboard(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
-    query, params = get_count_of_epc_rating_query(polygon=polygon)
+    query, params = get_count_of_epc_rating_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
     results = await db.execute(text(query), params)
     mapped_results = [CountOfEpcRatings.from_orm(row) for row in results]
 
@@ -428,8 +436,12 @@ async def get_epc_ratings_for_dashboard(
 async def get_epc_ratings_per_region_for_dashboard(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
-    query, params = get_count_of_epc_rating_query(per_region=True, polygon=polygon)
+    query, params = get_count_of_epc_rating_query(
+        per_region=True, polygon=polygon, area_level=area_level, area_names=area_names
+    )
     results = await db.execute(text(query), params)
     mapped_results = [CountOfEpcRatingsPerRegion.from_orm(row) for row in results]
 
@@ -443,8 +455,12 @@ async def get_epc_ratings_per_region_for_dashboard(
 async def get_percentage_building_attributes_per_region(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
-    query, params = get_percentage_of_buildings_attributes_per_region_query(polygon)
+    query, params = get_percentage_of_buildings_attributes_per_region_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
     results = await db.execute(text(query), params)
     mapped_results = [
         PercentageBuildingAttributesPerRegion.from_orm(row) for row in results
@@ -460,6 +476,8 @@ async def get_percentage_building_attributes_per_region(
 async def get_sap_rating_overtime(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
     national_query = get_national_avg_sap_rating_overtime_query()
     national_results = await db.execute(text(national_query))
@@ -473,8 +491,10 @@ async def get_sap_rating_overtime(
         for row in national_results
     }
 
-    if polygon:
-        filtered_query, params = get_filtered_avg_sap_rating_overtime_query(polygon)
+    if polygon or (area_level and area_names):
+        filtered_query, params = get_filtered_avg_sap_rating_overtime_query(
+            polygon=polygon, area_level=area_level, area_names=area_names
+        )
         filtered_results = await db.execute(text(filtered_query), params)
 
         for row in filtered_results:
@@ -491,8 +511,12 @@ async def get_sap_rating_overtime(
 async def get_fuel_types_by_building_type(
     db: AsyncSession = Depends(get_db),
     polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
-    query, params = get_fuel_types_by_building_type_query(polygon=polygon)
+    query, params = get_fuel_types_by_building_type_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
     results = await db.execute(text(query), params)
     mapped_results = [FuelTypesByBuildingType.from_orm(row) for row in results]
 
@@ -885,6 +909,38 @@ async def get_energy_performance_data_by_regions(
     geojson=Depends(fetch_geojson_for_energy_performance_by_regions),
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
+
+
+@router.get("/areas/regions", response_model=List[str])
+async def get_regions(db: AsyncSession = Depends(get_db)):
+    """Get list of all distinct region names."""
+    query = get_region_names_query()
+    result = await db.execute(text(query))
+    return [row[0] for row in result]
+
+
+@router.get("/areas/counties", response_model=List[str])
+async def get_counties(db: AsyncSession = Depends(get_db)):
+    """Get list of all distinct county names."""
+    query = get_county_names_query()
+    result = await db.execute(text(query))
+    return [row[0] for row in result]
+
+
+@router.get("/areas/districts", response_model=List[str])
+async def get_districts(db: AsyncSession = Depends(get_db)):
+    """Get list of all distinct district names."""
+    query = get_district_names_query()
+    result = await db.execute(text(query))
+    return [row[0] for row in result]
+
+
+@router.get("/areas/wards", response_model=List[str])
+async def get_wards(db: AsyncSession = Depends(get_db)):
+    """Get list of all distinct ward names."""
+    query = get_ward_names_query()
+    result = await db.execute(text(query))
+    return [row[0] for row in result]
 
 
 # @app.post("/buildings/states",description="Add a new state to a building")

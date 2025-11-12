@@ -524,7 +524,26 @@ def get_flag_history(uprn: str) -> str:
     """
 
 
-def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None):
+def area_level_to_column(area_level: str) -> str:
+    try:
+        return {
+            "region": "region_name",
+            "county": "county_name",
+            "district": "district_name",
+            "ward": "ward_name",
+        }[area_level]
+    except KeyError:
+        raise ValueError(
+            f"Invalid area_level '{area_level}'. Must be one of region, county, district, ward."
+        )
+
+
+def get_count_of_epc_rating_query(
+    per_region: bool = False,
+    polygon: str = None,
+    area_level: str = None,
+    area_names: list = None,
+):
     where_conditions = []
     params = {}
 
@@ -533,6 +552,9 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
+    elif area_level and area_names:
+        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        params["area_names"] = area_names
 
     if per_region:
         where_conditions.append("region_name IS NOT NULL AND region_name != ''")
@@ -556,7 +578,9 @@ def get_count_of_epc_rating_query(per_region: bool = False, polygon: str = None)
     return query, params
 
 
-def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None):
+def get_percentage_of_buildings_attributes_per_region_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
     where_conditions = []
     params = {}
 
@@ -573,6 +597,9 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
+    elif area_level and area_names:
+        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        params["area_names"] = area_names
 
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
@@ -595,7 +622,9 @@ def get_percentage_of_buildings_attributes_per_region_query(polygon: str = None)
     return query, params
 
 
-def get_fuel_types_by_building_type_query(polygon: str = None):
+def get_fuel_types_by_building_type_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
     where_conditions = []
     params = {}
 
@@ -604,6 +633,9 @@ def get_fuel_types_by_building_type_query(polygon: str = None):
     if polygon:
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
+    elif area_level and area_names:
+        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        params["area_names"] = area_names
 
     where_conditions.append("type IS NOT NULL")
     where_conditions.append("fuel_type IS NOT NULL")
@@ -636,16 +668,28 @@ def get_national_avg_sap_rating_overtime_query():
     return query
 
 
-def get_filtered_avg_sap_rating_overtime_query(polygon: str):
-    """Get filtered average SAP rating over time for a specific polygon area."""
-    params = {"polygon": polygon}
-    query = """
+def get_filtered_avg_sap_rating_overtime_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
+    """Get filtered average SAP rating over time for a specific polygon area or named areas."""
+    where_conditions = ["active_snapshots IS NOT NULL"]
+    params = {}
+
+    if polygon:
+        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        params["polygon"] = polygon
+    elif area_level and area_names:
+        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        params["area_names"] = area_names
+
+    where_clause = " AND ".join(where_conditions)
+
+    query = f"""
         SELECT
             unnest(active_snapshots) as date,
             AVG(sap_rating) as avg_sap_rating
         FROM iris.building_epc_analytics
-        WHERE active_snapshots IS NOT NULL
-          AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
+        WHERE {where_clause}
         GROUP BY date
         ORDER BY date ASC;
     """
@@ -674,3 +718,39 @@ def get_number_of_in_date_and_expired_epcs_query():
     """
 
     return query
+
+
+def get_region_names_query() -> str:
+    return """
+        SELECT DISTINCT region_name
+        FROM iris.building_epc_analytics
+        WHERE region_name IS NOT NULL
+        ORDER BY region_name
+    """
+
+
+def get_county_names_query() -> str:
+    return """
+        SELECT DISTINCT county_name
+        FROM iris.building_epc_analytics
+        WHERE county_name IS NOT NULL
+        ORDER BY county_name
+    """
+
+
+def get_district_names_query() -> str:
+    return """
+        SELECT DISTINCT district_name
+        FROM iris.building_epc_analytics
+        WHERE district_name IS NOT NULL
+        ORDER BY district_name
+    """
+
+
+def get_ward_names_query() -> str:
+    return """
+        SELECT DISTINCT ward_name
+        FROM iris.building_epc_analytics
+        WHERE ward_name IS NOT NULL
+        ORDER BY ward_name
+    """

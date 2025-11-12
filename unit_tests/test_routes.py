@@ -596,3 +596,63 @@ def test_post_assessment_not_found(monkeypatch):
     with pytest.raises(HTTPException) as excinfo:
         routes.post_assessment(dummy_ass)
     assert excinfo.value.status_code == 404
+
+
+def test_epc_ratings_invalid_area_level(client):
+    with pytest.raises(ValueError):
+        client.get(
+            "/dashboard/epc-ratings",
+            params={"area_level": "invalid", "area_names": ["Test"]}
+        )
+
+
+def test_epc_ratings_valid_area_level(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings",
+        params={"area_level": "region", "area_names": ["Test"]}
+    )
+    assert response.status_code == 200
+
+
+def test_sap_rating_overtime_invalid_area_level(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    with pytest.raises(ValueError):
+        client.get(
+            "/dashboard/sap-rating-overtime",
+            params={"area_level": "invalid", "area_names": ["Test"]}
+        )
+
+
+def test_fuel_types_invalid_area_level(client):
+    with pytest.raises(ValueError):
+        client.get(
+            "/dashboard/fuel-types-by-building-type",
+            params={"area_level": "invalid", "area_names": ["Test"]}
+        )
+
+
+def test_building_attributes_invalid_area_level(client):
+    with pytest.raises(ValueError):
+        client.get(
+            "/dashboard/building-attributes-percentage-per-region",
+            params={"area_level": "invalid", "area_names": ["Test"]}
+        )
