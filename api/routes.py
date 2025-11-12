@@ -545,9 +545,14 @@ async def get_buildings_affected_by_extreme_weather(
 )
 async def get_number_of_in_date_and_expired_epcs(
     db: AsyncSession = Depends(get_db),
+    polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
-    query = get_number_of_in_date_and_expired_epcs_query()
-    results = await db.execute(text(query))
+    query, params = get_number_of_in_date_and_expired_epcs_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
+    results = await db.execute(text(query), params)
     mapped_results = [NumberOfInDateAndExpiredEpcs.from_orm(row) for row in results]
 
     return mapped_results

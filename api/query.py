@@ -672,28 +672,35 @@ def get_filtered_avg_sap_rating_overtime_query(
     polygon: str = None, area_level: str = None, area_names: list = None
 ):
     """Get filtered average SAP rating over time for a specific polygon area or named areas."""
-    where_conditions = ["active_snapshots IS NOT NULL"]
-    params = {}
 
+    if not polygon and not (area_level and area_names):
+        raise ValueError("either polygon or area_level/area_names filter must be provided")
+
+    # For polygon filters, calculate dynamically from building_epc_analytics (spatial query required)
     if polygon:
-        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
-        params["polygon"] = polygon
-    elif area_level and area_names:
-        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
-        params["area_names"] = area_names
+        query = """
+            SELECT
+                unnest(active_snapshots) as date,
+                AVG(sap_rating) as avg_sap_rating
+            FROM iris.building_epc_analytics
+            WHERE active_snapshots IS NOT NULL
+              AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
+            GROUP BY date
+            ORDER BY date ASC;
+        """
+        return query, { "polygon": polygon }
 
-    where_clause = " AND ".join(where_conditions)
-
+    # For named area filters, use pre-aggregated data
     query = f"""
         SELECT
-            unnest(active_snapshots) as date,
-            AVG(sap_rating) as avg_sap_rating
-        FROM iris.building_epc_analytics
-        WHERE {where_clause}
-        GROUP BY date
-        ORDER BY date ASC;
+            snapshot_date as date,
+            SUM(sum_sap_rating) / NULLIF(SUM(active_epc_count), 0) as avg_sap_rating
+        FROM iris.building_epc_analytics_aggregates
+        WHERE {area_level_to_column(area_level)} = ANY(:area_names)
+        GROUP BY snapshot_date
+        ORDER BY snapshot_date ASC;
     """
-    return query, params
+    return query, { "area_names": area_names }
 
 
 def get_buildings_affected_by_extreme_weather_data_query():
@@ -706,18 +713,76 @@ def get_buildings_affected_by_extreme_weather_data_query():
     return query
 
 
-def get_number_of_in_date_and_expired_epcs_query():
-    query = """
+def get_number_of_in_date_and_expired_epcs_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
+    """Get in-date and expired EPC counts over time, optionally filtered by area."""
+    params = {}
+
+    # For polygon filters, calculate dynamically from building_epc_analytics (spatial query required)
+    if polygon:
+        params["polygon"] = polygon
+
+        query = """
+            WITH snapshot_dates AS (
+                SELECT generate_series(
+                    DATE_TRUNC('year', (SELECT MIN(lodgement_date) FROM iris.building_epc_analytics WHERE lodgement_date IS NOT NULL))::date + interval '1 year' - interval '1 day',
+                    DATE_TRUNC('year', CURRENT_DATE)::date + interval '1 year' - interval '1 day',
+                    interval '1 year'
+                )::date as snapshot_date
+            ),
+            filtered_buildings AS (
+                SELECT uprn, lodgement_date, active_snapshots
+                FROM iris.building_epc_analytics
+                WHERE active_snapshots IS NOT NULL
+                  AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
+            ),
+            issued_counts AS (
+                SELECT
+                    sd.snapshot_date,
+                    COUNT(DISTINCT fb.uprn) as total_issued_count
+                FROM snapshot_dates sd
+                CROSS JOIN filtered_buildings fb
+                WHERE fb.lodgement_date <= sd.snapshot_date
+                GROUP BY sd.snapshot_date
+            ),
+            active_counts AS (
+                SELECT
+                    unnest(active_snapshots) as snapshot_date,
+                    COUNT(*) as active_epc_count
+                FROM filtered_buildings
+                GROUP BY unnest(active_snapshots)
+            )
+            SELECT
+                ic.snapshot_date AS year,
+                COALESCE(ac.active_epc_count, 0) AS active,
+                (ic.total_issued_count - COALESCE(ac.active_epc_count, 0)) AS expired
+            FROM issued_counts ic
+            LEFT JOIN active_counts ac ON ic.snapshot_date = ac.snapshot_date
+            ORDER BY ic.snapshot_date;
+        """
+        return query, params
+
+    # For named area filters or national view, use pre-aggregated data
+    where_conditions = []
+    if area_level and area_names:
+        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        params["area_names"] = area_names
+
+    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+
+    query = f"""
         SELECT
             snapshot_date AS year,
             SUM(active_epc_count) AS active,
             SUM(expired_epc_count) AS expired
         FROM iris.building_epc_analytics_aggregates
+        {where_clause}
         GROUP BY snapshot_date
         ORDER BY snapshot_date;
     """
 
-    return query
+    return query, params
 
 
 def get_region_names_query() -> str:
