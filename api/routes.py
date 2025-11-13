@@ -529,11 +529,19 @@ async def get_fuel_types_by_building_type(
 )
 async def get_buildings_affected_by_extreme_weather(
     db: AsyncSession = Depends(get_db),
+    polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
 ):
-    query = get_buildings_affected_by_extreme_weather_data_query()
-    results = await db.execute(text(query))
+    has_filter = bool(polygon or (area_level and area_names))
+    query, params = get_buildings_affected_by_extreme_weather_data_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
+
+    results = await db.execute(text(query), params)
     mapped_results = [
-        BuildingsAffectedByExtremeWeather.from_orm(row) for row in results
+        BuildingsAffectedByExtremeWeather.from_orm(row, has_filter=has_filter)
+        for row in results
     ]
 
     return mapped_results

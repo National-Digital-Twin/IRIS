@@ -703,14 +703,33 @@ def get_filtered_avg_sap_rating_overtime_query(
     return query, { "area_names": area_names }
 
 
-def get_buildings_affected_by_extreme_weather_data_query():
-    query = """
-        SELECT COUNT(*) AS number_of_buildings, affected_by_icing_days, affected_by_hsds, affected_by_wdr
+def get_buildings_affected_by_extreme_weather_data_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
+    """Get buildings affected by extreme weather, optionally filtered by area."""
+    params = {}
+
+    if polygon:
+        params["polygon"] = polygon
+        filter_condition = "ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
+    elif area_level and area_names:
+        params["area_names"] = area_names
+        filter_condition = f"{area_level_to_column(area_level)} = ANY(:area_names)"
+    else:
+        filter_condition = "FALSE"
+
+    query = f"""
+        SELECT
+            COUNT(*) AS number_of_buildings,
+            COUNT(*) FILTER (WHERE {filter_condition}) AS filtered_number_of_buildings,
+            affected_by_icing_days,
+            affected_by_hsds,
+            affected_by_wdr
         FROM iris.building_extreme_weather_analytics
         GROUP BY affected_by_icing_days, affected_by_hsds, affected_by_wdr
     """
 
-    return query
+    return query, params
 
 
 def get_number_of_in_date_and_expired_epcs_query(
