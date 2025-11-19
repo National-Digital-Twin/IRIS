@@ -4,11 +4,11 @@
 
 import datetime
 import re
-from utils import has_bindings
 
 from models.dto_models import (
+    BuildingAttributePercentage,
+    BuildingAttributePercentagesPerRegion,
     DetailedBuilding,
-    DetailedBuildingSchema,
     EpcAndOsBuildingSchema,
     EpcStatistics,
     FilterableBuilding,
@@ -188,7 +188,7 @@ def map_ngd_solar_panel_presence_results(
     else:
         if 'solar_panel_presence' in results.keys():
             building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']=='True' else 'NoSolarPanels'
-            
+
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
         for result in results["results"]["bindings"]:
@@ -235,7 +235,7 @@ def map_ngd_roof_aspect_area_facings_results(
     if "roof_aspect_area_facing_north_m2" in results:
         for field, m2 in results.items():
             assign(field, m2)
-    
+
 
 
 def map_single_building_response(
@@ -642,3 +642,36 @@ def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSu
             mapped_result, result.roof_insulation_thickness
         )
     return mapped_result
+
+
+def map_percentage_building_attributes_per_region_response(results) -> list[BuildingAttributePercentagesPerRegion]:
+    attribute_mappings = [
+        ("percentage_single_glazing", "Single glazing"),
+        ("percentage_double_glazing", "Double glazing"),
+        ("percentage_triple_glazing", "Triple glazing"),
+        ("percentage_no_insulation", "No insulation"),
+        ("percentage_insulation_1_100mm", "1-100mm insulation"),
+        ("percentage_insulation_101_200mm", "101-200mm insulation"),
+        ("percentage_insulation_201_300mm", "201-300mm insulation"),
+        ("percentage_insulation_over_300mm", ">300mm insulation"),
+        ("percentage_suspended_flooring", "Suspended flooring"),
+        ("percentage_pitched_roof", "Pitched roofs"),
+        ("percentage_cavity_wall", "Cavity walls"),
+        ("percentage_roof_solar_panels", "Solar panels"),
+    ]
+
+    mapped_results = []
+    for row in results:
+        attributes = []
+        for column_name, label in attribute_mappings:
+            value = getattr(row, column_name, 0.0)
+            attributes.append(BuildingAttributePercentage(label=label, value=float(value)))
+
+        mapped_results.append(
+            BuildingAttributePercentagesPerRegion(
+                region_name=row.region_name,
+                attributes=attributes
+            )
+        )
+
+    return mapped_results

@@ -313,35 +313,6 @@ class CountOfEpcRatingsPerRegion(CountOfEpcRatings):
             epc_g=obj.epc_g,
         )
 
-
-class PercentageBuildingAttributesPerRegion(BaseModel):
-    region_name: str
-    percentage_roof_solar_panels: float
-    percentage_double_glazing: float
-    percentage_single_glazing: float
-    percentage_solid_floor: float
-    percentage_roof_insulation_thickness_150mm: float
-    percentage_roof_insulation_thickness_200mm: float
-    percentage_roof_insulation_thickness_250mm: float
-    percentage_pitched_roof: float
-    percentage_cavity_wall: float
-
-    @classmethod
-    def from_orm(cls, obj):
-        return cls(
-            region_name=obj.region_name,
-            percentage_roof_solar_panels=obj.percentage_roof_solar_panels,
-            percentage_double_glazing=obj.percentage_double_glazing,
-            percentage_single_glazing=obj.percentage_single_glazing,
-            percentage_solid_floor=obj.percentage_solid_floor,
-            percentage_roof_insulation_thickness_150mm=obj.percentage_roof_insulation_thickness_150mm,
-            percentage_roof_insulation_thickness_200mm=obj.percentage_roof_insulation_thickness_200mm,
-            percentage_roof_insulation_thickness_250mm=obj.percentage_roof_insulation_thickness_250mm,
-            percentage_pitched_roof=obj.percentage_pitched_roof,
-            percentage_cavity_wall=obj.percentage_cavity_wall,
-        )
-
-
 class FuelTypesByBuildingType(BaseModel):
     building_type: str
     fuel_type: str
@@ -396,3 +367,13 @@ class NumberOfInDateAndExpiredEpcs(BaseModel):
     @classmethod
     def from_orm(cls, obj):
         return cls(year=obj.year, expired=obj.expired, active=obj.active)
+
+
+class BuildingAttributePercentage(BaseModel):
+    label: str
+    value: float
+
+
+class BuildingAttributePercentagesPerRegion(BaseModel):
+    region_name: str
+    attributes: List[BuildingAttributePercentage]

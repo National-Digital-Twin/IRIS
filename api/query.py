@@ -605,15 +605,18 @@ def get_percentage_of_buildings_attributes_per_region_query(
 
     query = f"""
         SELECT region_name,
-                {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")},
-                {percentage_column("window_glazing = 'DoubleGlazing'", "percentage_double_glazing")},
                 {percentage_column("window_glazing = 'SingleGlazing'", "percentage_single_glazing")},
-                {percentage_column("floor_construction = 'SolidFloor'", "percentage_solid_floor")},
-                {percentage_column("roof_insulation_thickness = '150mm'", "percentage_roof_insulation_thickness_150mm")},
-                {percentage_column("roof_insulation_thickness = '200mm'", "percentage_roof_insulation_thickness_200mm")},
-                {percentage_column("roof_insulation_thickness = '250mm'", "percentage_roof_insulation_thickness_250mm")},
+                {percentage_column("window_glazing IN ('DoubleGlazing', 'DoubleGlazingBefore2002', 'DoubleGlazingAfter2002')", "percentage_double_glazing")},
+                {percentage_column("window_glazing = 'TripleGlazing'", "percentage_triple_glazing")},
+                {percentage_column("roof_insulation_thickness = '0mm'", "percentage_no_insulation")},
+                {percentage_column("roof_insulation_thickness IN ('12mm', '25mm', '50mm', '75mm', '100mm')", "percentage_insulation_1_100mm")},
+                {percentage_column("roof_insulation_thickness IN ('125mm', '150mm', '150+mm', '175mm', '200mm')", "percentage_insulation_101_200mm")},
+                {percentage_column("roof_insulation_thickness IN ('225mm', '250mm', '270mm', '300mm')", "percentage_insulation_201_300mm")},
+                {percentage_column("roof_insulation_thickness IN ('350mm', '400mm', '400+mm')", "percentage_insulation_over_300mm")},
+                {percentage_column("floor_construction = 'Suspended'", "percentage_suspended_flooring")},
                 {percentage_column("roof_construction = 'PitchedRoof'", "percentage_pitched_roof")},
-                {percentage_column("wall_construction = 'CavityWall'", "percentage_cavity_wall")}
+                {percentage_column("wall_construction = 'CavityWall'", "percentage_cavity_wall")},
+                {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")}
         FROM iris.building_epc_analytics
         {where_clause}
         GROUP BY region_name;

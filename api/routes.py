@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from mappers import (
     map_bounded_buildings_response,
     map_bounded_filterable_buildings_response,
+    map_percentage_building_attributes_per_region_response,
     map_epc_statistics_response,
     map_filter_summary_response,
     map_flagged_buildings_response,
@@ -23,6 +24,7 @@ from mappers import (
 )
 from models.dto_models import (
     AverageSapRatingPerLodgementDate,
+    BuildingAttributePercentagesPerRegion,
     BuildingsAffectedByExtremeWeather,
     CountOfEpcRatings,
     CountOfEpcRatingsPerRegion,
@@ -37,7 +39,6 @@ from models.dto_models import (
     FlagHistory,
     FuelTypesByBuildingType,
     NumberOfInDateAndExpiredEpcs,
-    PercentageBuildingAttributesPerRegion,
     SimpleBuilding,
 )
 from models.ies_models import (
@@ -450,7 +451,7 @@ async def get_epc_ratings_per_region_for_dashboard(
 
 @router.get(
     "/dashboard/building-attributes-percentage-per-region",
-    response_model=List[PercentageBuildingAttributesPerRegion],
+    response_model=List[BuildingAttributePercentagesPerRegion],
 )
 async def get_percentage_building_attributes_per_region(
     db: AsyncSession = Depends(get_db),
@@ -462,11 +463,8 @@ async def get_percentage_building_attributes_per_region(
         polygon=polygon, area_level=area_level, area_names=area_names
     )
     results = await db.execute(text(query), params)
-    mapped_results = [
-        PercentageBuildingAttributesPerRegion.from_orm(row) for row in results
-    ]
 
-    return mapped_results
+    return map_percentage_building_attributes_per_region_response(results)
 
 
 @router.get(
