@@ -239,12 +239,12 @@ def get_all_ngd_attributes_pg() -> str:
                 *
             FROM
                 iris.epc_assessment
+            WHERE uprn = :uprn
             ORDER BY
                 lodgement_date desc nulls last,
                 id desc
             LIMIT 1) ea
         JOIN iris.structure_unit su ON su.epc_assessment_id = ea.id
-        WHERE ea.uprn = :uprn
         LIMIT 1;
     """
 
