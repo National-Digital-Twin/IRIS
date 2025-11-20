@@ -2,8 +2,10 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
+from utils import expand_wales_region, WELSH_REGIONS
 
 EPC_ACTIVE_TRUE = "epc_active = true"
+WELSH_REGIONS_SQL = ", ".join(f"'{region}'" for region in sorted(WELSH_REGIONS))
 
 
 def get_building(uprn: str) -> str:
@@ -553,6 +555,7 @@ def get_count_of_epc_rating_query(
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
     elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
         where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
         params["area_names"] = area_names
 
@@ -561,8 +564,20 @@ def get_count_of_epc_rating_query(
 
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
+    region_select = f"""CASE
+            WHEN region_name IN ({WELSH_REGIONS_SQL})
+            THEN 'Wales'
+            ELSE region_name
+        END AS region_name,""" if per_region else ""
+
+    group_by = f"""GROUP BY CASE
+            WHEN region_name IN ({WELSH_REGIONS_SQL})
+            THEN 'Wales'
+            ELSE region_name
+        END""" if per_region else ""
+
     query = f"""
-        SELECT {"region_name," if per_region else ""}
+        SELECT {region_select}
                 COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
                 COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
                 COUNT(*) FILTER (WHERE epc_rating = 'C') AS epc_c,
@@ -572,7 +587,7 @@ def get_count_of_epc_rating_query(
                 COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
         FROM iris.building_epc_analytics
         {where_clause}
-        {"GROUP BY region_name" if per_region else ""};
+        {group_by};
     """
 
     return query, params
@@ -598,13 +613,18 @@ def get_percentage_of_buildings_attributes_per_region_query(
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
     elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
         where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
         params["area_names"] = area_names
 
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
-        SELECT region_name,
+        SELECT CASE
+                WHEN region_name IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE region_name
+            END AS region_name,
                 {percentage_column("window_glazing = 'SingleGlazing'", "percentage_single_glazing")},
                 {percentage_column("window_glazing IN ('DoubleGlazing', 'DoubleGlazingBefore2002', 'DoubleGlazingAfter2002')", "percentage_double_glazing")},
                 {percentage_column("window_glazing = 'TripleGlazing'", "percentage_triple_glazing")},
@@ -619,7 +639,11 @@ def get_percentage_of_buildings_attributes_per_region_query(
                 {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")}
         FROM iris.building_epc_analytics
         {where_clause}
-        GROUP BY region_name;
+        GROUP BY CASE
+                WHEN region_name IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE region_name
+            END;
     """
 
     return query, params
@@ -637,6 +661,7 @@ def get_fuel_types_by_building_type_query(
         where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
         params["polygon"] = polygon
     elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
         where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
         params["area_names"] = area_names
 
@@ -679,7 +704,6 @@ def get_filtered_avg_sap_rating_overtime_query(
     if not polygon and not (area_level and area_names):
         raise ValueError("either polygon or area_level/area_names filter must be provided")
 
-    # For polygon filters, calculate dynamically from building_epc_analytics (spatial query required)
     if polygon:
         query = """
             SELECT
@@ -693,7 +717,7 @@ def get_filtered_avg_sap_rating_overtime_query(
         """
         return query, { "polygon": polygon }
 
-    # For named area filters, use pre-aggregated data
+    area_names = expand_wales_region(area_names)
     query = f"""
         SELECT
             snapshot_date as date,
@@ -716,6 +740,7 @@ def get_buildings_affected_by_extreme_weather_data_query(
         params["polygon"] = polygon
         filter_condition = "ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
     elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
         params["area_names"] = area_names
         filter_condition = f"{area_level_to_column(area_level)} = ANY(:area_names)"
     else:
@@ -785,9 +810,9 @@ def get_number_of_in_date_and_expired_epcs_query(
         """
         return query, params
 
-    # For named area filters or national view, use pre-aggregated data
     where_conditions = []
     if area_level and area_names:
+        area_names = expand_wales_region(area_names)
         where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
         params["area_names"] = area_names
 
@@ -808,8 +833,12 @@ def get_number_of_in_date_and_expired_epcs_query(
 
 
 def get_region_names_query() -> str:
-    return """
-        SELECT DISTINCT region_name
+    return f"""
+        SELECT DISTINCT CASE
+            WHEN region_name IN ({WELSH_REGIONS_SQL})
+            THEN 'Wales'
+            ELSE region_name
+        END AS region_name
         FROM iris.building_epc_analytics
         WHERE region_name IS NOT NULL
         ORDER BY region_name
