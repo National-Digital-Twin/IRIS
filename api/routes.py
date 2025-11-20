@@ -31,6 +31,7 @@ from models.dto_models import (
     DetailedBuilding,
     DetailedBuildingSchema,
     EpcAndOsBuildingSchema,
+    EpcRatingCountsOvertime,
     EpcStatistics,
     FilterableBuilding,
     FilterableBuildingSchema,
@@ -64,6 +65,7 @@ from query import (
     get_count_of_epc_rating_query,
     get_county_names_query,
     get_district_names_query,
+    get_epc_ratings_overtime_query,
     get_filterable_buildings_in_bounding_box_query,
     get_filtered_avg_sap_rating_overtime_query,
     get_flag_history,
@@ -500,6 +502,25 @@ async def get_sap_rating_overtime(
                 results_by_date[row.date].filtered_avg_sap_rating = row.avg_sap_rating
 
     return list(results_by_date.values())
+
+
+@router.get(
+    "/dashboard/epc-ratings-overtime",
+    response_model=List[EpcRatingCountsOvertime],
+)
+async def get_epc_ratings_overtime(
+    db: AsyncSession = Depends(get_db),
+    polygon: Optional[GeoJSONPolygon] = Query(None),
+    area_level: Optional[str] = Query(None),
+    area_names: Optional[List[str]] = Query(None),
+):
+    query, params = get_epc_ratings_overtime_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
+    results = await db.execute(text(query), params)
+    mapped_results = [EpcRatingCountsOvertime.from_orm(row) for row in results]
+
+    return mapped_results
 
 
 @router.get(

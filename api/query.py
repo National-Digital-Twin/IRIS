@@ -841,3 +841,52 @@ def get_ward_names_query() -> str:
         WHERE ward_name IS NOT NULL
         ORDER BY ward_name
     """
+
+
+def get_epc_ratings_overtime_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
+    params = {}
+
+    if polygon:
+        query = """
+            SELECT
+                unnest(active_snapshots) as date,
+                COUNT(*) FILTER (WHERE epc_rating = 'A') AS epc_a,
+                COUNT(*) FILTER (WHERE epc_rating = 'B') AS epc_b,
+                COUNT(*) FILTER (WHERE epc_rating = 'C') AS epc_c,
+                COUNT(*) FILTER (WHERE epc_rating = 'D') AS epc_d,
+                COUNT(*) FILTER (WHERE epc_rating = 'E') AS epc_e,
+                COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
+                COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
+            FROM iris.building_epc_analytics
+            WHERE active_snapshots IS NOT NULL
+              AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
+            GROUP BY date
+            ORDER BY date ASC;
+        """
+        params["polygon"] = polygon
+    else:
+        where_clause = ""
+        if area_level and area_names:
+            area_names = expand_wales_region(area_names)
+            where_clause = f"WHERE {area_level_to_column(area_level)} = ANY(:area_names)"
+            params["area_names"] = area_names
+
+        query = f"""
+            SELECT
+                snapshot_date as date,
+                SUM(count_rating_a) as epc_a,
+                SUM(count_rating_b) as epc_b,
+                SUM(count_rating_c) as epc_c,
+                SUM(count_rating_d) as epc_d,
+                SUM(count_rating_e) as epc_e,
+                SUM(count_rating_f) as epc_f,
+                SUM(count_rating_g) as epc_g
+            FROM iris.building_epc_analytics_aggregates
+            {where_clause}
+            GROUP BY snapshot_date
+            ORDER BY snapshot_date ASC;
+        """
+
+    return query, params

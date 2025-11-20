@@ -313,6 +313,7 @@ class CountOfEpcRatingsPerRegion(CountOfEpcRatings):
             epc_g=obj.epc_g,
         )
 
+
 class FuelTypesByBuildingType(BaseModel):
     building_type: str
     fuel_type: str
@@ -341,6 +342,30 @@ class AverageSapRatingPerLodgementDate(BaseModel):
         )
 
 
+class EpcRatingCountsOvertime(BaseModel):
+    date: datetime.date
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            date=obj.date,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+        )
+
+
 class BuildingsAffectedByExtremeWeather(BaseModel):
     number_of_buildings: int
     filtered_number_of_buildings: Optional[int] = None
@@ -352,7 +377,9 @@ class BuildingsAffectedByExtremeWeather(BaseModel):
     def from_orm(cls, obj, has_filter: bool = True):
         return cls(
             number_of_buildings=obj.number_of_buildings,
-            filtered_number_of_buildings=obj.filtered_number_of_buildings if has_filter else None,
+            filtered_number_of_buildings=obj.filtered_number_of_buildings
+            if has_filter
+            else None,
             affected_by_icing_days=obj.affected_by_icing_days,
             affected_by_hsds=obj.affected_by_hsds,
             affected_by_wdr=obj.affected_by_wdr,
