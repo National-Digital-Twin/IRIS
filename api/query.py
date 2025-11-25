@@ -540,41 +540,29 @@ def area_level_to_column(area_level: str) -> str:
         )
 
 
-def get_count_of_epc_rating_query(
-    per_region: bool = False,
-    polygon: str = None,
-    area_level: str = None,
-    area_names: list = None,
-):
-    where_conditions = []
-    params = {}
+def _wales_grouped_column(column: str) -> str:
+    """Returns a CASE expression that groups Welsh regions into 'Wales'."""
+    return f"""CASE
+                WHEN {column} IN ({WELSH_REGIONS_SQL})
+                THEN 'Wales'
+                ELSE {column}
+            END"""
 
-    where_conditions.append(EPC_ACTIVE_TRUE)
 
-    if polygon:
-        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
-        params["polygon"] = polygon
-    elif area_level and area_names:
-        area_names = expand_wales_region(area_names)
-        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
-        params["area_names"] = area_names
-
+def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
+    """Build EPC rating query for polygon filter using building_epc_analytics."""
+    params = {"polygon": polygon}
+    where_conditions = [
+        EPC_ACTIVE_TRUE,
+        "ST_Within(point, ST_GeomFromGeoJSON(:polygon))",
+    ]
     if per_region:
         where_conditions.append("region_name IS NOT NULL AND region_name != ''")
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
-
-    region_select = f"""CASE
-            WHEN region_name IN ({WELSH_REGIONS_SQL})
-            THEN 'Wales'
-            ELSE region_name
-        END AS region_name,""" if per_region else ""
-
-    group_by = f"""GROUP BY CASE
-            WHEN region_name IN ({WELSH_REGIONS_SQL})
-            THEN 'Wales'
-            ELSE region_name
-        END""" if per_region else ""
+    region_select = (
+        _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
+    )
+    group_by = "GROUP BY " + _wales_grouped_column("region_name") if per_region else ""
 
     query = f"""
         SELECT {region_select}
@@ -586,11 +574,61 @@ def get_count_of_epc_rating_query(
                 COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
                 COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
         FROM iris.building_epc_analytics
-        {where_clause}
+        WHERE {" AND ".join(where_conditions)}
         {group_by};
     """
-
     return query, params
+
+
+def _get_epc_rating_query_from_aggregates(
+    per_region: bool, area_level: str, area_names: list
+):
+    """Build EPC rating query from pre-aggregated data."""
+    params = {}
+    where_conditions = [
+        "snapshot_date = (SELECT MAX(snapshot_date) FROM iris.building_epc_analytics_aggregates)"
+    ]
+
+    if area_level and area_names:
+        area_names = expand_wales_region(area_names)
+        where_conditions.append(
+            f"{area_level_to_column(area_level)} = ANY(:area_names)"
+        )
+        params["area_names"] = area_names
+
+    if per_region:
+        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+
+    region_select = (
+        _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
+    )
+    group_by = "GROUP BY " + _wales_grouped_column("region_name") if per_region else ""
+
+    query = f"""
+        SELECT {region_select}
+                SUM(count_rating_a) AS epc_a,
+                SUM(count_rating_b) AS epc_b,
+                SUM(count_rating_c) AS epc_c,
+                SUM(count_rating_d) AS epc_d,
+                SUM(count_rating_e) AS epc_e,
+                SUM(count_rating_f) AS epc_f,
+                SUM(count_rating_g) AS epc_g
+        FROM iris.building_epc_analytics_aggregates
+        WHERE {" AND ".join(where_conditions)}
+        {group_by};
+    """
+    return query, params
+
+
+def get_count_of_epc_rating_query(
+    per_region: bool = False,
+    polygon: str = None,
+    area_level: str = None,
+    area_names: list = None,
+):
+    if polygon:
+        return _get_epc_rating_query_with_polygon(per_region, polygon)
+    return _get_epc_rating_query_from_aggregates(per_region, area_level, area_names)
 
 
 def get_percentage_of_buildings_attributes_per_region_query(
@@ -614,17 +652,15 @@ def get_percentage_of_buildings_attributes_per_region_query(
         params["polygon"] = polygon
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
-        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        where_conditions.append(
+            f"{area_level_to_column(area_level)} = ANY(:area_names)"
+        )
         params["area_names"] = area_names
 
     where_clause = "WHERE " + " AND ".join(where_conditions)
 
     query = f"""
-        SELECT CASE
-                WHEN region_name IN ({WELSH_REGIONS_SQL})
-                THEN 'Wales'
-                ELSE region_name
-            END AS region_name,
+        SELECT {_wales_grouped_column("region_name")} AS region_name,
                 {percentage_column("window_glazing = 'SingleGlazing'", "percentage_single_glazing")},
                 {percentage_column("window_glazing IN ('DoubleGlazing', 'DoubleGlazingBefore2002', 'DoubleGlazingAfter2002')", "percentage_double_glazing")},
                 {percentage_column("window_glazing = 'TripleGlazing'", "percentage_triple_glazing")},
@@ -639,11 +675,7 @@ def get_percentage_of_buildings_attributes_per_region_query(
                 {percentage_column("has_roof_solar_panels", "percentage_roof_solar_panels")}
         FROM iris.building_epc_analytics
         {where_clause}
-        GROUP BY CASE
-                WHEN region_name IN ({WELSH_REGIONS_SQL})
-                THEN 'Wales'
-                ELSE region_name
-            END;
+        GROUP BY {_wales_grouped_column("region_name")};
     """
 
     return query, params
@@ -662,7 +694,9 @@ def get_fuel_types_by_building_type_query(
         params["polygon"] = polygon
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
-        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        where_conditions.append(
+            f"{area_level_to_column(area_level)} = ANY(:area_names)"
+        )
         params["area_names"] = area_names
 
     where_conditions.append("type IS NOT NULL")
@@ -702,7 +736,9 @@ def get_filtered_avg_sap_rating_overtime_query(
     """Get filtered average SAP rating over time for a specific polygon area or named areas."""
 
     if not polygon and not (area_level and area_names):
-        raise ValueError("either polygon or area_level/area_names filter must be provided")
+        raise ValueError(
+            "either polygon or area_level/area_names filter must be provided"
+        )
 
     if polygon:
         query = """
@@ -715,7 +751,7 @@ def get_filtered_avg_sap_rating_overtime_query(
             GROUP BY date
             ORDER BY date ASC;
         """
-        return query, { "polygon": polygon }
+        return query, {"polygon": polygon}
 
     area_names = expand_wales_region(area_names)
     query = f"""
@@ -727,7 +763,7 @@ def get_filtered_avg_sap_rating_overtime_query(
         GROUP BY snapshot_date
         ORDER BY snapshot_date ASC;
     """
-    return query, { "area_names": area_names }
+    return query, {"area_names": area_names}
 
 
 def get_buildings_affected_by_extreme_weather_data_query(
@@ -813,7 +849,9 @@ def get_number_of_in_date_and_expired_epcs_query(
     where_conditions = []
     if area_level and area_names:
         area_names = expand_wales_region(area_names)
-        where_conditions.append(f"{area_level_to_column(area_level)} = ANY(:area_names)")
+        where_conditions.append(
+            f"{area_level_to_column(area_level)} = ANY(:area_names)"
+        )
         params["area_names"] = area_names
 
     where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
@@ -834,11 +872,7 @@ def get_number_of_in_date_and_expired_epcs_query(
 
 def get_region_names_query() -> str:
     return f"""
-        SELECT DISTINCT CASE
-            WHEN region_name IN ({WELSH_REGIONS_SQL})
-            THEN 'Wales'
-            ELSE region_name
-        END AS region_name
+        SELECT DISTINCT {_wales_grouped_column("region_name")} AS region_name
         FROM iris.building_epc_analytics
         WHERE region_name IS NOT NULL
         ORDER BY region_name
@@ -872,6 +906,165 @@ def get_ward_names_query() -> str:
     """
 
 
+def get_count_of_epc_rating_by_area_level_query(
+    group_by_level: str,
+    filter_area_level: str = None,
+    filter_area_names: list = None,
+):
+    params = {}
+    where_conditions = []
+
+    group_column = area_level_to_column(group_by_level)
+
+    if filter_area_level and filter_area_names:
+        filter_area_names = expand_wales_region(filter_area_names)
+        filter_column = area_level_to_column(filter_area_level)
+        where_conditions.append(f"{filter_column} = ANY(:filter_area_names)")
+        params["filter_area_names"] = filter_area_names
+
+    where_conditions.append(f"{group_column} IS NOT NULL AND {group_column} != ''")
+
+    where_conditions.append(
+        "snapshot_date = (SELECT MAX(snapshot_date) FROM iris.building_epc_analytics_aggregates)"
+    )
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    if group_by_level == "region":
+        area_select = _wales_grouped_column(group_column) + " AS area_name"
+        group_by = "GROUP BY " + _wales_grouped_column(group_column)
+    else:
+        area_select = f"{group_column} AS area_name"
+        group_by = f"GROUP BY {group_column}"
+
+    query = f"""
+        SELECT
+            {area_select},
+            SUM(count_rating_a) AS epc_a,
+            SUM(count_rating_b) AS epc_b,
+            SUM(count_rating_c) AS epc_c,
+            SUM(count_rating_d) AS epc_d,
+            SUM(count_rating_e) AS epc_e,
+            SUM(count_rating_f) AS epc_f,
+            SUM(count_rating_g) AS epc_g
+        FROM iris.building_epc_analytics_aggregates
+        {where_clause}
+        {group_by};
+    """
+
+    return query, params
+
+
+def _get_feature_query_config(feature: str) -> dict:
+    """Returns select clause and where condition for a given feature."""
+    configs = {
+        "glazing_types": {
+            "select": """CASE
+                WHEN window_glazing IN ('DoubleGlazing', 'DoubleGlazingAfter2002', 'DoubleGlazingBefore2002')
+                THEN 'DoubleGlazing'
+                ELSE window_glazing
+            END""",
+            "where": "window_glazing IS NOT NULL AND window_glazing != ''",
+        },
+        "fuel_types": {
+            "select": "fuel_type",
+            "where": "fuel_type IS NOT NULL AND fuel_type != ''",
+        },
+        "wall_construction": {
+            "select": "wall_construction",
+            "where": "wall_construction IS NOT NULL AND wall_construction != ''",
+        },
+        "wall_insulation": {
+            "select": "wall_insulation",
+            "where": "wall_insulation IS NOT NULL AND wall_insulation != ''",
+        },
+        "floor_construction": {
+            "select": "floor_construction",
+            "where": "floor_construction IS NOT NULL AND floor_construction != ''",
+        },
+        "floor_insulation": {
+            "select": "floor_insulation",
+            "where": "floor_insulation IS NOT NULL AND floor_insulation != ''",
+        },
+        "roof_construction": {
+            "select": "roof_construction",
+            "where": "roof_construction IS NOT NULL AND roof_construction != ''",
+        },
+        "roof_material": {
+            "select": "roof_material",
+            "where": "roof_material IS NOT NULL AND roof_material != ''",
+        },
+        "roof_insulation": {
+            "select": "roof_insulation",
+            "where": "roof_insulation IS NOT NULL AND roof_insulation != ''",
+        },
+        "roof_insulation_thickness": {
+            "select": "roof_insulation_thickness",
+            "where": "roof_insulation_thickness IS NOT NULL AND roof_insulation_thickness != ''",
+        },
+        "solar_panels": {
+            "select": "CASE WHEN has_roof_solar_panels THEN 'Yes' ELSE 'No' END",
+            "where": "has_roof_solar_panels IS NOT NULL",
+        },
+        "roof_aspect": {
+            "select": "direction",
+            "where": "direction IS NOT NULL",
+            "from_clause": """iris.building_epc_analytics
+            CROSS JOIN LATERAL (
+                VALUES
+                    (CASE WHEN roof_aspect_area_facing_north_m2 > 0 THEN 'North' END),
+                    (CASE WHEN roof_aspect_area_facing_north_east_m2 > 0 THEN 'NorthEast' END),
+                    (CASE WHEN roof_aspect_area_facing_east_m2 > 0 THEN 'East' END),
+                    (CASE WHEN roof_aspect_area_facing_south_east_m2 > 0 THEN 'SouthEast' END),
+                    (CASE WHEN roof_aspect_area_facing_south_m2 > 0 THEN 'South' END),
+                    (CASE WHEN roof_aspect_area_facing_south_west_m2 > 0 THEN 'SouthWest' END),
+                    (CASE WHEN roof_aspect_area_facing_west_m2 > 0 THEN 'West' END),
+                    (CASE WHEN roof_aspect_area_facing_north_west_m2 > 0 THEN 'NorthWest' END)
+            ) AS directions(direction)""",
+        },
+    }
+    if feature not in configs:
+        raise ValueError(f"Invalid feature: {feature}")
+    return configs[feature]
+
+
+def get_count_of_epc_rating_by_features_query(
+    feature: str, polygon: str = None, area_level: str = None, area_names: list = None
+):
+    config = _get_feature_query_config(feature)
+    params = {}
+    where_conditions = [EPC_ACTIVE_TRUE, "epc_rating IS NOT NULL", config["where"]]
+
+    if polygon:
+        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        params["polygon"] = polygon
+    elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
+        filter_column = area_level_to_column(area_level)
+        where_conditions.append(f"{filter_column} = ANY(:area_names)")
+        params["area_names"] = area_names
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+    from_clause = config.get("from_clause", "iris.building_epc_analytics")
+
+    query = f"""
+        SELECT
+            {config["select"]} as name,
+            COUNT(*) FILTER (WHERE epc_rating = 'A') as epc_a,
+            COUNT(*) FILTER (WHERE epc_rating = 'B') as epc_b,
+            COUNT(*) FILTER (WHERE epc_rating = 'C') as epc_c,
+            COUNT(*) FILTER (WHERE epc_rating = 'D') as epc_d,
+            COUNT(*) FILTER (WHERE epc_rating = 'E') as epc_e,
+            COUNT(*) FILTER (WHERE epc_rating = 'F') as epc_f,
+            COUNT(*) FILTER (WHERE epc_rating = 'G') as epc_g
+        FROM {from_clause}
+        {where_clause}
+        GROUP BY name;
+    """
+
+    return query, params
+
+
 def get_epc_ratings_overtime_query(
     polygon: str = None, area_level: str = None, area_names: list = None
 ):
@@ -899,7 +1092,9 @@ def get_epc_ratings_overtime_query(
         where_clause = ""
         if area_level and area_names:
             area_names = expand_wales_region(area_names)
-            where_clause = f"WHERE {area_level_to_column(area_level)} = ANY(:area_names)"
+            where_clause = (
+                f"WHERE {area_level_to_column(area_level)} = ANY(:area_names)"
+            )
             params["area_names"] = area_names
 
         query = f"""

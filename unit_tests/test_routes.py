@@ -599,11 +599,11 @@ def test_post_assessment_not_found(monkeypatch):
 
 
 def test_epc_ratings_invalid_area_level(client):
-    with pytest.raises(ValueError):
-        client.get(
-            "/dashboard/epc-ratings",
-            params={"area_level": "invalid", "area_names": ["Test"]}
-        )
+    response = client.get(
+        "/dashboard/epc-ratings",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
 
 
 def test_epc_ratings_valid_area_level(client, monkeypatch):
@@ -635,24 +635,144 @@ def test_sap_rating_overtime_invalid_area_level(client, monkeypatch):
 
     monkeypatch.setattr(db_module, "get_db", mock_get_db)
 
-    with pytest.raises(ValueError):
-        client.get(
-            "/dashboard/sap-rating-overtime",
-            params={"area_level": "invalid", "area_names": ["Test"]}
-        )
+    response = client.get(
+        "/dashboard/sap-rating-overtime",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
 
 
 def test_fuel_types_invalid_area_level(client):
-    with pytest.raises(ValueError):
-        client.get(
-            "/dashboard/fuel-types-by-building-type",
-            params={"area_level": "invalid", "area_names": ["Test"]}
-        )
+    response = client.get(
+        "/dashboard/fuel-types-by-building-type",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
 
 
 def test_building_attributes_invalid_area_level(client):
-    with pytest.raises(ValueError):
-        client.get(
-            "/dashboard/building-attributes-percentage-per-region",
-            params={"area_level": "invalid", "area_names": ["Test"]}
-        )
+    response = client.get(
+        "/dashboard/building-attributes-percentage-per-region",
+        params={"area_level": "invalid", "area_names": ["Test"]}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_feature_valid_feature(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={"feature": "glazing_types"}
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_feature_invalid_feature(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={"feature": "invalid_feature"}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_feature_with_area_filter(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={
+            "feature": "fuel_types",
+            "area_level": "region",
+            "area_names": ["East Midlands", "Eastern"]
+        }
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_feature_invalid_area_level(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-feature",
+        params={
+            "feature": "glazing_types",
+            "area_level": "invalid",
+            "area_names": ["Test"]
+        }
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_area_level_valid(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={"group_by_level": "region"}
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_area_level_invalid_group_by(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={"group_by_level": "invalid"}
+    )
+    assert response.status_code == 422
+
+
+def test_epc_ratings_by_area_level_with_filter(client, monkeypatch):
+    mock_result = AsyncMock()
+    mock_result.__iter__ = lambda self: iter([])
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_result
+
+    async def mock_get_db():
+        yield mock_db
+
+    monkeypatch.setattr(db_module, "get_db", mock_get_db)
+
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={
+            "group_by_level": "county",
+            "filter_area_level": "region",
+            "filter_area_names": ["East Midlands"]
+        }
+    )
+    assert response.status_code == 200
+
+
+def test_epc_ratings_by_area_level_invalid_filter_level(client):
+    response = client.get(
+        "/dashboard/epc-ratings-by-area-level",
+        params={
+            "group_by_level": "county",
+            "filter_area_level": "invalid",
+            "filter_area_names": ["Test"]
+        }
+    )
+    assert response.status_code == 422

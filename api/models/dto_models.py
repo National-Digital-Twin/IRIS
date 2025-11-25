@@ -314,6 +314,43 @@ class CountOfEpcRatingsPerRegion(CountOfEpcRatings):
         )
 
 
+class EPCRatingsByCategory(BaseModel):
+    name: str
+    epc_a: int
+    epc_b: int
+    epc_c: int
+    epc_d: int
+    epc_e: int
+    epc_f: int
+    epc_g: int
+    total: int
+
+    @classmethod
+    def from_orm(cls, obj):
+        name = getattr(obj, "name", None) or getattr(obj, "area_name", None)
+        return cls(
+            name=name,
+            epc_a=obj.epc_a,
+            epc_b=obj.epc_b,
+            epc_c=obj.epc_c,
+            epc_d=obj.epc_d,
+            epc_e=obj.epc_e,
+            epc_f=obj.epc_f,
+            epc_g=obj.epc_g,
+            total=sum(
+                [
+                    obj.epc_a,
+                    obj.epc_b,
+                    obj.epc_c,
+                    obj.epc_d,
+                    obj.epc_e,
+                    obj.epc_f,
+                    obj.epc_g,
+                ]
+            ),
+        )
+
+
 class FuelTypesByBuildingType(BaseModel):
     building_type: str
     fuel_type: str
