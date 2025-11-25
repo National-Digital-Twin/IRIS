@@ -30,7 +30,7 @@
 
         @if (dashboardType() === 'national') {
             <section class="widget-card">
-                <c477-epc-region-chart [areaFilter]="areaFilter()"></c477-epc-region-chart>
+                <c477-epc-by-area-chart></c477-epc-by-area-chart>
             </section>
         }
 
@@ -53,12 +53,22 @@
         </section>
 
         <section class="widget-card">
+            <c477-epc-by-feature-chart [areaFilter]="areaFilter()"></c477-epc-by-feature-chart>
+        </section>
+
+        <section class="widget-card">
             <c477-extreme-weather-chart [areaFilter]="areaFilter()"></c477-extreme-weather-chart>
         </section>
 
         <section class="widget-card">
             <c477-in-date-vs-expired-epcs-chart [areaFilter]="areaFilter()"></c477-in-date-vs-expired-epcs-chart>
         </section>
+
+        @if (dashboardType() === 'area' && areaFilter()?.mode === 'named-areas') {
+            <section class="widget-card">
+                <c477-epc-by-area-chart [areaFilter]="areaFilter()"></c477-epc-by-area-chart>
+            </section>
+        }
     </div>
 </div>
 
