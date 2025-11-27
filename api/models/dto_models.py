@@ -379,6 +379,20 @@ class AverageSapRatingPerLodgementDate(BaseModel):
         )
 
 
+class SapRatingTimelineDataPoint(BaseModel):
+    date: datetime.date
+    name: str
+    avg_sap_rating: float
+
+    @classmethod
+    def from_orm(cls, obj):
+        return cls(
+            date=obj.date,
+            name=obj.name,
+            avg_sap_rating=obj.avg_sap_rating,
+        )
+
+
 class EpcRatingCountsOvertime(BaseModel):
     date: datetime.date
     epc_a: int

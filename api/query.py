@@ -1114,3 +1114,63 @@ def get_epc_ratings_overtime_query(
         """
 
     return query, params
+
+
+def get_sap_rating_overtime_by_property_type_query(polygon: str):
+    """Get average SAP rating over time grouped by property type for a polygon area."""
+    query = """
+        SELECT
+            unnest(active_snapshots) as date,
+            type as name,
+            AVG(sap_rating) as avg_sap_rating
+        FROM iris.building_epc_analytics
+        WHERE active_snapshots IS NOT NULL
+          AND type IS NOT NULL
+          AND type != ''
+          AND ST_Within(point, ST_GeomFromGeoJSON(:polygon))
+        GROUP BY date, type
+        ORDER BY date ASC, type ASC;
+    """
+    return query, {"polygon": polygon}
+
+
+def get_sap_rating_overtime_by_area_query(
+    group_by_level: str,
+    filter_area_level: str = None,
+    filter_area_names: list = None,
+):
+    """Get average SAP rating over time for each area at the specified grouping level."""
+    params = {}
+    where_conditions = []
+
+    group_column = area_level_to_column(group_by_level)
+
+    if filter_area_level and filter_area_names:
+        filter_area_names = expand_wales_region(filter_area_names)
+        filter_column = area_level_to_column(filter_area_level)
+        where_conditions.append(f"{filter_column} = ANY(:filter_area_names)")
+        params["filter_area_names"] = filter_area_names
+
+    where_conditions.append(f"{group_column} IS NOT NULL AND {group_column} != ''")
+
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    if group_by_level == "region":
+        area_select = _wales_grouped_column(group_column) + " AS name"
+        group_by = f"snapshot_date, {_wales_grouped_column(group_column)}"
+    else:
+        area_select = f"{group_column} AS name"
+        group_by = f"snapshot_date, {group_column}"
+
+    query = f"""
+        SELECT
+            snapshot_date as date,
+            {area_select},
+            SUM(sum_sap_rating) / NULLIF(SUM(active_epc_count), 0) as avg_sap_rating
+        FROM iris.building_epc_analytics_aggregates
+        {where_clause}
+        GROUP BY {group_by}
+        ORDER BY date ASC, name ASC;
+    """
+
+    return query, params

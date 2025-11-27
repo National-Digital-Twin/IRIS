@@ -41,6 +41,7 @@ from models.dto_models import (
     FlagHistory,
     FuelTypesByBuildingType,
     NumberOfInDateAndExpiredEpcs,
+    SapRatingTimelineDataPoint,
     SimpleBuilding,
 )
 from models.ies_models import (
@@ -85,6 +86,8 @@ from query import (
     get_percentage_of_buildings_attributes_per_region_query,
     get_region_names_query,
     get_roof_for_building,
+    get_sap_rating_overtime_by_area_query,
+    get_sap_rating_overtime_by_property_type_query,
     get_statistics_for_wards,
     get_walls_and_windows_for_building,
     get_ward_names_query,
@@ -545,6 +548,38 @@ async def get_sap_rating_overtime(
                 results_by_date[row.date].filtered_avg_sap_rating = row.avg_sap_rating
 
     return list(results_by_date.values())
+
+
+@router.get(
+    "/dashboard/sap-rating-overtime-by-property-type",
+    response_model=List[SapRatingTimelineDataPoint],
+)
+async def get_sap_rating_overtime_by_property_type(
+    db: AsyncSession = Depends(get_db),
+    polygon: GeoJSONPolygon = Query(...),
+):
+    query, params = get_sap_rating_overtime_by_property_type_query(polygon=polygon)
+    results = await db.execute(text(query), params)
+    return [SapRatingTimelineDataPoint.from_orm(row) for row in results]
+
+
+@router.get(
+    "/dashboard/sap-rating-overtime-by-area",
+    response_model=List[SapRatingTimelineDataPoint],
+)
+async def get_sap_rating_overtime_by_area(
+    db: AsyncSession = Depends(get_db),
+    group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
+    filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
+    filter_area_names: Optional[List[str]] = Query(None),
+):
+    query, params = get_sap_rating_overtime_by_area_query(
+        group_by_level=group_by_level,
+        filter_area_level=filter_area_level,
+        filter_area_names=filter_area_names,
+    )
+    results = await db.execute(text(query), params)
+    return [SapRatingTimelineDataPoint.from_orm(row) for row in results]
 
 
 @router.get(
