@@ -6,9 +6,9 @@ iris_data_cleansing:
       db_profile: dev_postgres # This points to your main adapter
     dev_postgres:
       type: postgres
-      host: localhost
-      user: myuser
-      password: mypassword
-      dbname: mydatabase
-      schema: public
+      host: "{{ env_var('DB_HOST') }}"
+      user: "{{ env_var('DB_USER') }}"
+      password: "{{ env_var('DB_PASSWORD') }}"
+      dbname: "{{ env_var('DB_NAME') }}"
+      schema: "{{ env_var('DB_SCHEMA') }}"
       port: 5432

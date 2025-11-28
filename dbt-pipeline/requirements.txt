@@ -2016,3 +2016,5 @@ yarl==1.9.2 ; python_version >= "3.11" and python_version < "3.12" \
 zipp==3.17.0 ; python_version >= "3.11" and python_version < "3.12" \
     --hash=sha256:0e923e726174922dce09c53c59ad483ff7bbb8e572e00c7f7c46b88556409f31 \
     --hash=sha256:84e64a1c28cf7e91ed2078bb8cc8c259cb19b76942096c8d7b84947690cabaf0
+python-dotenv==1.2.1; python_version >= "3.11" and python_version < "3.12"\
+    --hash=sha256:b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61

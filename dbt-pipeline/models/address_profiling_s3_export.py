@@ -19,13 +19,14 @@ from utils.logging_config import setup_logger
 # load credentials from .env
 load_dotenv(".env", verbose=True)
 
-SKIP_S3_UPLOAD = os.environ.get("SKIP_S3_UPLOAD")
+SKIP_S3_UPLOAD = os.environ.get("SKIP_S3_UPLOAD", True)
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME")
-S3_FILENAME_USER = os.environ.get("S3_FILENAME_USER")
-AWS_REGION_NAME = os.environ.get("AWS_REGION_NAME")
+S3_FILENAME = os.environ.get("S3_FILENAME")
+AWS_REGION = os.environ.get("AWS_REGION")
 DEBUG = os.environ.get("DEBUG", True)
-
-print(SKIP_S3_UPLOAD, S3_BUCKET_NAME, S3_FILENAME_USER, AWS_REGION_NAME)  # noqa: T201
+S3_ENDPOINT = os.environ.get("S3_ENDPOINT", None)
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", None)
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", None)
 
 logger = setup_logger(DEBUG)
 
@@ -41,10 +42,12 @@ def model(dbt, fal):
         logger,
         df,
         SKIP_S3_UPLOAD,
-        AWS_REGION_NAME,
+        AWS_REGION,
         S3_BUCKET_NAME,
-        "address_profiling",
-        S3_FILENAME_USER,
+        S3_FILENAME,
+        endpoint_url=S3_ENDPOINT,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
     return df
 
@@ -55,10 +58,12 @@ def main(input_file: str):
         logger,
         input,
         SKIP_S3_UPLOAD,
-        AWS_REGION_NAME,
+        AWS_REGION,
         S3_BUCKET_NAME,
-        "address_profiling",
-        S3_FILENAME_USER,
+        S3_FILENAME,
+        endpoint_url=S3_ENDPOINT,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
 
 

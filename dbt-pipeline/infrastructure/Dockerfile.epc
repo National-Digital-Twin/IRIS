@@ -1,0 +1,31 @@
+# Please run this from the dbt-pipeline directory of the repo
+
+FROM python:3.11.14-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY dbt_project.yml .
+COPY packages.yml .
+COPY profiles.yml .
+
+RUN mkdir models
+
+COPY models/sources.yml models/
+COPY models/address_profiling_s3_export.py models/
+COPY models/epc_with_uprn.py models/
+COPY models/epc_with_uprn.yml models/
+COPY models/mart_address_profiling.py models/
+COPY models/mart_address_profiling.yml models/
+COPY models/mart_address_profiling_with_sap.py models/
+COPY models/stg_epc_certificates.sql models/
+COPY models/stg_epc_certificates.yml models/
+
+COPY utils/ utils/
+
+RUN dbt deps
+
+CMD ["dbt", "run", "--project-dir", "."]
