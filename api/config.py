@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     LANDING_PAGE_URL: str = "http://localhost:5173"
     BOOTSTRAP_SERVERS: str = "localhost:9092"
     IES_TOPIC: str = "knowledge"
-    DB_QUERY_TIMEOUT: int = 29
+    DB_QUERY_TIMEOUT: int = 40
 
     def get_db_connection_string(self):
         if self.ENVIRONMENT == "TEST":
