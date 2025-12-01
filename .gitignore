@@ -35,7 +35,8 @@ JOHN.txt
 .RData
 
 # Environment
-venv/
+.venv/
+uv.lock
 
 # coverage
 .coverage
