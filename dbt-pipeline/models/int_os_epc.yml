@@ -1,6 +1,0 @@
-version: 2
-
-models:
-  - name: int_os_epc
-    description: "EPC & OS data joined on UPRN (Unique Property Reference Number)"
-    tags: [intermediate]

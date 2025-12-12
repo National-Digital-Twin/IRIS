@@ -62,4 +62,7 @@ target/
 # Local outputs (tiles, previews, etc.)
 out/
 
+# dbt
+**/.user.yml
+
 # https://www.gitignore.io/
