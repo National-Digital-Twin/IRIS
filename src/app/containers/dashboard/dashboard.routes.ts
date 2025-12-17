@@ -6,6 +6,11 @@ import { DashboardPageComponent } from './dashboard-page.component';
 
 export const DASHBOARD_ROUTES: Routes = [
     {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'national',
+    },
+    {
         path: 'national',
         component: DashboardPageComponent,
         providers: [importProvidersFrom(PlotlyModule.forRoot(PlotlyJS))],
