@@ -3,12 +3,13 @@ set -euo pipefail
 
 # Required inputs (can be set via --env-file or explicit -e flags)
 : "${DB_HOST:?DB_HOST is required}"
-: "${DB_PORT:?DB_PORT is required}"
 : "${DB_USER:?DB_USER is required}"
 : "${DB_PASSWORD:?DB_PASSWORD is required}"
 : "${DB_NAME:?DB_NAME is required}"
 : "${DB_SCHEMA:?DB_SCHEMA is required}"
-: "${S3_BUCKET:?S3_BUCKET is required}"
+: "${S3_BUCKET_NAME:?S3_BUCKET_NAME is required}"
+
+DB_PORT="${DB_PORT:-5432}"
 
 # File to export and output path
 FILE="${FILE:-/tmp/${TABLE}.csv}"
@@ -24,8 +25,8 @@ if [[ -n "${S3_ENDPOINT:-}" ]]; then
   AWS_ARGS+=(--endpoint-url "$S3_ENDPOINT")
 fi
 
-echo "Uploading to s3://${S3_BUCKET}/${S3_DIR}/${TABLE}.csv"
-aws "${AWS_ARGS[@]}" s3 cp "${FILE}" "s3://${S3_BUCKET}/${S3_DIR}/${TABLE}.csv"
+echo "Uploading to s3://${S3_BUCKET_NAME}/${S3_DIR}/${TABLE}.csv"
+aws "${AWS_ARGS[@]}" s3 cp "${FILE}" "s3://${S3_BUCKET_NAME}/${S3_DIR}/${TABLE}.csv"
 
 rm -f "${FILE}"
 echo "Cleaned up local file ${FILE}"
