@@ -14,6 +14,12 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## Unreleased
+
+### Bugfixes
+
+- [DPAV-2119]: Fixed issue with routing when refreshing dashboard
+
 
 ## [0.94.4] - 2025-10-24
 
