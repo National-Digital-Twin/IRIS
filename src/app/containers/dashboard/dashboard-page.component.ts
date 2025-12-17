@@ -18,6 +18,8 @@ import { SapTimelineByAreaChartComponent } from './charts/sap-timeline-by-area-c
 import { SapTimelineByPropertyTypeChartComponent } from './charts/sap-timeline-by-property-type-chart/sap-timeline-by-property-type-chart.component';
 import { SapTimelineChartComponent } from './charts/sap-timeline-chart/sap-timeline-chart.component';
 
+const AREA_FILTER_STORAGE_KEY = 'dashboard.areaFilter';
+
 @Component({
     selector: 'c477-dashboard-page',
     imports: [
@@ -58,6 +60,12 @@ export class DashboardPageComponent implements OnInit {
 
                 if (state?.areaFilter) {
                     this.areaFilter.set(state.areaFilter);
+                    this.#persistAreaFilter(state.areaFilter);
+                } else {
+                    const persisted = this.#loadPersistedAreaFilter();
+                    if (persisted) {
+                        this.areaFilter.set(persisted);
+                    }
                 }
             }
         }
@@ -65,6 +73,32 @@ export class DashboardPageComponent implements OnInit {
 
     public handleReturnToMapView(): void {
         this.#router.navigateByUrl('/');
+    }
+
+    #persistAreaFilter(filter: AreaFilter | undefined): void {
+        try {
+            if (!filter) {
+                localStorage.removeItem(AREA_FILTER_STORAGE_KEY);
+                return;
+            }
+
+            localStorage.setItem(AREA_FILTER_STORAGE_KEY, JSON.stringify(filter));
+        } catch {
+            // Ignore storage failures - not a critical issue - state simply won't persist
+        }
+    }
+
+    #loadPersistedAreaFilter(): AreaFilter | undefined {
+        try {
+            const saved = localStorage.getItem(AREA_FILTER_STORAGE_KEY);
+            if (!saved) {
+                return undefined;
+            }
+
+            return JSON.parse(saved) as AreaFilter;
+        } catch {
+            return undefined;
+        }
     }
 }
 
