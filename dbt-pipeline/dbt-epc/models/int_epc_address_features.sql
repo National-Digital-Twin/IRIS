@@ -71,12 +71,12 @@ select
     end as multiple_glazing_type,
     -- roof mappings
     case
-        when roof_construction_raw ilike '%pitched%' then 'Pitched'
-        when roof_construction_raw ilike '%roof room%' then 'RoofRoom'
-        when roof_construction_raw ilike '%flat%' then 'Flat'
-        when roof_construction_raw ilike '%other premises above%' then 'OtherPremisesAbove'
+        when roof_construction_raw ilike '%flat%' then 'FlatRoof'
         when roof_construction_raw ilike '%another dwelling above%' then 'AnotherDwellingAbove'
-        when roof_construction_raw ilike '%thatched%' then 'Thatched'
+        when roof_construction_raw ilike '%other premises above%' then 'OtherPremisesAbove'
+        when roof_construction_raw ilike '%pitched%' then 'PitchedRoof'
+        when roof_construction_raw ilike '%roof room%' then 'RoofRooms'
+        when roof_construction_raw ilike '%thatched%' then 'ThatchedRoof'
         else null
     end as roof_construction,
     case
@@ -130,8 +130,8 @@ select
     case
         when floor_construction_raw ilike '%solid%' then 'Solid'
         when floor_construction_raw ilike '%suspended%' then 'Suspended'
-        when floor_construction_raw ilike '%another dwelling above%' then 'AnotherDwellingAbove'
         when floor_construction_raw ilike '%another dwelling below%' then 'AnotherDwellingBelow'
+        when floor_construction_raw ilike '%other premises below%' then 'OtherPremisesBelow'
         else null
     end as floor_construction,
     case
