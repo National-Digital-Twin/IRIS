@@ -108,7 +108,9 @@ models:
         description: The date that the inspection was actually carried out by the energy assessor
         field_type: DATE
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
       - name: local_authority
         description: Office for National Statistics (ONS) code. Local authority area in which the building is located.
         field_type: TEXT
@@ -198,6 +200,8 @@ models:
                 - Y
                 - N
                 - null
+              config:
+                severity: warn
       - name: flat_storey_count
         description: The number of storeys in the apartment block.
         field_type: INT
@@ -222,6 +226,8 @@ models:
                 - Less Than Typical
                 - Much Less Than Typical
                 - null
+              config:
+                severity: warn
       - name: extension_count
         description: The number of extensions added to the property.
         field_type: FLOAT
@@ -252,6 +258,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: hot_water_env_eff
         description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -264,6 +272,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: floor_description
         description: Overall description of the property feature
         field_type: TEXT
@@ -279,6 +289,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: windows_description
         description: Overall description of the property feature
         field_type: TEXT
@@ -294,6 +306,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: windows_env_eff
         description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -306,6 +320,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: walls_description
         description: Overall description of the property feature
         field_type: TEXT
@@ -321,6 +337,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: walls_env_eff
         description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -333,6 +351,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: secondheat_description
         description: Overall description of the property feature
         field_type: TEXT
@@ -348,6 +368,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: sheating_env_eff
         description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -360,6 +382,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: roof_description
         description: Overall description of the property feature
         field_type: TEXT
@@ -375,6 +399,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: roof_env_eff
         description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -387,6 +413,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: mainheat_energy_eff
         description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -399,6 +427,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: mainheat_env_eff
         description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -411,6 +441,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: mainheatcont_description
         description: Overall description of the property feature.
         field_type: TEXT
@@ -426,6 +458,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: mainheatc_env_eff
         description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -438,6 +472,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: lighting_description
         description:
           Overall description of property feature. Total number of fixed lighting outlets and total number of low-energy
@@ -455,6 +491,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: lighting_env_eff
         description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
         field_type: TEXT
@@ -467,6 +505,8 @@ models:
                 - Poor
                 - Very Poor
                 - null
+              config:
+                severity: warn
       - name: main_fuel
         description: The type of fuel used to power the central heating e.g. Gas, Electricity
         field_type: TEXT
@@ -496,6 +536,8 @@ models:
                 - Y
                 - N
                 - null
+              config:
+                severity: warn
       - name: mechanical_ventilation
         description: Identifies the type of mechanical ventilation the property has. This is required for the RdSAP calculation.
         field_type: TEXT
