@@ -13,7 +13,6 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
  - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`).
 
 ---
-
 ## [0.95.0] - 2026-01-12
 
 ### Features
