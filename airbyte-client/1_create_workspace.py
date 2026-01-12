@@ -26,13 +26,13 @@ def main():
     )
     print(f"Workspace ID: {workspace_id}")
 
-    # 3. Create EPC Source
+    # 3. Create Source
     print("Creating sources...")
     source_id = sources.create_s3_source(
         client=client,
         workspace_id=workspace_id,
-        source_name=os.getenv("EPC_SOURCE_NAME"),
-        streams_params=[json.loads(os.getenv("EPC_CERTIFICATES_STREAM_PARAMS"))],
+        source_name=os.getenv("SOURCE_NAME"),
+        streams_params=[json.loads(os.getenv("STREAMS_PARAMS"))],
         bucket=os.getenv("S3_BUCKET_NAME"),
         auth_mode=os.getenv("S3_AUTH_MODE"),
         access_key_id=os.getenv("S3_ACCESS_KEY_ID"),
@@ -57,13 +57,13 @@ def main():
     print(f"Destination ID: {destination_id}")
 
     # 5. Create Connection
-    epc_connection_id = connections.create_connection(
+    connection_id = connections.create_connection(
         client=client,
         source_id=source_id,
         destination_id=destination_id,
-        name=os.getenv("EPC_CONNECTION_NAME")
+        name=os.getenv("CONNECTION_NAME")
     )
-    print(f"Connection ID: {epc_connection_id}")
+    print(f"Connection ID: {connection_id}")
 
     print("\nIMPORTANT: Copy these IDs to your .env file now!")
 

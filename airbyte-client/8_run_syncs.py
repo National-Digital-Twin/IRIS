@@ -21,25 +21,25 @@ def main():
 
 
     # 2. Load Connection ID
-    epc_connection_id = os.getenv("EPC_CONNECTION_ID")
-    if not epc_connection_id:
-        print("Error: EPC_CONNECTION_ID not found in environment variables.")
+    connection_id = os.getenv("CONNECTION_ID")
+    if not connection_id:
+        print("Error: CONNECTION_ID not found in environment variables.")
         return
 
     # 3. Trigger Sync
-    print(f"Triggering sync for connection: {epc_connection_id}")
-    epc_job_id = connections.trigger_sync(
+    print(f"Triggering sync for connection: {connection_id}")
+    job_id = connections.trigger_sync(
         client=client,
-        connection_id=epc_connection_id
+        connection_id=connection_id
     )
-    print(f"Sync triggered. Job ID: {epc_job_id}")
+    print(f"Sync triggered. Job ID: {job_id}")
     
     # 4. Check Sync Status
-    epc_job_status = connections.check_sync(
+    job_status = connections.check_sync(
         client=client,
-        job_id=epc_job_id
+        job_id=job_id
     )
-    print(f"Job Status: {epc_job_status}")
+    print(f"Job Status: {job_status}")
     
 if __name__ == "__main__":
     main()

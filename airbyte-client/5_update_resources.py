@@ -24,8 +24,8 @@ def main():
         client=client,
         workspace_id=os.getenv("WORKSPACE_ID"),
         source_id=os.getenv("SOURCE_ID"),
-        source_name=os.getenv("EPC_SOURCE_NAME"),
-        streams_params=[json.loads(os.getenv("EPC_CERTIFICATES_STREAM_PARAMS"))],
+        source_name=os.getenv("SOURCE_NAME"),
+        streams_params=[json.loads(os.getenv("STREAMS_PARAMS"))],
         bucket=os.getenv("S3_BUCKET_NAME"),
         auth_mode=os.getenv("S3_AUTH_MODE"),
         access_key_id=os.getenv("S3_ACCESS_KEY_ID"),
@@ -55,8 +55,8 @@ def main():
     # 4. Update Connection
     connection_id = connections.update_connection(
         client=client,
-        connection_id=os.getenv("EPC_CONNECTION_ID"),
-        streams_params=[json.loads(os.getenv("EPC_CERTIFICATES_STREAM_PARAMS"))]
+        connection_id=os.getenv("CONNECTION_ID"),
+        streams_params=[json.loads(os.getenv("STREAMS_PARAMS"))]
     )
     print(f"Updated connection ID: {connection_id}")
     
