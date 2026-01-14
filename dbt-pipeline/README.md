@@ -13,13 +13,14 @@ Welcome to the dbt pipelines for IRIS data cleansing.
 - `dbt-os-ngd-buildings` – OS NGD Buildings transforms
 
 ### Run locally
-From `dbt-pipeline`, inside the project you want to run:
-```sh
-dbt deps --project-dir dbt-epc
-dbt run --project-dir dbt-epc
-dbt test --project-dir dbt-epc
-```
-Replace `dbt-epc` with the target project directory.
+From `dbt-pipeline`, ensure you have exported the variables from your .env one way or another.
+
+Then, run:
+`dbt deps --project-dir <dbt-directory>` which installs the necessary dbt dependencies.
+
+Then run `dbt run --project-dir <dbt-directory> --profiles-dir <dbt-directory>` to run the dbt pipeline.
+
+Then run `dbt test --project-dir <dbt-directory> --profiles-dir <dbt-directory>` to run dbt tests and validation checks against the data produced in the dbt run step.
 
 ### Container builds
 Each project has its own Dockerfile in its directory. Build from the `dbt-pipeline` root:
