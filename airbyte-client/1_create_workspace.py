@@ -1,6 +1,6 @@
 import os, json
 from dotenv import load_dotenv
-from core import auth, workspaces, sources, destinations, connections
+from core import auth, workspaces
 
 def main():
     """
@@ -25,45 +25,6 @@ def main():
         workspace_name=os.getenv("WORKSPACE_NAME")
     )
     print(f"Workspace ID: {workspace_id}")
-
-    # 3. Create Source
-    print("Creating sources...")
-    source_id = sources.create_s3_source(
-        client=client,
-        workspace_id=workspace_id,
-        source_name=os.getenv("SOURCE_NAME"),
-        streams_params=[json.loads(os.getenv("STREAMS_PARAMS"))],
-        bucket=os.getenv("S3_BUCKET_NAME"),
-        auth_mode=os.getenv("S3_AUTH_MODE"),
-        access_key_id=os.getenv("S3_ACCESS_KEY_ID"),
-        secret_access_key=os.getenv("S3_SECRET_ACCESS_KEY"),
-        role_arn=os.getenv("S3_IAM_ROLE_ARN"),
-        endpoint=os.getenv("S3_ENDPOINT")
-    )
-    print(f"Source ID: {source_id}")
-
-    # 4. Create Destination
-    destination_id = destinations.create_postgres_destination(
-        client=client,
-        workspace_id=workspace_id,
-        destination_name=os.getenv("DESTINATION_NAME"),
-        database=os.getenv("DATABASE_NAME"),
-        host=os.getenv("DATABASE_HOST"),
-        port=int(os.getenv("DATABASE_PORT")),
-        username=os.getenv("DATABASE_USERNAME"),
-        password=os.getenv("DATABASE_PASSWORD"),
-        schema=os.getenv("DATABASE_SCHEMA")
-    )
-    print(f"Destination ID: {destination_id}")
-
-    # 5. Create Connection
-    connection_id = connections.create_connection(
-        client=client,
-        source_id=source_id,
-        destination_id=destination_id,
-        name=os.getenv("CONNECTION_NAME")
-    )
-    print(f"Connection ID: {connection_id}")
 
     print("\nIMPORTANT: Copy these IDs to your .env file now!")
 

@@ -1,6 +1,6 @@
 import os, json
 from dotenv import load_dotenv
-from core import auth, workspaces, sources, destinations, connections
+from core import auth, destinations
 
 def main():
     """

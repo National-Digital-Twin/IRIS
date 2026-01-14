@@ -27,19 +27,26 @@ Airbyte Python client helpers for creating, updating, running, and deleting Airb
 
 ## Configure env vars
 Create `airbyte-client/.env` (copy from `.env.example` if present) with:
-- Airbyte authentication: `AUTHENTICATION_REQUIRED` ("TRUE" or "FALSE")
-- Airbyte auth (if authentication enabled): `AIRBYTE_SERVER_URL`, `AIRBYTE_CLIENT_ID`, `AIRBYTE_CLIENT_SECRET`.
-- Workspace/IDs: `WORKSPACE_NAME`, `WORKSPACE_ID`, `SOURCE_ID`, `DESTINATION_ID`, `EPC_CONNECTION_ID`.
-- Connection naming: `EPC_SOURCE_NAME`, `EPC_CONNECTION_NAME`, `DESTINATION_NAME`.
-- Source config: `EPC_CERTIFICATES_STREAM_PARAMS` (JSON string with `stream_name`, `globs`), `S3_BUCKET_NAME`, `S3_AUTH_MODE` (set to "role" or "access_key"), `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_IAM_ROLE_ARN`, `S3_ENDPOINT`.
-- Destination config: `DATABASE_NAME`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_SCHEMA`.
+- Airbyte authentication mode: `AUTHENTICATION_REQUIRED` ("TRUE" or "FALSE")
+- Airbyte server URL: `AIRBYTE_SERVER_URL` (typically `http://<url>/api/public/v1`)
+- Airbyte auth (if authentication enabled): `AIRBYTE_CLIENT_ID`, `AIRBYTE_CLIENT_SECRET`.
+- Workspace config: `WORKSPACE_NAME`, `WORKSPACE_ID`
+- S3 Source config: `STREAMS_PARAMS` (JSON string with `stream_name`, `globs`), `S3_BUCKET_NAME`, `S3_AUTH_MODE` (set to "role" or "access_key"), `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_IAM_ROLE_ARN`, `S3_ENDPOINT`, `SOURCE_ID` (if source created)
+- Destination config: `DATABASE_NAME`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_SCHEMA`, `DESTINATION_ID` (if destination created)
+- Connection config: `CONNECTION_NAME`, `CONNECTION_ID` (if connection created)
 
 ## Scripts
-- `1_create_resources.py`: create workspace, S3 source, Postgres destination, connection; prints IDs—copy them into `.env`.
-- `2_run_syncs.py`: trigger and check a sync for `EPC_CONNECTION_ID`.
-- `3_update_resources.py`: patch source/destination/connection using current `.env` values (e.g., renamed stream).
-- `4_delete_resources.py`: delete the workspace and associated connectors (uses `WORKSPACE_ID`).
+- `1_create_workspace.py`: create workspace
+- `2_create_s3_source.py`: create S3 source
+- `3_create_postgres_destination.py`: create Postgres destination
+- `4_create_connection.py`: create connection
+- `5_update_resources.py`: update source, destination and connection using latest environment variables.
+- `6_delete_all_resources.py`: delete workspace, sources and destinations
+- `7_delete_source`: delete source using source ID in .env
+- `8_delete_destination.py`: delete destination using destination ID in .env
+- `9_delete_connection.py`: delete connection using connection ID in .env
+- `10_run_syncs.py`: trigger and check a sync for connection using connection ID in .env
 
 ## Tips
 - Run from inside `airbyte-client` so `.env` is picked up by `load_dotenv()`.
-- If stream/schema changes, run script 3 after updating `EPC_CERTIFICATES_STREAM_PARAMS` to refresh the connection catalog.
+- If stream/schema changes, run script 5 after updating `STREAMS_PARAMS` to refresh the connection catalog.

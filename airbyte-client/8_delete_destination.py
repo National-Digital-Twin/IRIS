@@ -1,10 +1,10 @@
 import os, json
 from dotenv import load_dotenv
-from core import auth, workspaces
+from core import auth, destinations
 
 def main():
     """
-    Delete Workspace and Connectors.
+    Delete source.
     Reads config from .env, deletes resources, and prints IDs for manual saving.
     """
     # 1. Authenticate
@@ -20,13 +20,13 @@ def main():
 
     print("Airbyte API client created successfully")
     
-    # Delete workspace and connectors
-    workspaces.delete_workspace(
+    # Delete destination
+    destinations.delete_destination(
         client=client,
-        workspace_id=os.getenv("WORKSPACE_ID")
+        destination_id=os.getenv("DESTINATION_ID")
     )
     
-    print(f"""Workspace ID DELETED: {os.getenv("WORKSPACE_ID")}""")
+    print(f"""Destination ID DELETED: {os.getenv("DESTINATION_ID")}""")
 
 
 if __name__ == "__main__":
