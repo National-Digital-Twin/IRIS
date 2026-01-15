@@ -1,7 +1,0 @@
-version: 2
-
-models:
-  - name: int_os_ngd_buildings
-
-    meta:
-      owner: "data_engineering_team"
