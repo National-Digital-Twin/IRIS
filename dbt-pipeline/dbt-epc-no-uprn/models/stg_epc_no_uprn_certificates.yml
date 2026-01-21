@@ -1,0 +1,607 @@
+version: 2
+models:
+  - name: stg_epc_no_uprn_certificates
+    description: A dbt model for validating data (without UPRNs) in the certificates table 
+    columns:
+      - name: lmk_key
+        description:
+          Individual lodgement identifier. Guaranteed to be unique and can be used to identify a certificate in the
+          downloads and the API
+        field_type: TEXT
+        tests:
+          - not_null
+          - unique
+      - name: address1
+        description: First line of address
+        field_type: TEXT
+      - name: address2
+        description: Second line of address
+        field_type: TEXT
+      - name: address3
+        description: Third line of address
+        field_type: TEXT
+      - name: postcode
+        description: Postcode for the building address
+        field_type: TEXT
+      - name: building_reference_number
+        description: Unique identifier for the property.
+        field_type: TEXT
+      - name: current_energy_rating
+        description: Current energy rating converted into a linear 'A to G' rating (where A is the most energy efficient and G is the least energy efficient)
+        field_type: TEXT
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - A
+                - B
+                - C
+                - D
+                - E
+                - F
+                - G
+                - INVALID!
+      - name: potential_energy_rating
+        description: Estimated potential energy rating converted into a linear 'A to G' rating (where A is the most energy efficient and G is the least energy efficient)
+        field_type: TEXT
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - A
+                - B
+                - C
+                - D
+                - E
+                - F
+                - G
+                - INVALID!
+      - name: current_energy_efficiency
+        description: Based on cost of energy, i.e. energy required for space heating, water heating and lighting [in kWh/year] multiplied by fuel costs. (£/m2/year where cost is derived from kWh).
+        field_type: INT
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 200
+              config:
+                severity: warn
+      - name: potential_energy_efficiency
+        description: The potential energy efficiency rating of the property.
+        field_type: INT
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 200
+              config:
+                severity: warn
+      - name: property_type
+        description: Describes the type of building that is being inspected. Based on planning use class.
+        field_type: TEXT
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Park home
+                - Maisonette
+                - Bungalow
+                - Flat
+                - House
+      - name: built_form
+        description:
+          The building type of the Property e.g. Detached, Semi-Detached, Terrace etc. Together with the Property Type,
+          the Build Form produces a structured description of the property
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - End-Terrace
+                - Enclosed End-Terrace
+                - Detached
+                - Enclosed Mid-Terrace
+                - Mid-Terrace
+                - Not Recorded
+                - Semi-Detached
+                - null
+      - name: inspection_date
+        description: The date that the inspection was actually carried out by the energy assessor
+        field_type: DATE
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: local_authority
+        description: Office for National Statistics (ONS) code. Local authority area in which the building is located.
+        field_type: TEXT
+      - name: constituency
+        description: Office for National Statistics (ONS) code. Parliamentary constituency in which the building is located.
+        field_type: TEXT
+      - name: county
+        description: County in which the building is located (where applicable)
+        field_type: TEXT
+      - name: lodgement_date
+        description: Date lodged on the Energy Performance of Buildings Register
+        field_type: DATE
+        tests:
+          - not_null
+      - name: transaction_type
+        description: Type of transaction that triggered EPC. Transaction types may be changed over time.
+        field_type: TEXT
+      - name: environment_impact_current
+        description: The Environmental Impact Rating. A measure of the property's current impact on the environment in terms of carbon dioxide (CO2) emissions. The higher the rating the lower the CO2 emissions. (CO2 emissions in tonnes year)"
+        field_type: FLOAT
+        tests:
+          - not_null
+      - name: environment_impact_potential
+        description: The potential Environmental Impact Rating. A measure of the property's potential impact on the environment in terms of carbon dioxide (CO2) emissions after improvements have been carried out. The higher the rating the lower the CO2 emissions. (CO2 emissions in tonnes / year)"
+        field_type: FLOAT
+      - name: energy_consumption_current
+        description: Current estimated total energy consumption for the property in a 12 month period (kWh/m2). Displayed on EPC as the current primary energy use per square metre of floor area.
+        field_type: FLOAT
+      - name: energy_consumption_potential
+        description: Estimated potential total energy consumption for the Property in a 12 month period. Value is Kilowatt Hours per Square Metre (kWh/m2)"
+        field_type: FLOAT
+      - name: co2_emissions_current
+        description: CO2 emissions per year in tonnes/year.
+        field_type: FLOAT
+      - name: co2_emiss_curr_per_floor_area
+        description: CO2 emissions per square metre floor area per year in kg/m2
+        field_type: FLOAT
+      - name: co2_emissions_potential
+        description: Estimated value in Tonnes per Year of the total CO2 emissions produced by the Property in 12 month period."
+        field_type: FLOAT
+      - name: lighting_cost_current
+        description: GBP. Current estimated annual energy costs for lighting the property.
+        field_type: FLOAT
+      - name: lighting_cost_potential
+        description: GBP. Potential estimated annual energy costs for lighting the property after improvements have been made.
+        field_type: FLOAT
+      - name: heating_cost_current
+        description: GBP. Current estimated annual energy costs for heating the property.
+        field_type: FLOAT
+      - name: heating_cost_potential
+        description: GBP. Potential annual energy costs for lighting the property after improvements have been made.
+        field_type: FLOAT
+      - name: hot_water_cost_current
+        description: GBP. Current estimated annual energy costs for hot water
+        field_type: FLOAT
+      - name: hot_water_cost_potential
+        description: GBP. Potential estimated annual energy costs for hot water after improvements have been made.
+        field_type: FLOAT
+      - name: total_floor_area
+        description: Total Useful Floor Area (m2)
+        field_type: FLOAT
+      - name: energy_tariff
+        description: Type of electricity tariff for the property, e.g. single.
+        field_type: TEXT
+      - name: mains_gas_flag
+        description:
+          Whether mains gas is available. Yes means that there is a gas meter or a gas-burning appliance in the dwelling.
+          A closed-off gas pipe does not count.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Y
+                - N
+                - null
+      - name: floor_level
+        description:
+          Flats and maisonettes only. Floor level relative to the lowest level of the property (0 for ground floor).
+          If there is a basement, the basement is level 0 and the other floors are from 1 upwards
+        field_type: TEXT
+      - name: flat_top_storey
+        description: Whether the flat is on the top storey
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Y
+                - N
+                - null
+              config:
+                severity: warn
+      - name: flat_storey_count
+        description: The number of storeys in the apartment block.
+        field_type: INT
+      - name: main_heating_controls
+        description: Type of main heating controls. Includes both main heating systems if there are two.
+        field_type: TEXT
+      - name: multi_glaze_proportion
+        description: The estimated banded range (e.g. 0% - 10%) of the total glazed area of the Property that is multiple glazed.
+        field_type: FLOAT
+      - name: glazed_type
+        description: The type of glazing. From British Fenestration Rating Council or manufacturer declaration.
+        field_type: TEXT
+      - name: glazed_area
+        description: Ranged estimate of the total glazed area of the Habitable Area.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Much More Than Typical
+                - More Than Typical
+                - Normal
+                - Less Than Typical
+                - Much Less Than Typical
+                - null
+              config:
+                severity: warn
+      - name: extension_count
+        description: The number of extensions added to the property.
+        field_type: FLOAT
+      - name: number_habitable_rooms
+        description: Habitable rooms include any living room, sitting room, dining room, bedroom, study and similar; and also a non-separated conservatory. A kitchen/diner having a discrete seating area (with space for a table and four chairs) also counts as a habitable room. A non-separated conservatory adds to the habitable room count if it has an internal quality door between it and the dwelling. Excluded from the room count are any room used solely as a kitchen, utility room, bathroom, cloakroom, en-suite accommodation and similar and any hallway, stairs or landing; and also any room not having a window.
+        field_type: FLOAT
+      - name: number_heated_rooms
+        description: The number of heated rooms in the property if more than half of the habitable rooms are not heated.
+        field_type: FLOAT
+      - name: low_energy_lighting
+        description: The percentage of low energy lighting present in the property as a percentage of the total fixed lights in the property. 0% indicates that no low-energy lighting is present.
+        field_type: INT
+      - name: number_open_fireplaces
+        description: The number of Open Fireplaces in the Property. An Open Fireplace is a fireplace that still allows air to pass between the inside of the Property and the outside.
+        field_type: INT
+      - name: hotwater_description
+        description: Overall description of the property feature
+        field_type: TEXT
+      - name: hot_water_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Average
+                - Good
+                - Very Good
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: hot_water_env_eff
+        description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Average
+                - Good
+                - Very Good
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: floor_description
+        description: Overall description of the property feature
+        field_type: TEXT
+      - name: floor_env_eff
+        description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Average
+                - Good
+                - Very Good
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: windows_description
+        description: Overall description of the property feature
+        field_type: TEXT
+      - name: windows_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Average
+                - Good
+                - Very Good
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: windows_env_eff
+        description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Average
+                - Good
+                - Very Good
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: walls_description
+        description: Overall description of the property feature
+        field_type: TEXT
+      - name: walls_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Average
+                - Good
+                - Very Good
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: walls_env_eff
+        description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: secondheat_description
+        description: Overall description of the property feature
+        field_type: TEXT
+      - name: sheating_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: sheating_env_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: roof_description
+        description: Overall description of the property feature
+        field_type: TEXT
+      - name: roof_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: roof_env_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: mainheat_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: mainheat_env_eff
+        description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: mainheatcont_description
+        description: Overall description of the property feature.
+        field_type: TEXT
+      - name: mainheatc_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: mainheatc_env_eff
+        description: Environmental efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: lighting_description
+        description:
+          Overall description of property feature. Total number of fixed lighting outlets and total number of low-energy
+          fixed lighting outlets
+        field_type: TEXT
+      - name: lighting_energy_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: lighting_env_eff
+        description: Energy efficiency rating. On actual energy certificate shown as one to five star rating.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Very Good
+                - Good
+                - Average
+                - Poor
+                - Very Poor
+                - null
+              config:
+                severity: warn
+      - name: main_fuel
+        description: The type of fuel used to power the central heating e.g. Gas, Electricity
+        field_type: TEXT
+      - name: wind_turbine_count
+        description: Number of wind turbines; 0 if none.
+        field_type: INT
+      - name: heat_loss_corridor
+        description: Flats and maisonettes only. Indicates that the flat contains a corridor through which heat is lost.
+        field_type: TEXT
+      - name: unheated_corridor_length
+        description: The total length of unheated corridor in the flat. Only populated if flat or maisonette contains unheated corridor. If unheated corridor, length of sheltered wall (m2)
+        field_type: FLOAT
+      - name: floor_height
+        description: Average height of the storey in metres.
+        field_type: FLOAT
+      - name: photo_supply
+        description:
+          Percentage of photovoltaic area as a percentage of total roof area. 0% indicates that a Photovoltaic Supply
+          is not present in the property.
+        field_type: FLOAT
+      - name: solar_water_heating_flag
+        description: Indicates whether the heating in the Property is solar powered.
+        field_type: TEXT
+        tests:
+          - accepted_values:
+              values:
+                - Y
+                - N
+                - null
+              config:
+                severity: warn
+      - name: mechanical_ventilation
+        description: Identifies the type of mechanical ventilation the property has. This is required for the RdSAP calculation.
+        field_type: TEXT
+      - name: address
+        description: Field containing the concatenation of address1, address2 and address3. Note that post code is recorded separately.
+        field_type: TEXT
+      - name: local_authority_label
+        description: The name of the local authority area in which the building is located. This field is for additional information only and should not be relied upon. please refer to the Local Authority ONS Code.
+        field_type: TEXT
+      - name: constituency_label
+        description: The name of the parliamentary constituency in which the building is located. This field is for additional information only and should not be relied upon. please refer to the Constituency ONS Code.
+        field_type: TEXT
+      - name: posttown
+        description: Post town for the building address.
+        field_type: TEXT
+      - name: construction_age_band
+        description: Age band when building part constructed. England & Wales only.
+        field_type: TEXT
+      - name: lodgement_datetime
+        description: Date and time lodged on the Energy Performance of Buildings Register.
+        field_type: TIMESTAMP
+      - name: tenure
+        description: Describes the tenure type of the property.
+        field_type: TEXT
+      - name: fixed_lighting_outlets_count
+        description: The number of fixed lighting outlets.
+        field_type: FLOAT
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 300
+              config:
+                severity: warn
+      - name: low_energy_fixed_light_count
+        description: The number of low-energy fixed lighting outlets.
+        field_type: FLOAT
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 300
+              config:
+                severity: warn
+      - name: uprn
+        description: Unique Property Reference Number. The UPRN submitted by an assessor or alternatively from the department's address matching algorithm.
+        field_type: TEXT
+      - name: match_score
+        description: Match score from the address matching algorithm using OS Places API.
+        tests:
+          - not_null
+      - name: uprn_source
+        description: Populated with the values "Energy Assessor" or "Address Matched" to show how the UPRN was populated.
+        field_type: TEXT
+        tests:
+          - not_null
+      - name: report_type
+        description: Type of assessment carried out on the building (e.g. RdSAP=100, SAP=101).
+        field_type: INT
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 100
+                - 101
+              config:
+                severity: warn
+    meta:
+      owner: data_engineering_team
