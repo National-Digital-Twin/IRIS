@@ -62,4 +62,10 @@ export interface MapService<T> {
     getViewportBoundingBox(): { minLat: number; maxLat: number; minLng: number; maxLng: number } | null;
 
     addDrawControl(): MapDraw;
+
+    registerPopup(popup: mapboxgl.Popup): void;
+
+    removePopup(popup: mapboxgl.Popup): void;
+
+    clearAllPopups(): void;
 }
