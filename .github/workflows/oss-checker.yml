@@ -13,9 +13,6 @@ on:
       - unlabeled
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   oss-checks:
     permissions:
