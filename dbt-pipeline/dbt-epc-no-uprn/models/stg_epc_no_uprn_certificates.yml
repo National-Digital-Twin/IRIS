@@ -583,13 +583,10 @@ models:
       - name: uprn
         description: Unique Property Reference Number. The UPRN submitted by an assessor or alternatively from the department's address matching algorithm.
         field_type: TEXT
-      - name: match_score
-        description: Match score from the address matching algorithm using OS Places API.
         tests:
           - not_null
-      - name: uprn_source
-        description: Populated with the values "Energy Assessor" or "Address Matched" to show how the UPRN was populated.
-        field_type: TEXT
+      - name: match_score
+        description: Match score from the address matching algorithm using OS Places API.
         tests:
           - not_null
       - name: report_type
