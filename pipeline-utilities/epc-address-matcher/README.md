@@ -19,6 +19,11 @@ Optional:
 - `MATCH_THRESHOLD` (0.8 by default)
 - `LOG_LEVEL` ("INFO" by default)
 - `LOG_INTERVAL` (1000 by default)
+- `SLEEP_DURATION` (0.1 by default)
+- `COMMIT_INTERVAL` (100 by default)
+- `TIMEOUT_WAIT_TIME` (60 by default)
+- `BACKOFF_WAIT_TIME` (15 by default)
+- `MAX_RETRIES` (3 by default)
 
 ## Run locally
 

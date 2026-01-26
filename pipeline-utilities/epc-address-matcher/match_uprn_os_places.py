@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+import osdatahub
 from osdatahub import PlacesAPI
 import time
 import logging
@@ -34,6 +35,20 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 MATCH_THRESHOLD=float(os.getenv("MATCH_THRESHOLD", default=0.8))
 LOG_INTERVAL = int(os.getenv("LOG_INTERVAL", default=1000))
+SLEEP_DURATION = float(os.getenv("SLEEP_DURATION", default=0.1))
+COMMIT_INTERVAL = int(os.getenv("COMMIT_INTERVAL", default=100))
+TIMEOUT_WAIT_TIME = int(os.getenv("TIMEOUT_WAIT_TIME", default=60))
+
+_original_get = osdatahub.get
+
+def get_with_timeout(*args, **kwargs):
+    kwargs.setdefault("timeout", TIMEOUT_WAIT_TIME)
+    return _original_get(*args, **kwargs)
+
+osdatahub.get = get_with_timeout
+
+BACKOFF_WAIT_TIME = float(os.getenv("BACKOFF_WAIT_TIME", default=15))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", default=3))
 
 
 def get_db_connection(db_host, db_port, db_name, db_user, db_password):
@@ -127,8 +142,37 @@ def get_certificates(engine, db_schema, crossref_exists=False):
         """
 
     return pd.read_sql(query, engine)
-    
-def match_address(api_client, address, threshold=0.8):
+
+def find_with_retry(api_client, address, threshold, limit):
+    """_summary_
+
+    Args:
+        api_client (_type_): _description_
+        address (_type_): _description_
+        threshold (_type_): _description_
+        retries (int, optional): _description_. Defaults to 3.
+        backoff (float, optional): _description_. Defaults to 0.5.
+    """
+
+    for attempt in range(1, MAX_RETRIES+1):
+        try:
+            return api_client.find(
+                text=address, 
+                minmatch=threshold, 
+                limit=limit,
+            )
+        except Exception as e:
+            logger.warning(f"Exception: {e} encoutered for record: {address}.")
+            if attempt == MAX_RETRIES:
+                logger.warning(f"No more attempts planned for record {address}. This record will be recorded as unmatched.")
+                return None
+            else:
+                sleep_for = BACKOFF_WAIT_TIME * (2**(attempt-1))
+                logger.warning(f"Retrying matching for {address} after {sleep_for} seconds.")
+                time.sleep(sleep_for)
+            
+ 
+def match_address(api_client, address, threshold):
     """
     Given a EPC record with no UPRN, use the OS Places API to find a UPRN value with the highest match score which is above the threshold.
     
@@ -141,10 +185,15 @@ def match_address(api_client, address, threshold=0.8):
         match_score (float): a match score value
     """
 
-    results = api_client.find(text=address, minmatch=threshold, limit=1)
+    results = find_with_retry(
+                api_client=api_client,
+                address=address, 
+                threshold=threshold, 
+                limit=1
+            )
     if results and results.get("features"):
-                props = results["features"][0].get("properties", {})
-                return props.get("UPRN"), float(props.get("MATCH")), props.get("MATCH_DESCRIPTION") 
+        props = results["features"][0].get("properties", {})
+        return props.get("UPRN"), float(props.get("MATCH")), props.get("MATCH_DESCRIPTION") 
     else:
         return None, None, None
 
@@ -155,19 +204,24 @@ def main():
     crossref_exists = is_crossref_exists(engine, DB_SCHEMA)
     certificates = get_certificates(engine, DB_SCHEMA, crossref_exists=crossref_exists)
 
-    crossref_rows = []
     places_api = PlacesAPI(OS_PLACES_API_KEY)
 
     matched = 0
     unmatched = 0
 
-    logger.info(f"Matching threshold set at {MATCH_THRESHOLD}")
-
+    logger.info(f"Matching threshold set at {MATCH_THRESHOLD}.")
+    logger.info(f"Sleep duration between matches set at: {SLEEP_DURATION}.")
+    logger.info(f"Commit interval set at: {COMMIT_INTERVAL}.")
+    logger.info(f"API timeout time set at: {TIMEOUT_WAIT_TIME}.")
+    logger.info(f"Backoff wait time set at: {BACKOFF_WAIT_TIME}.")
+    logger.info(f"Max retries set at: {MAX_RETRIES}.")
+    
+    crossref_rows = []
     for _, record in certificates.iterrows():
 
         uprn, match_score, match_description = match_address(places_api, record["query_address"], MATCH_THRESHOLD)
 
-        time.sleep(0.1)
+        time.sleep(SLEEP_DURATION)
 
         match_date = datetime.date.today()
         
@@ -193,6 +247,7 @@ def main():
             crossref_rows.append(record_unmatched)
             unmatched += 1
         
+        
         if (matched+unmatched) == 10:
             logger.debug(f"UPRN found for {matched} records so far.")
             logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
@@ -200,20 +255,26 @@ def main():
         if (matched+unmatched) % LOG_INTERVAL == 0:
             logger.info(f"UPRN found for {matched} records so far.")
             logger.info(f"A UPRN could not be found for {unmatched} records so far.")
+
+        if (matched+unmatched) % COMMIT_INTERVAL == 0:
+            epc_address_uprn_crossref = pd.DataFrame(
+                crossref_rows,
+                columns=["lmk_key", "query_address", "uprn", "match_score", "match_date"]
+            )
+            epc_address_uprn_crossref.to_sql("epc_address_uprn_crossref", schema=DB_SCHEMA, con=engine, index=False, if_exists='append')
+            crossref_rows = []
+            logger.info(f"Committing {COMMIT_INTERVAL} records to the cross reference table.")
     
+    if len(crossref_rows) != 0:
+        epc_address_uprn_crossref = pd.DataFrame(
+            crossref_rows,
+            columns=["lmk_key", "query_address", "uprn", "match_score", "match_date"]
+        )
+        epc_address_uprn_crossref.to_sql("epc_address_uprn_crossref", schema=DB_SCHEMA, con=engine, index=False, if_exists='append')
+        crossref_rows = []
+
     logger.info(f"A total of {matched} records were successfully matched.")
     logger.info(f"A total of {unmatched} records were not able to be matched.")
-
-    epc_address_uprn_crossref = pd.DataFrame(
-        crossref_rows,
-        columns=["lmk_key", "query_address", "uprn", "match_score", "match_date"]
-    )
-
-    logger.info(f"{len(crossref_rows)} records loading into postgres.")
-
-    epc_address_uprn_crossref.to_sql("epc_address_uprn_crossref", schema=DB_SCHEMA, con=engine, index=False, if_exists='append')
-
-    logger.info(f"{len(crossref_rows)} records successfully loaded into postgres.")
 
 if __name__ == "__main__":
      main()
