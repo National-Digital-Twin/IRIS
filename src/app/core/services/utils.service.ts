@@ -1,4 +1,5 @@
 import { Injectable, NgZone, inject, signal } from '@angular/core';
+import { RoofAspectAreaDirectionField } from '@core/enums/roof-aspect-area-direction';
 import { FilterProps } from '@core/models/advanced-filters.model';
 import { BuildingMap, BuildingModel } from '@core/models/building.model';
 import { FilterableBuildingModel } from '@core/models/filterable-building.model';
@@ -32,6 +33,7 @@ export class UtilService {
     readonly #settings = inject(SettingsService);
     readonly #spatialQueryService = inject(SpatialQueryService);
     readonly #zone = inject(NgZone);
+    readonly #roofAspectAreaDirectionFieldMap: Record<string, string> = RoofAspectAreaDirectionField;
 
     private readonly colourBlindMode = this.#settings.get(SETTINGS.ColourBlindMode);
 
@@ -297,23 +299,6 @@ export class UtilService {
         }
     }
 
-    public calculateModalRating(epcData: any): string {
-        const ratings = [
-            { rating: 'A', count: epcData.a_rating },
-            { rating: 'B', count: epcData.b_rating },
-            { rating: 'C', count: epcData.c_rating },
-            { rating: 'D', count: epcData.d_rating },
-            { rating: 'E', count: epcData.e_rating },
-            { rating: 'F', count: epcData.f_rating },
-            { rating: 'G', count: epcData.g_rating },
-        ];
-
-        ratings.sort((a, b) => b.count - a.count);
-
-        // Return the most common rating
-        return ratings[0].count > 0 ? ratings[0].rating : 'None';
-    }
-
     public filterBuildingsWithinBounds(buildings: BuildingMap, spatialQueryBounds?: mapboxgl.Point[]): BuildingMap {
         /** get all features within current map bounds */
         const currentMapFeatures = this.#mapService.queryFeatures();
@@ -387,7 +372,6 @@ export class UtilService {
                         }
                     } else if (key === 'StructureUnitType' || key === 'EPC') {
                         const matchedBuildingModel = buildingsArray.find((building) => building.UPRN === filterableBuildingModel.UPRN);
-                        console.log(`List of filters are: ${removeQuotes}`);
                         return (
                             matchedBuildingModel &&
                             removeQuotes?.includes(
@@ -397,10 +381,26 @@ export class UtilService {
                             )
                         );
                     } else {
-                        return removeQuotes?.includes(
+                        let mappedKeys: string[] | undefined = removeQuotes;
+
+                        if (key === 'RoofAspectAreaDirection') {
+                            return removeQuotes
+                                ?.map((r) => filterableBuildingModel[this.#roofAspectAreaDirectionFieldMap[r] as keyof FilterableBuildingModel])
+                                .every((f) => !!f);
+                        }
+
+                        if (key === 'HasRoofSolarPanels') {
+                            mappedKeys = removeQuotes?.map((f) => {
+                                if (f === 'HasSolarPanels') return 'true';
+                                else if (f === 'NoSolarPanels') return 'false';
+                                return '';
+                            });
+                        }
+
+                        return mappedKeys?.includes(
                             // eslint-disable-next-line
                             // @ts-ignore
-                            filterableBuildingModel[key as keyof FilterableBuildingModel],
+                            filterableBuildingModel[key as keyof FilterableBuildingModel]?.toString(),
                         );
                     }
                 }),

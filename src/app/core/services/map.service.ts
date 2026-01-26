@@ -22,6 +22,7 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
     readonly #document = inject(DOCUMENT);
     readonly #zone = inject(NgZone);
     readonly #runtimeConfig = inject(RUNTIME_CONFIGURATION);
+    private readonly _popups = new Set<mapboxgl.Popup>();
 
     public mapInstance!: mapboxgl.Map;
     public drawControl?: MapboxDraw;
@@ -29,9 +30,11 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
 
     public currentMapBounds = signal<LngLatBounds | undefined>(undefined);
 
-    private readonly mapLoaded = new AsyncSubject<boolean>();
+    private mapLoaded: AsyncSubject<boolean>;
+    private _isDrawing: boolean = false;
 
     constructor() {
+        this.mapLoaded = new AsyncSubject<boolean>();
         this.mapLoaded$ = this.mapLoaded.asObservable();
     }
 
@@ -54,19 +57,30 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
 
     public addMapSource(name: string, source: SourceSpecification): mapboxgl.Map {
         return this.#zone.runOutsideAngular(() => {
-            const createdSource = this.mapInstance.addSource(name, source);
+            if (!this.mapInstance.getSource(name)) {
+                const createdSource = this.mapInstance.addSource(name, source);
 
-            if (source.type === 'raster-dem') {
-                // add the DEM source as a terrain layer
-                createdSource.setTerrain({ source: name });
+                if (source.type === 'raster-dem') {
+                    // add the DEM source as a terrain layer
+                    createdSource.setTerrain({ source: name });
+                }
+
+                return createdSource;
             }
-
-            return createdSource;
+            return this.mapInstance;
         });
     }
 
     public addMapLayer(layerConfig: LayerSpecification): mapboxgl.Map {
         return this.#zone.runOutsideAngular(() => this.mapInstance.addLayer(layerConfig));
+    }
+
+    public removeMapLayerAndSource(layerId: string): mapboxgl.Map | void {
+        const layer = this.mapInstance.getLayer(layerId);
+        if (layer?.source) {
+            this.mapInstance.removeLayer(layerId);
+            this.mapInstance.removeSource(layer.source);
+        }
     }
 
     /**
@@ -158,9 +172,10 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
     }
 
     public destroyMap(): void {
-        if (this.mapInstance) {
-            this.mapInstance.remove();
-        }
+        this.mapInstance?.remove();
+        this.drawControl = undefined;
+        this.mapLoaded = new AsyncSubject<boolean>();
+        this.mapLoaded$ = this.mapLoaded.asObservable();
     }
 
     private hookEvents(): void {
@@ -198,6 +213,24 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
             minLng: bounds.getWest(),
             maxLng: bounds.getEast(),
         };
+    }
+
+    public startDrawing(): void {
+        this._isDrawing = true;
+    }
+
+    public stopDrawing(): void {
+        if (this._isDrawing) {
+            // delay to avoid immediate click event when drawing is completed
+            // don't create a timeout if we're not drawing though as this causes a race condition
+            setTimeout(() => {
+                this._isDrawing = false;
+            }, 0);
+        }
+    }
+
+    public isDrawing(): boolean {
+        return this._isDrawing;
     }
 
     public addDrawControl(): MapboxDraw {
@@ -429,6 +462,36 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
         const imageData = rasterizeSvgBase64String(svgBase64 ?? '');
 
         return imageData;
+    }
+
+    /**
+     *
+     * Adds the provided mapboxgl popup to the map instance and adds it to the internal set of popups.
+     *
+     */
+    public registerPopup(popup: mapboxgl.Popup): void {
+        this._popups.add(popup);
+        popup.addTo(this.mapInstance);
+    }
+
+    /**
+     *
+     * Removes the provided mapboxgl popup from the map instance and the internal set of popups.
+     *
+     */
+    public removePopup(popup: mapboxgl.Popup): void {
+        popup.remove();
+        this._popups.delete(popup);
+    }
+
+    /**
+     *
+     * Removes all the popups from the map instance and the internal set of popups.
+     *
+     */
+    public clearAllPopups(): void {
+        this._popups.forEach((p) => p.remove());
+        this._popups.clear();
     }
 }
 

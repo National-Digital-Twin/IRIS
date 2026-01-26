@@ -29,7 +29,7 @@
             </button>
         </div>
         <div class="control-group">
-            <button class="control" mat-mini-fab matTooltip="Draw filter area" [ngClass]="{ active: this.drawActive }" (click)="setDrawMode('polygon')">
+            <button class="control" mat-mini-fab matTooltip="Draw filter area" [class.active]="drawActive" (click)="setDrawMode('polygon')">
                 <img class="icon" [src]="this.drawActive ? 'assets/icons/polyline-white.svg' : 'assets/icons/polyline.svg'" alt="Draw filter area" />
             </button>
             @if (hasSpatialFilter && mapInstance.getZoom() < 15) {
@@ -46,12 +46,107 @@
             </button>
         </div>
         <div class="control-group">
-            <button mat-mini-fab class="control" (click)="showLegend = !showLegend" matTooltip="Legend">
+            <button mat-mini-fab class="control" (click)="toggleLegend()" matTooltip="Legend">
                 <img class="icon" src="assets/icons/legend-toggle.svg" alt="Legend" />
             </button>
-            @if (showLegend) {
-                <c477-legend />
+            @if (showLegend()) {
+                <c477-legend [layerState]="legendLayerState()" />
             }
+        </div>
+        @if (showLayersAndControls()) {
+            <div class="control-group">
+                <button mat-mini-fab class="control" [matMenuTriggerFor]="layersMenu" matTooltip="Layers" [class.active]="activeLayersCount > 0">
+                    <mat-icon>layers</mat-icon>
+                </button>
+                <mat-menu #layersMenu="matMenu" class="layers-menu" xPosition="before" [overlapTrigger]="false">
+                    <div>
+                        @let isEpcActive = layerStates.epc.region || layerStates.epc.county || layerStates.epc.district || layerStates.epc.ward;
+                        <button mat-menu-item [matMenuTriggerFor]="epcSubmenu" [class.active]="isEpcActive">
+                            <mat-icon>bar_chart</mat-icon>
+                            <span>EPC ratings</span>
+                        </button>
+                        <mat-menu #epcSubmenu="matMenu" class="layers-submenu" [overlapTrigger]="false" xPosition="before">
+                            <button mat-menu-item (click)="toggleEpcLayer('region')" [class.active]="layerStates.epc.region">
+                                <mat-icon svgIcon="epc_1"></mat-icon>
+                                <span>Regions</span>
+                            </button>
+                            <button mat-menu-item (click)="toggleEpcLayer('county')" [class.active]="layerStates.epc.county">
+                                <mat-icon svgIcon="epc_2"></mat-icon>
+                                <span>Counties</span>
+                            </button>
+                            <button mat-menu-item (click)="toggleEpcLayer('district')" [class.active]="layerStates.epc.district">
+                                <mat-icon svgIcon="epc_3"></mat-icon>
+                                <span>Districts</span>
+                            </button>
+                            <button mat-menu-item (click)="toggleEpcLayer('ward')" [class.active]="layerStates.epc.ward">
+                                <mat-icon svgIcon="epc_4"></mat-icon>
+                                <span>Wards</span>
+                            </button>
+                        </mat-menu>
+                    </div>
+
+                    <div>
+                        @let isWindDrivenRainActive = layerStates.windDrivenRain.twoDegree || layerStates.windDrivenRain.fourDegree;
+                        <button mat-menu-item [matMenuTriggerFor]="windRainSubmenu" [class.active]="isWindDrivenRainActive">
+                            <mat-icon>air</mat-icon>
+                            <span>Wind-driven rain</span>
+                        </button>
+                        <mat-menu #windRainSubmenu="matMenu" class="layers-submenu" [overlapTrigger]="false" xPosition="before">
+                            <button mat-menu-item (click)="toggleWindDrivenRainLayer('twoDegree')" [class.active]="layerStates.windDrivenRain.twoDegree">
+                                <mat-icon svgIcon="wdr_2"></mat-icon>
+                                <span>2°C warming</span>
+                            </button>
+                            <button mat-menu-item (click)="toggleWindDrivenRainLayer('fourDegree')" [class.active]="layerStates.windDrivenRain.fourDegree">
+                                <mat-icon svgIcon="wdr_4"></mat-icon>
+                                <span>4°C warming</span>
+                            </button>
+                        </mat-menu>
+                    </div>
+
+                    <div>
+                        <button mat-menu-item (click)="toggleIcingDaysLayer()" [class.active]="layerStates.icingDays">
+                            <mat-icon>ac_unit</mat-icon>
+                            <span>Icing days</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <button mat-menu-item (click)="toggleHotSummerDaysLayer()" [class.active]="layerStates.hotSummerDays">
+                            <mat-icon>thermostat</mat-icon>
+                            <span>Hot summer days (30°C+)</span>
+                        </button>
+                    </div>
+                </mat-menu>
+            </div>
+        }
+        <div class="control-group">
+            <button mat-mini-fab class="control" [matMenuTriggerFor]="dashboardsMenu" matTooltip="Dashboard">
+                <mat-icon>bar_chart_4_bars</mat-icon>
+            </button>
+            <mat-menu #dashboardsMenu="matMenu" xPosition="before" [overlapTrigger]="false" class="layers-menu">
+                @if (hasSpatialFilter) {
+                    <button mat-menu-item (click)="handleDashboardAreaClick()">
+                        <mat-icon>map</mat-icon>
+                        <div class="menu-item-text">
+                            <span class="main-text">Area view</span>
+                            <span class="info-text">For drawn polygon</span>
+                        </div>
+                    </button>
+                } @else {
+                    <button mat-menu-item (click)="handleDashboardAreaClick()">
+                        <mat-icon svgIcon="polyline"></mat-icon>
+                        <span>Draw area</span>
+                    </button>
+                }
+                <button mat-menu-item (click)="onChooseAreaDashboardNavClick($event)">
+                    <mat-icon>highlight_alt</mat-icon>
+                    <span>Choose areas</span>
+                </button>
+                <a mat-menu-item routerLink="/dashboards/national" (click)="onDashboardNavClick($event)">
+                    <mat-icon>public</mat-icon>
+                    <span>National view</span>
+                </a>
+            </mat-menu>
         </div>
     </div>
     <div class="map-controls bottom">

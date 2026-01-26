@@ -3,7 +3,6 @@ import { URLStateModel } from '@core/models/url-state.model';
 import { MapLayerId } from '@core/types/map-layer-id';
 import { Theme } from '@core/types/theme';
 import { LayerSpecification } from 'mapbox-gl';
-import { MapLayerConfig } from './map-layer-config.model';
 
 type Layer = LayerSpecification & { filter: MapLayerFilter & { layerId: MapLayerId } };
 
@@ -15,11 +14,6 @@ export interface RuntimeConfigurationModel {
     /** Address search configuration */
     addressSearch: {
         maxResults: number;
-    };
-    cache: {
-        epc: string;
-        sap: string;
-        nonEpc: string;
     };
     /* Mapbox minimap config */
     minimap: {
@@ -33,10 +27,7 @@ export interface RuntimeConfigurationModel {
     epcColours: Record<string, string>;
     /** EPC Colours - Colour Deficient*/
     epcColoursCD: Record<string, string>;
-    /* Company logo */
-    companyLogo: Record<Theme, string>;
     /* Map context layers */
-    contextLayers: MapLayerConfig[];
 }
 
 // SPDX-License-Identifier: Apache-2.0

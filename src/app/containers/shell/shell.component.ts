@@ -1,15 +1,17 @@
-import { AsyncPipe, CommonModule, DOCUMENT } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, Input, InputSignal, NgZone, computed, effect, inject, input, numberAttribute } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, Input, InputSignal, NgZone, computed, effect, inject, input, numberAttribute, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Params, Router } from '@angular/router';
+import { AreaFilterPanelComponent } from '@components/area-filter-panel/area-filter-panel.component';
+import { DashboardAreaSelectionDialogComponent } from '@components/dashboard-area-selection-dialog/dashboard-area-selection-dialog.component';
 import { DetailsPanelComponent } from '@components/details-panel/details-panel.component';
 import { DownloadWarningComponent } from '@components/download-warning/download-warning.component';
 import { FlagModalComponent, FlagModalData, FlagModalResult } from '@components/flag-modal/flag.modal.component';
@@ -21,6 +23,7 @@ import { RemoveFlagModalComponent, RemoveFlagModalData, RemoveFlagModalResult } 
 import { MainFiltersComponent } from '@containers/main-filters/main-filters.component';
 import { ResultsPanelComponent } from '@containers/results-panel/results-panel.component';
 import { AdvancedFiltersFormModel, FilterKeys, FilterProps } from '@core/models/advanced-filters.model';
+import { AreaSelectionDialogResult } from '@core/models/area-filter.model';
 import { BuildingModel } from '@core/models/building.model';
 import { DownloadDataWarningData, DownloadDataWarningResponse } from '@core/models/download-data-warning.model';
 import { MinimapData } from '@core/models/minimap-data.model';
@@ -35,8 +38,8 @@ import { SpatialQueryService } from '@core/services/spatial-query.service';
 import { UserDetailsService } from '@core/services/user-details.service';
 import { UtilService } from '@core/services/utils.service';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
-import { FeatureCollection, GeoJsonProperties, Geometry, Polygon } from 'geojson';
-import { EMPTY, Observable, filter, forkJoin, map, of, switchMap, take } from 'rxjs';
+import { Polygon } from 'geojson';
+import { EMPTY, filter, forkJoin, map, switchMap, take } from 'rxjs';
 
 @Component({
     selector: 'c477-shell',
@@ -47,7 +50,6 @@ import { EMPTY, Observable, filter, forkJoin, map, of, switchMap, take } from 'r
         MapComponent,
         MinimapComponent,
         ResultsPanelComponent,
-        AsyncPipe,
         MatSidenavModule,
         MatToolbarModule,
         MatIconModule,
@@ -57,6 +59,7 @@ import { EMPTY, Observable, filter, forkJoin, map, of, switchMap, take } from 'r
         MatMenuModule,
         MatDividerModule,
         PrivacyNoticeComponent,
+        AreaFilterPanelComponent,
     ],
     templateUrl: './shell.component.html',
     styleUrl: './shell.component.scss',
@@ -78,7 +81,8 @@ export class ShellComponent {
     readonly #signoutService = inject(SignoutService);
     readonly #zone = inject(NgZone);
 
-    public contextData$: Observable<FeatureCollection<Geometry, GeoJsonProperties>[]>;
+    public areaFilterSidenav = viewChild<MatSidenav>('areaFilterSidenav');
+    public mapComponent = viewChild<MapComponent>(MapComponent);
     public filterProps: FilterProps = {};
     public mapConfig!: URLStateModel;
     public minimapData?: MinimapData;
@@ -89,8 +93,6 @@ export class ShellComponent {
     public userEmail = 'loading...';
     public menuOpened = false;
     public showPrivacy = false;
-
-    private _enhancedWardDataCache: FeatureCollection<Geometry, GeoJsonProperties>[] | null = null;
 
     // get map state from route query params
     public bearing: InputSignal<number> = input<number, number>(0, { transform: numberAttribute });
@@ -113,27 +115,6 @@ export class ShellComponent {
     public loading = computed(() => this.#dataService.loading());
 
     constructor() {
-        this.contextData$ = this.#dataService.contextData$.pipe(
-            switchMap((contextData) => {
-                if (this._enhancedWardDataCache) {
-                    return of(this._enhancedWardDataCache);
-                }
-
-                const wardBoundaries = contextData[0];
-
-                return this.#dataService.fetchWardEPCData().pipe(
-                    map((wardEPCData) => {
-                        const enhancedData = this.processWardData(wardBoundaries, wardEPCData);
-
-                        // Cache the processed data
-                        this._enhancedWardDataCache = enhancedData;
-
-                        return enhancedData;
-                    }),
-                );
-            }),
-        );
-
         // close minimap by default on smaller screens
         if (window.innerWidth < 1280) {
             this.showMinimap = false;
@@ -487,6 +468,9 @@ export class ShellComponent {
                 Flagged: [],
                 EPCExpiry: [],
                 FuelType: [],
+                RoofMaterial: [],
+                HasRoofSolarPanels: [],
+                RoofAspectAreaDirection: [],
             });
             this.navigate(params);
             /** delete spatial filter if it exists */
@@ -510,58 +494,6 @@ export class ShellComponent {
         });
     }
 
-    /**
-     * Process ward data with EPC information
-     */
-    private processWardData(
-        wardBoundaries: FeatureCollection<Geometry, GeoJsonProperties>,
-        wardEPCData: FeatureCollection<Geometry, GeoJsonProperties>,
-    ): FeatureCollection<Geometry, GeoJsonProperties>[] {
-        const epcByWard = new Map();
-
-        if (Array.isArray(wardEPCData)) {
-            wardEPCData.forEach((ward: any) => {
-                if (ward?.name) {
-                    epcByWard.set(ward.name, ward);
-                }
-            });
-        }
-
-        const enhancedWardData = JSON.parse(JSON.stringify(wardBoundaries)) as FeatureCollection<Geometry, GeoJsonProperties>;
-
-        // Merge EPC data into each feature's properties
-        if (enhancedWardData.features) {
-            enhancedWardData.features = enhancedWardData.features.map((feature) => {
-                const wardName = feature.properties?.WD23NM ?? '';
-
-                const epcData = epcByWard.get(wardName);
-
-                if (epcData) {
-                    const modalRating = this.#utilService.calculateModalRating(epcData);
-
-                    feature.properties = {
-                        ...feature.properties,
-                        a_rating: epcData.a_rating ?? 0,
-                        b_rating: epcData.b_rating ?? 0,
-                        c_rating: epcData.c_rating ?? 0,
-                        d_rating: epcData.d_rating ?? 0,
-                        e_rating: epcData.e_rating ?? 0,
-                        f_rating: epcData.f_rating ?? 0,
-                        g_rating: epcData.g_rating ?? 0,
-                        no_rating: epcData.no_rating ?? 0,
-                        modal_rating: modalRating,
-                        aggEPC: modalRating,
-                        color: this.#utilService.getEPCColour(modalRating),
-                    };
-                }
-
-                return feature;
-            });
-        }
-
-        return [enhancedWardData];
-    }
-
     public showInfo(): void {
         this.#dialog.open<InformationComponent>(InformationComponent, {
             panelClass: 'information',
@@ -570,6 +502,49 @@ export class ShellComponent {
 
     public filtersExist(): boolean {
         return (this.filterProps && Object.keys(this.filterProps).length > 0) || this.#spatialQueryService.spatialFilterEnabled();
+    }
+
+    public handleNavigateToAreaDashboard(polygon: GeoJSON.Feature<Polygon>): void {
+        const state = {
+            areaFilter: {
+                mode: 'polygon',
+                polygon: polygon.geometry,
+            },
+        };
+        // If spatial filter already exists, navigate directly
+        if (this.spatialFilterEnabled()) {
+            this.#zone.run(() => this.#router.navigate(['/dashboards/area'], { state }));
+            return;
+        }
+
+        this.#dialog
+            .open<DashboardAreaSelectionDialogComponent, void, 'yes' | 'no'>(DashboardAreaSelectionDialogComponent)
+            .afterClosed()
+            .subscribe((response) => {
+                if (response === 'yes') {
+                    this.#zone.run(() => this.#router.navigate(['/dashboards/area'], { state }));
+                } else {
+                    this.mapComponent()?.deleteSearchArea();
+                }
+            });
+    }
+
+    public handleOpenAreaFilterDialog(): void {
+        this.areaFilterSidenav()?.open();
+    }
+
+    public handleAreaFilterConfirm(result: AreaSelectionDialogResult): void {
+        this.#zone.run(() => {
+            this.#router.navigate(['/dashboards/area'], {
+                state: {
+                    areaFilter: {
+                        mode: 'named-areas',
+                        level: result.level,
+                        names: result.names,
+                    },
+                },
+            });
+        });
     }
 }
 

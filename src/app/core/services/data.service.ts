@@ -1,18 +1,15 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { EPCRating, FloorConstruction, RoofConstruction, WallConstruction, WindowGlazing } from '@core/enums';
+import { BuiltForm, EPCRating, FloorConstruction, RoofConstruction, StructureUnitType, WallConstruction, WindowGlazing } from '@core/enums';
 import { InvalidateFlagReason } from '@core/enums/invalidate-flag-reason';
 import { BuildingMap, BuildingModel, BuildingParts } from '@core/models/building.model';
-import { MapLayerConfig } from '@core/models/map-layer-config.model';
 import { MinimalBuildingData, MinimalBuildingMap } from '@core/models/minimal-building-data.model';
 import { BACKEND_API_ENDPOINT } from '@core/tokens/backend-endpoint.token';
-import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
 import { EPCBuildingResponseModel } from '@core/types/building-response';
 import { FlagHistory } from '@core/types/flag-history';
 import { FlagMap, FlagResponse } from '@core/types/flag-response';
-import { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
-import { EMPTY, Observable, catchError, first, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, first, map, of, switchMap, tap } from 'rxjs';
 
 type Loading<T> = T | 'loading';
 
@@ -21,16 +18,43 @@ export type Building = {
     energy_rating?: string;
     toid?: string;
     first_line_of_address?: string;
-    lattitude: string;
+    latitude: string;
     longitude: string;
     structure_unit_type?: string;
 };
+
+interface BuildingDetailAPIResponse extends Record<string, unknown> {
+    uprn?: string;
+    lodgement_date?: string;
+    built_form?: string;
+    structure_unit_type?: string;
+    floor_construction?: string;
+    floor_insulation?: string;
+    roof_construction?: string;
+    roof_insulation_location?: string;
+    roof_insulation_thickness?: string;
+    wall_construction?: string;
+    wall_insulation?: string;
+    window_glazing?: string;
+    fueltype?: string;
+    roof_material?: string;
+    solar_panel_presence?: string;
+    roof_shape?: string;
+    roof_aspect_area_facing_north_m2?: string;
+    roof_aspect_area_facing_north_east_m2?: string;
+    roof_aspect_area_facing_east_m2?: string;
+    roof_aspect_area_facing_south_east_m2?: string;
+    roof_aspect_area_facing_south_m2?: string;
+    roof_aspect_area_facing_south_west_m2?: string;
+    roof_aspect_area_facing_west_m2?: string;
+    roof_aspect_area_facing_north_west_m2?: string;
+    roof_aspect_area_indeterminable_m2?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DataService {
     readonly #http: HttpClient = inject(HttpClient);
     readonly #backendApiEndpoint = inject(BACKEND_API_ENDPOINT);
-    readonly #runtimeConfig = inject(RUNTIME_CONFIGURATION);
 
     public uiReady = signal<boolean>(true);
 
@@ -39,7 +63,6 @@ export class DataService {
 
     public activeFlag = signal<Loading<FlagHistory> | undefined>(undefined);
     public buildingsSelection = signal<BuildingModel[][] | undefined>(undefined);
-    public contextData$ = this.loadContextData();
     public flagHistory = signal<Loading<FlagHistory[]>>([]);
 
     public loading = computed(() => {
@@ -214,17 +237,6 @@ export class DataService {
     }
 
     /**
-     * Loads all spatial context data
-     * @returns FeatureCollection[] Array of geojson
-     */
-    private loadContextData(): Observable<FeatureCollection[]> {
-        const requests = this.#runtimeConfig.contextLayers.map((mapLayerConfig: MapLayerConfig) =>
-            this.#http.get<FeatureCollection>(`assets/data/${mapLayerConfig.filename}`),
-        );
-        return forkJoin(requests).pipe(map((data: FeatureCollection[]) => data));
-    }
-
-    /**
      * An object where TOIDS are keys, and values are an array of buildings
      * @param buildings array of buildings data
      * @returns an object with TOID as key, and array of buildings as values
@@ -281,7 +293,7 @@ export class DataService {
      * @param results API response
      * @returns Array of minimal building data objects
      */
-    private mapViewportAPIResponse(results: any[]): MinimalBuildingData[] {
+    private mapViewportAPIResponse(results: Building[]): MinimalBuildingData[] {
         return results.map((row) => {
             const building: MinimalBuildingData = {
                 UPRN: row.uprn,
@@ -473,7 +485,7 @@ export class DataService {
         }
 
         return this.#http
-            .get<any>(`/api/buildings/${uprn}`, {
+            .get<BuildingDetailAPIResponse>(`/api/buildings/${uprn}`, {
                 withCredentials: true,
             })
             .pipe(
@@ -488,45 +500,45 @@ export class DataService {
     /**
      * Map building detail API response to BuildingModel
      */
-    private mapBuildingDetailResponse(response: any, uprn: string): BuildingModel {
+    private mapBuildingDetailResponse(response: BuildingDetailAPIResponse, uprn: string): BuildingModel {
         const existingData = this.getBuildingByUPRN(uprn);
 
         const detailedBuilding: BuildingModel = {
             ...existingData,
-            UPRN: this.getPropertyValue(response, 'uprn'),
+            UPRN: response.uprn ?? uprn,
             FullAddress: existingData.FullAddress,
-            LodgementDate: this.getPropertyValue(response, 'lodgement_date'),
-            BuiltForm: this.getPropertyValue(response, 'built_form'),
-            YearOfAssessment: this.getPropertyValue(response, 'lodgement_date')
-                ? new Date(this.getPropertyValue(response, 'lodgement_date')).getFullYear().toString()
-                : '',
-            StructureUnitType: this.getPropertyValue(response, 'structure_unit_type'),
-            FloorConstruction: this.getPropertyValue(response, 'floor_construction'),
-            FloorInsulation: this.getPropertyValue(response, 'floor_insulation'),
-            RoofConstruction: this.getPropertyValue(response, 'roof_construction'),
-            RoofInsulationLocation: this.getPropertyValue(response, 'roof_insulation_location'),
-            RoofInsulationThickness: this.getPropertyValue(response, 'roof_insulation_thickness'),
-            WallConstruction: this.getPropertyValue(response, 'wall_construction'),
-            WallInsulation: this.getPropertyValue(response, 'wall_insulation'),
-            WindowGlazing: this.getPropertyValue(response, 'window_glazing'),
-            FuelType: this.getPropertyValue(response, 'fueltype'),
+            LodgementDate: response.lodgement_date,
+            BuiltForm: response.built_form as BuiltForm | undefined,
+            YearOfAssessment: response.lodgement_date ? new Date(response.lodgement_date).getFullYear().toString() : '',
+            StructureUnitType: response.structure_unit_type as StructureUnitType | undefined,
+            FloorConstruction: response.floor_construction,
+            FloorInsulation: response.floor_insulation,
+            RoofConstruction: response.roof_construction,
+            RoofInsulationLocation: response.roof_insulation_location,
+            RoofInsulationThickness: response.roof_insulation_thickness,
+            WallConstruction: response.wall_construction,
+            WallInsulation: response.wall_insulation,
+            WindowGlazing: response.window_glazing,
+            FuelType: response.fueltype,
+            // OS NGD Buildings attributes
+            RoofMaterial: response.roof_material,
+            SolarPanelPresence: response.solar_panel_presence,
+            RoofShape: response.roof_shape,
+            RoofAspectAreaNorth: response.roof_aspect_area_facing_north_m2,
+            RoofAspectAreaNortheast: response.roof_aspect_area_facing_north_east_m2,
+            RoofAspectAreaEast: response.roof_aspect_area_facing_east_m2,
+            RoofAspectAreaSoutheast: response.roof_aspect_area_facing_south_east_m2,
+            RoofAspectAreaSouth: response.roof_aspect_area_facing_south_m2,
+            RoofAspectAreaSouthwest: response.roof_aspect_area_facing_south_west_m2,
+            RoofAspectAreaWest: response.roof_aspect_area_facing_west_m2,
+            RoofAspectAreaNorthwest: response.roof_aspect_area_facing_north_west_m2,
+            RoofAspectAreaIndeterminable: response.roof_aspect_area_indeterminable_m2,
         };
 
         // Cache the detailed data for future use
         this.updateBuildingCache(detailedBuilding);
 
         return detailedBuilding;
-    }
-
-    /**
-     * Helper method to get property value from building details response
-     */
-    private getPropertyValue(response: any, propertyName: string): any {
-        if (response && response[propertyName] !== undefined) {
-            return response[propertyName];
-        }
-
-        return undefined;
     }
 
     /**
@@ -740,37 +752,6 @@ export class DataService {
             }
         });
         return flagMap;
-    }
-
-    // Private cache for ward EPC data
-    private _wardEPCDataCache: any = null;
-
-    /**
-     * Fetch ward-level EPC data from API
-     * @returns Observable of ward data with EPC information
-     */
-    public fetchWardEPCData(): Observable<FeatureCollection<Geometry, GeoJsonProperties>> {
-        if (this._wardEPCDataCache !== null) {
-            return of(this._wardEPCDataCache);
-        }
-
-        return this.#http
-            .get<FeatureCollection<Geometry, GeoJsonProperties>>('/api/epc-statistics/wards', {
-                withCredentials: true,
-            })
-            .pipe(
-                tap((data) => {
-                    this._wardEPCDataCache = data;
-                }),
-                catchError((error) => {
-                    console.error('Error fetching ward EPC data:', error);
-                    const emptyCollection: FeatureCollection<Geometry, GeoJsonProperties> = {
-                        type: 'FeatureCollection',
-                        features: [],
-                    };
-                    return of(emptyCollection);
-                }),
-            );
     }
 }
 

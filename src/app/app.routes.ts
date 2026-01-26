@@ -8,6 +8,10 @@ export const routes: Routes = [
         component: ShellComponent,
         canActivate: [mapStateGuard],
     },
+    {
+        path: 'dashboards',
+        loadChildren: () => import('@containers/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+    },
 ];
 
 // SPDX-License-Identifier: Apache-2.0

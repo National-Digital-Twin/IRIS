@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'c477-app-privacy-notice',
+    selector: 'c477-privacy-notice',
     standalone: true,
     imports: [CommonModule, MatButtonModule, MatIconModule],
     template: `
@@ -28,16 +28,14 @@ import { Router } from '@angular/router';
     styleUrls: ['./privacy-notice.css'],
 })
 export class PrivacyNoticeComponent {
-    @Output() private readonly back = new EventEmitter<void>();
-    readonly #router = inject(Router);
-
-    constructor() {}
+    @Output() public back = new EventEmitter<void>();
+    private readonly router = inject(Router);
 
     public onBack(): void {
         if (this.back.observers.length) {
             this.back.emit();
         } else {
-            this.#router.navigateByUrl('/');
+            this.router.navigateByUrl('/');
         }
     }
 
