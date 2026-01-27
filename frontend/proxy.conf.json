@@ -1,0 +1,15 @@
+{
+    "/api": {
+        "target": "http://localhost:3010",
+        "secure": false,
+        "pathRewrite": {
+            "^/api": ""
+        },
+        "changeOrigin": true
+    },
+    "/transparent-proxy": {
+        "target": "http://localhost:5013",
+        "secure": false,
+        "changeOrigin": true
+    }
+}

@@ -1,0 +1,73 @@
+:host {
+    display: block;
+    background: #fff;
+  
+    --pn-left-gutter: 24px;
+    --pn-pad-top: 12px;
+    --pn-pad-right: 16px;
+    --pn-logo-width: 300px;
+    --pn-logo-shift: -32px;
+    --pn-text: #374151;
+    --pn-link: #0b5fff;
+  }
+
+  .privacy-page {
+    padding: var(--pn-pad-top) var(--pn-pad-right) 16px 0;
+    box-sizing: border-box;
+  }
+  
+  .privacy-header,
+  .privacy-html {
+    padding-left: var(--pn-left-gutter, 24px) !important;
+    box-sizing: border-box;
+  }
+  
+  .privacy-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  
+  .privacy-back { margin: 0 0 2px 0; }
+  
+  img.privacy-logo {
+    width: var(--pn-logo-width, 300px) !important;
+    max-width: none !important;
+    height: auto !important;
+    display: block;
+    margin: 0 0 8px 0;
+    transform: translateX(var(--pn-logo-shift, -32px));
+  }
+  
+  .privacy-html h1 {
+    margin: 0 0 12px !important;
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+  .privacy-html h2 {
+    margin: 20px 0 8px !important;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .privacy-html p,
+  .privacy-html address {
+    margin: 0 0 16px !important;
+    line-height: 1.6;
+    color: var(--pn-text);
+    font-style: normal;
+  }
+  
+  .privacy-html ul,
+  .privacy-html ol {
+    list-style: revert !important;
+    list-style-position: outside !important;
+    margin: 0 0 16px 24px !important;
+    padding: 0 !important;
+  }
+  .privacy-html ul ul { list-style-type: circle !important; margin-top: 8px; }
+  .privacy-html li { margin-bottom: 8px !important; }
+  
+  .privacy-html a { color: var(--pn-link); text-decoration: underline; }
+  
