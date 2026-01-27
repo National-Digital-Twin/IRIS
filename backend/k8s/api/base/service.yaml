@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: {}
+  labels:
+    io.kompose.service: iris-write-api
+  name: iris-write-api
+spec:
+  type: ClusterIP
+  ports:
+    - name: "3010"
+      port: 3010
+      targetPort: 3010
+  selector:
+    io.kompose.service: iris-write-api

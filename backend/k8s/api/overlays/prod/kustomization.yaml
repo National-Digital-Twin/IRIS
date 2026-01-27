@@ -1,0 +1,23 @@
+resources:
+  - ../../base
+
+namespace: iris
+
+configMapGenerator:
+  - name: iris-write-api-configs
+    envs:
+      - params.env
+
+patches:
+  - path: patches/service-account.yaml
+    target:
+      kind: ServiceAccount
+
+labels:
+  - pairs:
+      env: prod
+
+images:
+  - name: iris-write-api-image:template
+    newName: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/api
+    newTag: '1736464040'
