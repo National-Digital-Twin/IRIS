@@ -9,9 +9,9 @@ on:
         branches:
             - 'develop'
         paths:
-            - 'src/**'
+            - 'frontend/src/**'
             - '.github/workflows/frontend-ci-pr.yml'
-            - '.github/workflows/frontend-ci-pr-merge.yml'
+            - '.github/workflows/frontend-cd-pr-merge.yml'
     workflow_dispatch:
 
 permissions:
@@ -24,6 +24,9 @@ jobs:
         name: Dependency Checks
         runs-on: ubuntu-latest
         timeout-minutes: 10
+        defaults:
+            run:
+                working-directory: frontend
         env:
             GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         steps:
@@ -47,6 +50,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 10
         needs: dependencies
+        defaults:
+            run:
+                working-directory: frontend
         env:
             GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         steps:
@@ -74,6 +80,9 @@ jobs:
         runs-on: ubuntu-latest
         needs: dependencies
         timeout-minutes: 10
+        defaults:
+            run:
+                working-directory: frontend
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -115,6 +124,9 @@ jobs:
         runs-on: ubuntu-latest
         needs: security-scanning
         timeout-minutes: 20
+        defaults:
+            run:
+                working-directory: frontend
         env:
             GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         environment: development
@@ -126,7 +138,6 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: '24.x'
-
             - name: Install Dependencies
               run: npm ci --legacy-peer-deps
 

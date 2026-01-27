@@ -53,6 +53,11 @@ jobs:
         run: |
           echo "Generated Version: ${{ steps.extract_version.outputs.version }}"
 
+  api-ci:
+    needs: [versioning]
+    uses: ./.github/workflows/backend-ci-pr.yml
+    secrets: inherit
+
   frontend-ci:
     needs: [versioning]
     uses: ./.github/workflows/frontend-ci-pr.yml
@@ -60,6 +65,16 @@ jobs:
   proxy-ci:
     needs: [versioning]
     uses: ./.github/workflows/transparent-proxy-ci-pr.yml
+
+  api-push-to-ECR:
+    needs: [api-ci, versioning]
+    uses: ./.github/workflows/backend-cd-push-to-ECR.yml
+    with:
+      aws_account_number: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"
+      repo_name: iris/api
+      app_name: iris/api
+      version: ${{ needs.versioning.outputs.version }}
+    secrets: inherit
 
   frontend-push-to-ECR:
     needs: [frontend-ci, versioning]

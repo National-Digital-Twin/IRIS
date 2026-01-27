@@ -1,6 +1,6 @@
 # Maintainers  
 
-**Repository:** `[repository-name]`  
+**Repository:** `IRIS`  
 **Description:** `Lists maintainers responsible for reviewing issues, security, and documentation updates.`  
 
 ## Introduction  
