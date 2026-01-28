@@ -49,10 +49,16 @@ export class NumberPipe implements PipeTransform {
         const fixedNum = num.toFixed(decimals);
 
         if (fixedNum.includes('.')) {
-            const allZerosAfterDecimalPoint = /\.?0+$/;
-
-            if (allZerosAfterDecimalPoint.test(fixedNum)) {
-                return `${fixedNum.replace(allZerosAfterDecimalPoint, '')}${ordinal}`;
+            // Trim trailing zeros and an optional trailing decimal point without regex backtracking.
+            let trimmed = fixedNum;
+            while (trimmed.endsWith('0')) {
+                trimmed = trimmed.slice(0, -1);
+            }
+            if (trimmed.endsWith('.')) {
+                trimmed = trimmed.slice(0, -1);
+            }
+            if (trimmed !== fixedNum) {
+                return `${trimmed}${ordinal}`;
             }
         }
 

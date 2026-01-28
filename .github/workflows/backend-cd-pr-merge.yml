@@ -56,7 +56,8 @@ jobs:
   api-ci:
     needs: [versioning]
     uses: ./.github/workflows/backend-ci-pr.yml
-    secrets: inherit
+    secrets:
+      GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   push-to-ECR:
     needs: [api-ci, versioning]
@@ -66,4 +67,5 @@ jobs:
       repo_name: "iris/api"
       app_name: "iris/api"
       version: ${{ needs.versioning.outputs.version }}
-    secrets: inherit
+    secrets:
+      GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
