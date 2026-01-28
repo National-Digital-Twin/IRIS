@@ -7,6 +7,8 @@ from osdatahub import PlacesAPI
 import time
 import logging
 import datetime
+from concurrent.futures import ThreadPoolExecutor
+from queue import Queue, Empty
 
 # Load environment variables
 load_dotenv(".env")
@@ -18,13 +20,24 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-OS_PLACES_API_KEY = os.environ.get("OS_PLACES_API_KEY")
+OS_PLACES_API_KEY1 = os.environ.get("OS_PLACES_API_KEY1")
+OS_PLACES_API_KEY2 = os.environ.get("OS_PLACES_API_KEY2")
+OS_PLACES_API_KEY3 = os.environ.get("OS_PLACES_API_KEY3")
+OS_PLACES_API_KEY4 = os.environ.get("OS_PLACES_API_KEY4")
 
-if not OS_PLACES_API_KEY:
-    logger.error("OS_PLACES_KEY not found. Please set it in your .env file.")
-    raise RuntimeError("OS_PLACES_KEY not found. Please set it in your .env file.")
+api_keys = [key for key in [
+    OS_PLACES_API_KEY1, 
+    OS_PLACES_API_KEY2, 
+    OS_PLACES_API_KEY3, 
+    OS_PLACES_API_KEY4
+] if key not in [None, '']]
+
+num_api_keys = len(api_keys)
+if num_api_keys < 1:
+    logger.error("No OS Places API key found. Please add one or more keys to you .env file.")
+    raise RuntimeError("OS_PLACES_KEY not found. Please add one or more to your .env file.")
 else:
-    logger.info("OS Places API Key loaded.")
+    logger.info(f"{num_api_keys} OS Places API keys loaded.")
 
 # Database Connection Details
 DB_HOST = os.getenv("DB_HOST")
@@ -197,14 +210,69 @@ def match_address(api_client, address, threshold):
     else:
         return None, None, None
 
+def worker(api_key, in_q, out_q):
+    
+    try:
+        api = PlacesAPI(api_key)
+    except Exception:
+        logger.error(f"Failed to create api class using key ending in {api_key[:-3]}")
+        return
+    
+    while True:
+        record = in_q.get()
+        if record is None:
+            in_q.task_done()
+            break
+        
+        try:
+            uprn, match_score, match_description = match_address(api, record["query_address"], MATCH_THRESHOLD)
+            if uprn is not None and match_score is not None and match_description is not None:
+                record_out = {
+                    "lmk_key": record["LMK_KEY"],
+                    "query_address": record["query_address"],
+                    "uprn": uprn,
+                    "match_score": match_score,
+                    "match_date": datetime.date.today()
+                }
+            else:
+                record_out = {
+                    "lmk_key": record["LMK_KEY"],
+                    "query_address": record["query_address"],
+                    "uprn": None,
+                    "match_score": None,
+                    "match_date": datetime.date.today()
+                }
+        except Exception:
+            logger.exception("Worker failed to process record; marking as unmatched.")
+            record_out = {
+                "lmk_key": record.get("LMK_KEY"),
+                "query_address": record.get("query_address"),
+                "uprn": None,
+                "match_score": None,
+                "match_date": datetime.date.today()
+            }
+        finally:
+            out_q.put(record_out)
+            in_q.task_done()
+            
+            # wait before using this API key again
+            time.sleep(SLEEP_DURATION)
+
+def write_records(engine, records):
+    matching_results_df = pd.DataFrame(
+        records,
+        columns=["lmk_key", "query_address", "uprn", "match_score", "match_date"]
+    )
+    matching_results_df.to_sql("epc_address_uprn_crossref", schema=DB_SCHEMA, con=engine, index=False, if_exists='append')
+    logger.info(f"Committing {len(records)} records to the cross reference table.")
+
+
 def main():
 
     engine = get_db_connection(DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
 
     crossref_exists = is_crossref_exists(engine, DB_SCHEMA)
     certificates = get_certificates(engine, DB_SCHEMA, crossref_exists=crossref_exists)
-
-    places_api = PlacesAPI(OS_PLACES_API_KEY)
 
     matched = 0
     unmatched = 0
@@ -216,65 +284,67 @@ def main():
     logger.info(f"Backoff wait time set at: {BACKOFF_WAIT_TIME}.")
     logger.info(f"Max retries set at: {MAX_RETRIES}.")
     
-    crossref_rows = []
+    # build an in- and out- queue
+    in_q = Queue()
+    out_q = Queue()
+
+    # populate queue with all records which require matching
     for _, record in certificates.iterrows():
+        in_q.put(record)
 
-        uprn, match_score, match_description = match_address(places_api, record["query_address"], MATCH_THRESHOLD)
-
-        time.sleep(SLEEP_DURATION)
-
-        match_date = datetime.date.today()
-        
-        if uprn is not None and match_score is not None and match_description is not None:
-            record_matched = {
-                "lmk_key": record["LMK_KEY"],
-                "query_address": record["query_address"],
-                "uprn": uprn,
-                "match_score": match_score,
-                "match_date": match_date
-            }
-            crossref_rows.append(record_matched)
-            matched += 1
-
-        else:
-            record_unmatched = {
-                "lmk_key": record["LMK_KEY"],
-                "query_address": record["query_address"],
-                "uprn": None,
-                "match_score": None,
-                "match_date": match_date
-            }
-            crossref_rows.append(record_unmatched)
-            unmatched += 1
-        
-        
-        if (matched+unmatched) == 10:
-            logger.debug(f"UPRN found for {matched} records so far.")
-            logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
-
-        if (matched+unmatched) % LOG_INTERVAL == 0:
-            logger.info(f"UPRN found for {matched} records so far.")
-            logger.info(f"A UPRN could not be found for {unmatched} records so far.")
-
-        if (matched+unmatched) % COMMIT_INTERVAL == 0:
-            epc_address_uprn_crossref = pd.DataFrame(
-                crossref_rows,
-                columns=["lmk_key", "query_address", "uprn", "match_score", "match_date"]
-            )
-            epc_address_uprn_crossref.to_sql("epc_address_uprn_crossref", schema=DB_SCHEMA, con=engine, index=False, if_exists='append')
-            crossref_rows = []
-            logger.info(f"Committing {COMMIT_INTERVAL} records to the cross reference table.")
+    # append Nones to the queue to act as a finish line
+    for _ in api_keys:
+        in_q.put(None)
     
-    if len(crossref_rows) != 0:
-        epc_address_uprn_crossref = pd.DataFrame(
-            crossref_rows,
-            columns=["lmk_key", "query_address", "uprn", "match_score", "match_date"]
-        )
-        epc_address_uprn_crossref.to_sql("epc_address_uprn_crossref", schema=DB_SCHEMA, con=engine, index=False, if_exists='append')
-        crossref_rows = []
+    # initiate workers to start address matching records in the queue
+    with ThreadPoolExecutor(max_workers=num_api_keys) as executor:
+        for key in api_keys:
+            executor.submit(worker, key, in_q, out_q)
+        logger.info(f"Instantiated {len(api_keys)} workers in parallel with one API key each.")
+
+        # as the out queue begins populating, organise records into batches that are written to the DB
+        batch = []
+        matched = 0
+        unmatched = 0
+        written = 0
+
+        while written < certificates.shape[0]:
+            
+            # get a record from the out queue
+            try: 
+                record = out_q.get(timeout=1)
+            except Empty:
+                continue # wait for more records to be added to the out queue by the workers
+
+            if record["uprn"] is None and record["match_score"] is None:
+                unmatched += 1
+            else:
+                matched += 1
+
+            batch.append(record)
+            written += 1
+
+            if (matched+unmatched) == 10:
+                logger.debug(f"UPRN found for {matched} records so far.")
+                logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
+
+            if (matched+unmatched) % LOG_INTERVAL == 0:
+                logger.info(f"UPRN found for {matched} records so far.")
+                logger.info(f"A UPRN could not be found for {unmatched} records so far.")
+            
+            # write to DB 
+            if len(batch) == COMMIT_INTERVAL:
+                write_records(engine, batch)
+                batch = []
+
+        # write any leftover records
+        if batch:
+            write_records(engine, batch)
+            batch = []
 
     logger.info(f"A total of {matched} records were successfully matched.")
     logger.info(f"A total of {unmatched} records were not able to be matched.")
+    logger.info(f"In total, {written} records were written to the cross reference table.")
 
 if __name__ == "__main__":
      main()

@@ -12,7 +12,11 @@ This utility requires you to have a `certificates` table in a postgres database 
 
 ### Environment
 Required:
-- `OS_PLACES_API_KEY`
+- OS Places API keys, you can add up to 4:
+    - `OS_PLACES_API_KEY1`
+    - `OS_PLACES_API_KEY2`
+    - `OS_PLACES_API_KEY3`
+    - `OS_PLACES_API_KEY4`
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_USER`, `DB_PASSWORD`
 
 Optional:
