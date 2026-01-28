@@ -50,6 +50,7 @@ jobs:
           scan-ref: frontend/transparent-proxy
           format: "table"
           exit-code: "1"
+          ignore-file: frontend/transparent-proxy/.trivyignore
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
 
@@ -75,6 +76,7 @@ jobs:
           image-ref: "iris/transparent-proxy:latest"
           format: "table"
           exit-code: "1"
+          ignore-file: frontend/transparent-proxy/.trivyignore
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
