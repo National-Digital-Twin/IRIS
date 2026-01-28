@@ -1,6 +1,6 @@
 # README
 
-**Repository:** `[repository-name]`  
+**Repository:** `IRIS`  
 **Description:** `[Brief summary of this repository’s purpose, key features, and usage]`  
 **Repository Status:** `Private – NDTP InnerSource`  
 

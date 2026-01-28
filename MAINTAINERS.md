@@ -1,6 +1,6 @@
 # Maintainers  
 
-**Repository:** `[repository-name]`  
+**Repository:** `IRIS`  
 **Description:** `Lists maintainers responsible for reviewing issues, security, and documentation updates.`  
 
 ## Introduction  
@@ -29,11 +29,11 @@ NDTP does not accept public code contributions, but we welcome **bug reports and
 
 ## Current Maintainers  
 
-| Name              | Organisation           | Role               | Contact                |
-|-------------------|------------------------|--------------------|------------------------|
-| [Maintainer Name] | [NDTP / Supplier Name] | Lead Maintainer    | [email@example.com]    |
-| [Maintainer Name] | [NDTP / Supplier Name] | Security Contact   | [security@example.com] |
-| [Maintainer Name] | [NDTP / Supplier Name] | Documentation Lead | [docs@example.com]     |
+| Name | Organisation | Role | Contact |
+|------|-------------|------|---------|
+| James Cruddas | Informed Solutions | Lead Maintainer | [NDTP-OSS@informed.com] |
+| James Cruddas | Informed Solutions | Security Contact | [NDTP-OSS@informed.com] |
+| James Cruddas | Informed Solutions | Documentation Lead | [NDTP-OSS@informed.com] |
 
 For general issues, please **open a GitHub issue** rather than contacting maintainers directly.  
 
