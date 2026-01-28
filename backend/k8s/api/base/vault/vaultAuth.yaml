@@ -1,0 +1,12 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: iris-write-api-vault-auth
+spec:
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: iris-write-api-role
+    serviceAccount: iris-write-api-sa
+    audiences:
+      - vault

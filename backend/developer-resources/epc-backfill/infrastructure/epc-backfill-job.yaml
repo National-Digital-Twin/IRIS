@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epc-backfill-job
+  namespace: iris
+spec:
+  template:
+    spec:
+      serviceAccountName: s3-csv-postgres-importer-sa
+      containers:
+        - name: epc-backfill-python
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/epc-backfill-python:latest
+          resources:
+            requests:
+              ephemeral-storage: "2Gi"
+              memory: 512Mi
+              cpu: 0.5
+            limits:
+              memory: 1Gi
+          env:
+            - name: AWS_ROLE_ARN
+              value: "arn:aws:iam::537124944113:role/s3-csv-postgres-importer-role"
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+            - name: DB_HOST
+              value: "{REPLACE ME}"
+            - name: DB_NAME
+              value: "{REPLACE ME}"
+            - name: DB_USERNAME
+              value: "{REPLACE ME}"
+            - name: DB_PASSWORD
+              value: "{REPLACE ME}"
+            - name: CSV_PATH
+              value: "{REPLACE ME}"
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 999
+  backoffLimit: 4
