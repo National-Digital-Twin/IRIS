@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-name: API CD on PR merge
+name: Backend CD on PR merge
 
 on:
   push:
@@ -55,15 +55,17 @@ jobs:
 
   api-ci:
     needs: [versioning]
-    uses: ./.github/workflows/api-ci-pr.yml
-    secrets: inherit
+    uses: ./.github/workflows/backend-ci-pr.yml
+    secrets:
+      GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   push-to-ECR:
     needs: [api-ci, versioning]
-    uses: ./.github/workflows/api-cd-push-to-ECR.yml
+    uses: ./.github/workflows/backend-cd-push-to-ECR.yml
     with:
       aws_account_number: "${{ vars.DEV_AWS_ACCOUNT_ID }}"
       repo_name: "iris/api"
       app_name: "iris/api"
       version: ${{ needs.versioning.outputs.version }}
-    secrets: inherit
+    secrets:
+      GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}

@@ -1,4 +1,4 @@
-**Repository:** `IRIS-visualisation`  
+**Repository:** `IRIS`  
 **Description:** `Details steps and information required to report issues with the software`  
 **SPDX-License-Identifier:** OGL-UK-3.0
 
