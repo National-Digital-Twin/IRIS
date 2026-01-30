@@ -41,17 +41,34 @@ jobs:
 
       - name: Generate Full Semantic Version
         id: generate-version
+        env:
+          MAJOR_INPUT: ${{ github.event.inputs.major }}
+          MINOR_INPUT: ${{ github.event.inputs.minor }}
+          PATCH_VERSION: ${{ env.patch_version }}
         run: |
-          MAJOR="${{ github.event.inputs.major }}" && MAJOR=${MAJOR:-1}
-          MINOR="${{ github.event.inputs.minor }}" && MINOR=${MINOR:-0}
-          PATCH="${{ env.patch_version }}"
+          MAJOR="${MAJOR_INPUT:-1}"
+          MINOR="${MINOR_INPUT:-0}"
+          PATCH="${PATCH_VERSION}"
+
+          if [[ ! "$MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid major version input."
+            exit 1
+          fi
+
+          if [[ ! "$MINOR" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid minor version input."
+            exit 1
+          fi
+
           VERSION="${MAJOR}.${MINOR}.${PATCH}"
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Print Generated Version
+        env:
+          GENERATED_VERSION: ${{ steps.generate-version.outputs.version }}
         run: |
-          echo "Generated Version: ${{ steps.generate-version.outputs.version }}"
+          echo "Generated Version: $GENERATED_VERSION"
 
   api-ci:
     needs: [versioning]

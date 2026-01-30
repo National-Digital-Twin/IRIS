@@ -39,9 +39,11 @@ jobs:
       # Extract the tag from the commit message or source branch name
       - name: Extract Tag from Merge Commit or Source Branch
         id: extract-tag # Add an ID to this step
+        env:
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           # Try to extract the tag from the commit message
-          TAG=$(echo "${{ github.event.head_commit.message }}" | grep -o 'release/[0-9]\+\.[0-9]\+\.[0-9]\+' | cut -d'/' -f2)
+          TAG=$(echo "$HEAD_COMMIT_MESSAGE" | grep -o 'release/[0-9]\+\.[0-9]\+\.[0-9]\+' | cut -d'/' -f2)
 
           # If the tag is not found in the commit message, extract it from the source branch name
           if [ -z "$TAG" ]; then
@@ -60,8 +62,10 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Debug - Print Determined Tag
+        env:
+          DETERMINED_TAG: ${{ steps.extract-tag.outputs.tag }}
         run: |
-          echo "The determined tag is: ${{ steps.extract-tag.outputs.tag }}"
+          echo "The determined tag is: $DETERMINED_TAG"
 
   copy-docker-image:
     needs: determine-tag
@@ -86,23 +90,28 @@ jobs:
 
       # Pull all tags for the image from the source ECR
       - name: Pull All Tags for the Image
+        env:
+          REPO_NAME: ${{ matrix.repo_name }}
+          RELEASE_TAG: ${{ needs.determine-tag.outputs.tag }}
         run: |
           # Pull the image with the determined tag
-          docker pull ${{ env.SOURCE_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}:${{ needs.determine-tag.outputs.tag }} || exit 1
+          docker pull $SOURCE_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$RELEASE_TAG || exit 1
 
           # Get the image ID of the pulled image
-          IMAGE_ID=$(docker images --format "{{.ID}}" ${{ env.SOURCE_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}:${{ needs.determine-tag.outputs.tag }})
+          IMAGE_ID=$(docker images --format "{{.ID}}" $SOURCE_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$RELEASE_TAG)
 
           # Pull all tags for the image
-          ALL_TAGS=$(aws ecr describe-images --repository-name ${{ matrix.repo_name }} --image-ids imageTag=${{ needs.determine-tag.outputs.tag }} --query 'imageDetails[].imageTags[]' --output text)
+          ALL_TAGS=$(aws ecr describe-images --repository-name $REPO_NAME --image-ids imageTag=$RELEASE_TAG --query 'imageDetails[].imageTags[]' --output text)
           for TAG in $ALL_TAGS; do
-            docker pull ${{ env.SOURCE_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}:$TAG || exit 1
+            docker pull $SOURCE_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$TAG || exit 1
           done
 
       # Debug step to print all locally available tags
       - name: Debug - Print All Locally Available Tags
+        env:
+          REPO_NAME: ${{ matrix.repo_name }}
         run: |
-          ALL_TAGS=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" --filter "reference=${{ env.SOURCE_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}")
+          ALL_TAGS=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" --filter "reference=$SOURCE_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME")
           echo "All locally available tags: $ALL_TAGS"
 
       # Set up AWS credentials for the destination account
@@ -120,16 +129,19 @@ jobs:
 
       # Tag and push all locally available tags to the destination ECR
       - name: Tag and Push All Tags to Destination ECR
+        env:
+          REPO_NAME: ${{ matrix.repo_name }}
+          RELEASE_TAG: ${{ needs.determine-tag.outputs.tag }}
         run: |
           # Get all locally available tags for the image
-          IMAGE_ID=$(docker images --format "{{.ID}}" ${{ env.SOURCE_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}:${{ needs.determine-tag.outputs.tag }})
-          ALL_TAGS=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" --filter "reference=${{ env.SOURCE_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}")
+          IMAGE_ID=$(docker images --format "{{.ID}}" $SOURCE_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$RELEASE_TAG)
+          ALL_TAGS=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" --filter "reference=$SOURCE_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME")
 
           # Tag and push each tag to the destination ECR
           for TAG in $ALL_TAGS; do
             TAG_NAME=${TAG#*:}  # Extract the tag name (e.g., "1.2.3" from "repo:1.2.3")
-            docker tag $IMAGE_ID ${{ env.DESTINATION_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}:$TAG_NAME
-            docker push ${{ env.DESTINATION_AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-2.amazonaws.com/${{ matrix.repo_name }}:$TAG_NAME
+            docker tag $IMAGE_ID $DESTINATION_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$TAG_NAME
+            docker push $DESTINATION_AWS_ACCOUNT_ID.dkr.ecr.eu-west-2.amazonaws.com/$REPO_NAME:$TAG_NAME
           done
 
       # Verify the Docker image in the destination ECR
@@ -138,5 +150,7 @@ jobs:
           docker images
 
       - name: Verify Docker Image in Destination ECR
+        env:
+          REPO_NAME: ${{ matrix.repo_name }}
         run: |
-          aws ecr describe-images --repository-name ${{ matrix.repo_name }} --query 'sort_by(imageDetails, &imagePushedAt)[-1]' --output table
+          aws ecr describe-images --repository-name $REPO_NAME --query 'sort_by(imageDetails, &imagePushedAt)[-1]' --output table
