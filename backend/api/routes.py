@@ -3,6 +3,7 @@
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
 import configparser
+import re
 import uuid
 from datetime import datetime
 from typing import Annotated, List, Optional
@@ -195,6 +196,14 @@ def lengthen(uri):
         stub = prefix_dict[prefix]
         uri = uri.replace(prefix + ":", stub)
     return uri
+
+
+def sanitize_for_message(value: str, max_len: int = 200) -> str:
+    if value is None:
+        return ""
+    trimmed = value.replace("\r", " ").replace("\n", " ").strip()
+    clipped = trimmed[:max_len]
+    return re.sub(r"[^a-zA-Z0-9 .,:;@/_+-]", "?", clipped)
 
 
 prefixes = format_prefixes()
@@ -783,8 +792,9 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
         user = access_client.get_user_details(request.headers)
     except exceptions.RequestException as e:
         if e.response is not None:
+            reason = sanitize_for_message(e.response.reason)
             raise HTTPException(
-                e.response.status_code, f"Error calling Access:{e.response.reason}"
+                e.response.status_code, f"Error calling Access:{reason}"
             )
         else:
             raise HTTPException(500, ACCESS_API_CALL_ERROR)
@@ -948,8 +958,9 @@ def post_flag_investigate(request: Request, visited: IesEntity):
         user = access_client.get_user_details(request.headers)
     except exceptions.RequestException as e:
         if e.response is not None:
+            reason = sanitize_for_message(e.response.reason)
             raise HTTPException(
-                e.response.status_code, f"Error calling Access:{e.response.reason}"
+                e.response.status_code, f"Error calling Access:{reason}"
             )
         else:
             raise HTTPException(500, ACCESS_API_CALL_ERROR)
@@ -1058,9 +1069,10 @@ def post_building_state(bs: IesState):
     if bs.stateType not in building_state_classes:
         # get_building_states()
         if bs.stateType not in building_state_classes:
+            safe_type = sanitize_for_message(bs.stateType)
             raise HTTPException(
                 status_code=404,
-                detail="Building State Class: " + bs.stateType + " not found",
+                detail=f"Building State Class: {safe_type} not found",
             )
     mint_uri(bs)
     if bs.startDateTime:
@@ -1167,8 +1179,9 @@ def post_assess_to_be_false(ass: IesAssessToBeFalse):
     status_code=204,
 )
 def post_uri_stub(uri: str):
-    data_uri_stub = uri  # noqa: F841
-    return data_uri_stub
+    global data_uri_stub
+    data_uri_stub = uri
+    return sanitize_for_message(data_uri_stub, max_len=512)
 
 
 @router.get(
@@ -1212,9 +1225,10 @@ def post_assessment(ass: IesAssessment):
     if ass.assessmentType not in assessment_classes:
         get_assessments()
         if ass.assessmentType not in assessment_classes:
+            safe_type = sanitize_for_message(ass.assessmentType)
             raise HTTPException(
                 status_code=404,
-                detail="Assessment Class: " + ass.assessmentType + " not found",
+                detail=f"Assessment Class: {safe_type} not found",
             )
         else:
             if ass.userOverride:
@@ -1252,7 +1266,7 @@ def get_user_details(request: Request):
         if e.response is not None:
             raise HTTPException(
                 e.response.status_code,
-                f"Error calling Access client:{e.response.reason}",
+                f"Error calling Access client:{sanitize_for_message(e.response.reason)}",
             )
         else:
             raise HTTPException(codes.internal_server_error, ACCESS_API_CALL_ERROR)
@@ -1270,12 +1284,13 @@ def get_signout_links():
                 "redirectUrl": signout_links_response.json(),
             }
         else:
-            return f"Error {signout_links_response.status_code}: {signout_links_response.reason}"
+            reason = sanitize_for_message(signout_links_response.reason)
+            return f"Error {signout_links_response.status_code}: {reason}"
     except exceptions.RequestException as e:
         if e.response is not None:
             raise HTTPException(
                 e.response.status_code,
-                f"Error calling the identity api: {e.response.reason}",
+                f"Error calling the identity api: {sanitize_for_message(e.response.reason)}",
             )
         else:
             raise HTTPException(codes.internal_server_error, IDENTITY_API_CALL_ERROR)
