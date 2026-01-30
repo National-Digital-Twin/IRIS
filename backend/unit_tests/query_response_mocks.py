@@ -184,40 +184,38 @@ def bounded_building_response(
 
 
 def bounded_filterable_buildings_response():
-    return {
-        [
-            {
-                "uprn": "10003319738",
-                "postcode": "PO36 9JA",
-                "built_form": "Detached",
-                "lodgement_date": "2024-09-01",
-                "fuel_type": "MainsGas",
-                "window_glazing": "DoubleGlazingBefore2002",
-                "wall_construction": "CavityWall",
-                "wall_insulation": "InsulatedWall",
-                "floor_construction": "Suspended",
-                "floorInsulation": "NoInsulationInFloor",
-                "roof_construction": "Pitched",
-                "roof_insulation_location": "LoftInsulation",
-                "roof_insulation_thickness": "100mm",
-            },
-            {
-                "uprn": "100060763759",
-                "postcode": "PO33 1DG",
-                "built_form": "Detached",
-                "lodgement_date": "2024-09-01",
-                "fuel_type": "MainsGas",
-                "window_glazing": "DoubleGlazingAfter2002",
-                "wall_construction": "CavityWall",
-                "wall_insulation": "InsulatedWall",
-                "floor_construction": "Suspended",
-                "floor_insulation": "NoInsulationInFloor",
-                "roof_construction": "Pitched",
-                "roof_insulation_location": "LoftInsulation",
-                "roof_insulation_thickness": "100mm",
-            },
-        ]
-    }
+    return [
+        {
+            "uprn": "10003319738",
+            "postcode": "PO36 9JA",
+            "built_form": "Detached",
+            "lodgement_date": "2024-09-01",
+            "fuel_type": "MainsGas",
+            "window_glazing": "DoubleGlazingBefore2002",
+            "wall_construction": "CavityWall",
+            "wall_insulation": "InsulatedWall",
+            "floor_construction": "Suspended",
+            "floorInsulation": "NoInsulationInFloor",
+            "roof_construction": "Pitched",
+            "roof_insulation_location": "LoftInsulation",
+            "roof_insulation_thickness": "100mm",
+        },
+        {
+            "uprn": "100060763759",
+            "postcode": "PO33 1DG",
+            "built_form": "Detached",
+            "lodgement_date": "2024-09-01",
+            "fuel_type": "MainsGas",
+            "window_glazing": "DoubleGlazingAfter2002",
+            "wall_construction": "CavityWall",
+            "wall_insulation": "InsulatedWall",
+            "floor_construction": "Suspended",
+            "floor_insulation": "NoInsulationInFloor",
+            "roof_construction": "Pitched",
+            "roof_insulation_location": "LoftInsulation",
+            "roof_insulation_thickness": "100mm",
+        },
+    ]
 
 
 def flag_history_response(active):
@@ -409,4 +407,3 @@ def mock_known_building(query, headers):
         return wall_window_query_response(uprn)
     else:
         return empty_query_response()
-

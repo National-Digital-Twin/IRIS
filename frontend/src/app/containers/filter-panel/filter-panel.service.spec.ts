@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { BACKEND_API_ENDPOINT } from '@core/tokens/backend-endpoint.token';
 import { SEARCH_ENDPOINT } from '@core/tokens/search-endpoint.token';
-import { map } from 'rxjs';
+import { tap } from 'rxjs';
 import { FilterPanelService, panelNames } from './filter-panel.service';
 
 const filterData = {
@@ -101,10 +101,10 @@ describe('DataService', () => {
             service
                 .retrieveFilterPanels({ minX: 1, maxX: 2, minY: 3, maxY: 4 })
                 .pipe(
-                    map((result) => {
+                    tap((result) => {
                         expect(result).toHaveLength(5);
-                        panelNames.map((name, idx) => expect(result.at(idx)?.title).toEqual(name));
-                        [5, 1, 2, 2, 6].map((size, idx) => expect(result.at(idx)?.filters).toHaveLength(size));
+                        panelNames.forEach((name, idx) => expect(result.at(idx)?.title).toEqual(name));
+                        [5, 1, 2, 2, 6].forEach((size, idx) => expect(result.at(idx)?.filters).toHaveLength(size));
                     }),
                 )
                 .subscribe({

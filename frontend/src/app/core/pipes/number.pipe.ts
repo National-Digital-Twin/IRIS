@@ -49,13 +49,23 @@ export class NumberPipe implements PipeTransform {
         const fixedNum = num.toFixed(decimals);
 
         if (fixedNum.includes('.')) {
-            const allZerosAfterDecimalPoint = /\.?0+$/;
-
-            if (allZerosAfterDecimalPoint.test(fixedNum)) {
-                return `${fixedNum.replace(allZerosAfterDecimalPoint, '')}${ordinal}`;
+            const trimmed = this.trimTrailingZeros(fixedNum);
+            if (trimmed !== fixedNum) {
+                return `${trimmed}${ordinal}`;
             }
         }
 
         return `${num.toFixed(decimals)}${ordinal}`;
+    }
+
+    private trimTrailingZeros(value: string): string {
+        let end = value.length;
+        while (end > 0 && value[end - 1] === '0') {
+            end -= 1;
+        }
+        if (end > 0 && value[end - 1] === '.') {
+            end -= 1;
+        }
+        return value.slice(0, end);
     }
 }
