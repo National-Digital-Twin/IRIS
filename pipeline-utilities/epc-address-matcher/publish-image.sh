@@ -1,7 +1,7 @@
 #!/bin/sh
 
 TAG="latest"
-IMAGE="iris-data-pipeline/epc-address-matcher:$TAG"
+IMAGE="iris-data-pipeline/address-matcher:$TAG"
 
 if [ -z "$(docker images -q $IMAGE 2> /dev/null)" ]; then
   echo "Image: $IMAGE does not exist, exiting..."
