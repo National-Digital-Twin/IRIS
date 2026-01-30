@@ -1,6 +1,6 @@
 # Contribution Guidelines  
 
-**Repository:** `[repository-name]`  
+**Repository:** `IRIS`  
 **Description:** `Guidelines for issue reporting, documentation suggestions, and NDTP’s controlled contribution model.`  
 
 Thank you for your interest in this repository.  

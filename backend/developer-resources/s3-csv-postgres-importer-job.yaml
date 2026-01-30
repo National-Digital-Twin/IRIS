@@ -1,0 +1,97 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: iris-s3-csv-postgres-importer-job
+  namespace: iris
+spec:
+  template:
+    spec:
+      serviceAccountName: s3-csv-postgres-importer-sa
+      containers:
+        - name: csv-postgres-importer
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0
+          resources:
+            limits:
+              memory: "2GiB"
+            requests:
+              ephemeral-storage: "2GiB"
+              memory: "2GiB"
+              cpu: 2
+          env:
+            - name: AWS_ROLE_ARN
+              value: arn:aws:iam::537124944113:role/s3-csv-postgres-importer-role
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+            - name: DB_HOST
+              value: REPLACE_ME
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "iris"
+            - name: DB_USERNAME
+              value: REPLACE_ME
+            - name: DB_PASSWORD
+              value: REPLACE_ME
+            - name: S3_FILE_URI
+              value: REPLACE_ME
+            - name: AWS_REGION
+              value: REPLACE_ME
+            - name: TARGET_TABLE
+              value: REPLACE_ME
+          command: ["sh", "-c"]
+          args:
+            - |
+              # Wait for PostgreSQL to be ready
+              while ! pg_isready -h ${DB_HOST} -p ${DB_PORT}; do
+                echo "Waiting for database connection..."
+                sleep 2
+              done
+
+              # Download CSV from S3
+              aws s3 cp ${S3_FILE_URI} /tmp/data.csv --region ${AWS_REGION}
+
+              # Verify download
+              if [ $? -ne 0 ]; then
+                echo "Failed to download CSV from S3"
+                exit 1
+              fi
+
+              # Import CSV data
+              PGPASSWORD=${DB_PASSWORD} psql \
+                -h ${DB_HOST} \
+                -p ${DB_PORT} \
+                -U ${DB_USERNAME} \
+                -d ${DB_NAME} \
+                -c "\copy ${TARGET_TABLE} FROM '/tmp/data.csv' WITH(FORMAT csv, DELIMITER '|', HEADER, QUOTE '\"', ESCAPE '''');"
+
+              # Verify import
+              echo "Verifying data import..."
+
+              PGPASSWORD=${DB_PASSWORD} psql \
+                -h ${DB_HOST} \
+                -p ${DB_PORT} \
+                -U ${DB_USERNAME} \
+                -d ${DB_NAME} \
+                -t -c "SELECT COUNT(*) FROM ${TARGET_TABLE}"
+
+              # Check for errors
+              if [ $? -ne 0 ]; then
+                echo "CSV import failed!"
+                exit 1
+              fi
+
+              echo "CSV import completed successfully!"
+
+              echo "Removing the CSV file after import..."
+
+              # Check for errors
+              if [ $? -ne 0 ]; then
+                echo "Failed to remove CSV file!"
+                exit 1
+              fi
+
+              echo "Successfully removed the CSV file!"
+      restartPolicy: OnFailure
+      securityContext:
+        fsGroup: 999
+  backoffLimit: 4

@@ -1,6 +1,6 @@
 # Acknowledgements
 
-**Repository:** `[repository-name]`  
+**Repository:** `IRIS`  
 **Description:** `Recognises suppliers, partner organisations, and other contributors to the repository's development.`  
 
 The National Digital Twin Programme (NDTP) would like to acknowledge the contributions of various organisations and individuals who have supported the development of this repository.

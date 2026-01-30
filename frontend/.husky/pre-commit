@@ -1,0 +1,5 @@
+git update-index --refresh
+npm outdated || true
+npm run lint:app-fix
+npm run lint:styles-fix
+git add --all
