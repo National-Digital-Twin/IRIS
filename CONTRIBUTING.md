@@ -9,7 +9,7 @@ The National Digital Twin Programme (NDTP) develops and maintains this repositor
 
 NDTP follows a **Cathedral open-source governance model** where code may be made **publicly available** under open-source licences, and collaboration is invited from **approved partners**. Contributions from the general public are not currently accepted, but **feedback, issue reporting, and documentation suggestions are encouraged**.  
 
-If you want to see which suppliers and organisations have contributed to this repository in the past, refer to [ACKNOWLEDGEMENTS.md](./ACKNOWLEDGEMENTS.md) and the GitHub contributor insights page at [Contributors](../../graphs/contributors).
+If you want to see which suppliers and organisations have contributed to this repository in the past, refer to [ACKNOWLEDGEMENTS.md](./ACKNOWLEDGEMENTS.md) and the GitHub contributor insights page at [Contributors](https://github.com/National-Digital-Twin/IRIS/graphs/contributors).
 
 ---
 
@@ -33,7 +33,7 @@ For details on repository maintainers and how to contact them, refer to [MAINTAI
 
 If you encounter a bug, error, or inconsistency, please follow these steps:  
 
-1. Check for an existing issue under [Issues](../../issues).  
+1. Check for an existing issue under [Issues](https://github.com/National-Digital-Twin/IRIS/issues).  
 2. Open a new issue if no one has reported it yet. Use one of the provided issue templates.  
 3. Provide a clear, detailed description of the issue, including steps to reproduce it if applicable.  
 4. Label the issue appropriately (bug, documentation, enhancement, etc.).  
@@ -59,7 +59,7 @@ We prioritise documentation updates based on user impact and alignment with prog
 - **Development is led by approved suppliers and partners** who have been engaged through a formal process.  
 - **We welcome feedback and ideas**, but implementation is subject to programme priorities.  
 
-To see what we’re working on, check out our [Project Roadmap](../../projects). If no roadmap is currently available, please note that it is being actively developed and will be published in due course.  
+To see what we’re working on, check out our [Project Roadmap](https://github.com/National-Digital-Twin/IRIS/projects). If no roadmap is currently available, please note that it is being actively developed and will be published in due course.  
 
 ---
 
