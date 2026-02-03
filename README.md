@@ -1,94 +1,133 @@
 # README
 
 **Repository:** `IRIS`  
-**Description:** `[Brief summary of this repository’s purpose, key features, and usage]`  
-**Repository Status:** `Private – NDTP InnerSource`  
-
----
+**Description:** `Monorepo containing the IRIS frontend and backend services.`  
+**SPDX-License-Identifier:** `Apache-2.0 AND OGL-UK-3.0`  
 
 ## Overview
 
-This repository is part of the **National Digital Twin Programme (NDTP)**. It supports the development of secure, modular, and standards-based components for internal use across NDTP projects.
+IRIS is a digital tool designed to support data-driven decision-making for retrofitting domestic properties by identifying homes that could benefit from energy efficiency improvements. It enables stakeholders to assess housing stock based on energy performance data to help target funding schemes and policy interventions more effectively. IRIS is part of the NDTP Demonstrator Programme.
 
-> **This repository is private and governed by the NDTP InnerSource Licence – Version 1.0.**  
-> It is intended solely for collaboration among NDTP teams and authorised suppliers.  
-> It is **not open source** and must not be disclosed, redistributed, or published externally.
+This monorepo contains:
+- `frontend/` — the IRIS visualisation client (Angular).
+- `backend/` — the IRIS API service (Python).
 
---- 
+## Repository Structure
 
-## Prerequisites  
-Before using this repository, ensure you have the following dependencies installed:  
-- **Required Tooling:** [List required CLI tools, SDKs, or dependencies]  
-- **Pipeline Requirements:** [Describe CI/CD pipeline compatibility]  
-- **Supported Kubernetes Versions:** [List supported Kubernetes versions, if applicable]  
-- **System Requirements:** [Minimum hardware/software requirements]  
-
-## Quick Start  
-Follow these steps to get started quickly with this repository. For detailed installation, configuration, and deployment, refer to the relevant MD files.  
-
-### 1. Download and Build  
-```sh  
-git clone https://github.com/[repository-name].git  
-cd [repository-name]  
+```
+.
+├── frontend/  # IRIS visualisation client
+└── backend/   # IRIS API service
 ```
 
-### 2. Run Build Version  
-```sh  
-[build-command] --version  
+## Prerequisites
+
+Common:
+- Git
+
+Frontend:
+- NVM (recommended)
+- Node.js (via `.nvmrc`)
+- Angular CLI
+
+Backend:
+- Python 3.12
+- Docker
+- make
+
+## Quick Start
+
+### 1. Clone
+```sh
+git clone https://github.com/National-Digital-Twin/IRIS.git
+cd IRIS
 ```
 
-### 3. Full Installation  
-<!-- Acknowledging these steps will vary between repositories, this file must be created as part of repository setup. -->
-Refer to [INSTALLATION.md](INSTALLATION.md) for detailed installation steps, including required dependencies and setup configurations.  
+### 2. Frontend (visualisation)
 
-### 4. Uninstallation  
-<!-- Acknowledging these steps will vary between repositories, this file must be created as part of repository setup. -->
-For steps to remove this repository and its dependencies, see [UNINSTALL.md](UNINSTALL.md).  
+```sh
+cd frontend
+nvm install
+nvm use
+```
 
-## Features  
-Include a brief list of key features provided by this repository. These should highlight what makes the project valuable to users and contributors. Examples of features might include:  
-- **Core functionality** (e.g., "Supports secure and federated data-sharing")  
-- **Key integrations** (e.g., "Provides REST and GraphQL API interfaces")  
-- **Scalability & performance** (e.g., "Optimized for high-throughput environments")  
-- **Modularity** (e.g., "Designed with a plugin-based architecture for extensibility")  
+If you need access to GitHub Packages, create a classic token with `read:packages` and export it:
+```sh
+export GITHUB_ACCESS_TOKEN=ghp_xxxxxxx
+```
 
-## API Documentation  
-[If this repository exposes an API, link to API documentation or describe the endpoints.]  
+```sh
+npm install
+ng build
+```
 
-## Public Funding Acknowledgment  
-This repository has been developed with public funding as part of the National Digital Twin Programme (NDTP), a UK Government initiative. NDTP, alongside its partners, has invested in this work to advance open, secure, and reusable digital twin technologies for any organisation, whether from the public or private sector, irrespective of size.  
+System requirements (frontend):
+- Dual-Core CPU (Intel i5 or AMD Ryzen 3 equivalent), 8GB RAM, SSD/HDD with 10GB free space
 
-## Licensing
+For more details, see `frontend/INSTALLATION.md` and `frontend/UNINSTALL.md`.
 
-This repository, including all source code, documentation, configuration files, and related materials, is licensed under the:
+### 3. Backend (API)
 
-**NDTP InnerSource Licence – Version 1.0**  
-See [LICENSE.md](LICENSE.md) for the full licence text.
+```sh
+cd backend
+pip install -f requirements.txt
+make run-api
+```
 
-> ⚠️ This repository is **not open source**.  
-> Redistribution, disclosure, or publication of any part of this repository is prohibited without the **explicit, written approval** of the NDTP Management Team.
+System requirements (backend):
+- Dual-Core CPU (Intel i5 or AMD Ryzen 3 equivalent), 8GB RAM, SSD/HDD with 10GB free space
 
-All intellectual property rights are held by the **Department for Business and Trade (UK)** as the governing entity for the National Digital Twin Programme (NDTP).
+For more details, see `backend/INSTALLATION.md` and `backend/UNINSTALL.md`.
 
-## Security and Responsible Disclosure  
-We take security seriously. If you believe you have found a security vulnerability in this repository, please follow our responsible disclosure process outlined in `SECURITY.md`.  
+## Features
+
+Frontend:
+- **Core functionality** Visualises housing data on a map, including materials and EPC ratings.
+- **Scalability & performance** Code optimised for scalability and performance.
+
+Backend:
+- **Core functionality** Provides API routes to serve and route data to and from the visualisation client.
+- **Key integrations** REST interface to query and write data to the IA node.
+- **Scalability & performance** Optimised for scalability and performance.
+
+## API Documentation
+
+The API documentation can be accessed by running the backend and navigating to:
+- `/api-docs`
+- `/api-docs/openapi.json`
+
+## Public Funding Acknowledgment
+
+This repository has been developed with public funding as part of the National Digital Twin Programme (NDTP), a UK Government initiative. NDTP, alongside its partners, has invested in this work to advance open, secure, and reusable digital twin technologies for any organisation, whether from the public or private sector, irrespective of size.
+
+## License
+
+This repository contains both source code and documentation, which are covered by different licenses:
+- **Code:** Originally developed by Coefficient Systems, Ove Arup & Partners, and Informed Solutions, now maintained by National Digital Twin Programme. Licensed under the Apache License 2.0.
+- **Documentation:** Licensed under the Open Government Licence v3.0.
+
+See `LICENSE.md` for details. Service-specific notes remain in `frontend/README.md` and `backend/README.md`.
+
+## Security and Responsible Disclosure
+
+We take security seriously. If you believe you have found a security vulnerability in this repository, please follow our responsible disclosure process outlined in `SECURITY.md`.
 
 ## Software Bill of Materials (SBOM)
 
-This project provides a Software Bill of Materials (SBOM) to help users and integrators understand its dependencies.
+Download the [latest SBOM for this codebase](https://github.com/National-Digital-Twin/IRIS/dependency-graph/sbom) to view the current list of components used in this repository.
 
-### Current SBOM
-Download the [latest SBOM for this codebase](../../dependency-graph/sbom) to view the current list of components used in this repository.
+## Contributing
 
-## Contributing  
-We welcome contributions that align with the Programme’s objectives. Please read our `CONTRIBUTING.md` guidelines before submitting pull requests.  
+We welcome contributions that align with the Programme’s objectives. Please read `CONTRIBUTING.md` before submitting pull requests.
 
-## Acknowledgements  
-This repository has benefited from collaboration with various organisations. For a list of acknowledgments, see `ACKNOWLEDGEMENTS.md`.  
+## Acknowledgements
 
-## Support and Contact  
-For questions or support, check our Issues or contact the NDTP team by emailing ndtp@businessandtrade.gov.uk.
+For a list of acknowledgments, see `ACKNOWLEDGEMENTS.md`.
 
-**Maintained by the National Digital Twin Programme (NDTP).**  
+## Support and Contact
+
+For questions or support, check Issues or contact the NDTP team on ndtp@businessandtrade.gov.uk.
+
+**Maintained by the National Digital Twin Programme (NDTP).**
 
 © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
