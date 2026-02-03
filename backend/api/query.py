@@ -204,6 +204,46 @@ def get_fueltype_for_building(uprn: str) -> str:
         }}
     """
 
+def get_epc_attributes_pg() -> str:
+    return """
+        WITH selected_dwelling AS (
+            SELECT uprn, toid, post_code, point
+            FROM iris.building
+            WHERE is_residential = true
+                AND uprn = :uprn
+        )
+        SELECT
+            sd.uprn, sd.toid, sd.post_code,
+            su.built_form, 
+            su.type as structure_unit_type,
+            su.fuel_type,
+            ea.lodgement_date, su.window_glazing,
+            su.wall_construction, su.wall_insulation,
+            su.floor_construction, su.floor_insulation,
+            su.roof_construction, 
+            su.roof_insulation as roof_insulation_location,
+            su.roof_insulation_thickness
+        FROM
+            selected_dwelling sd
+        LEFT JOIN LATERAL (
+            SELECT
+                id,
+                uprn,
+                epc_rating,
+                lodgement_date
+            FROM
+                iris.epc_assessment
+            WHERE
+                uprn = sd.uprn
+            ORDER BY
+                lodgement_date desc nulls last,
+                id desc
+            LIMIT 1
+        ) ea ON TRUE
+        LEFT JOIN iris.structure_unit su
+        ON
+            su.epc_assessment_id = ea.id;
+    """
 
 def get_all_ngd_attributes_pg() -> str:
     return """

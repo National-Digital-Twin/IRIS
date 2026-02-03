@@ -63,6 +63,7 @@ from pydantic import AfterValidator, BaseModel
 from query import (
     get_all_ngd_attributes_pg,
     get_building,
+    get_epc_attributes_pg,
     get_buildings_affected_by_extreme_weather_data_query,
     get_buildings_in_bounding_box_query,
     get_count_of_epc_rating_by_area_level_query,
@@ -113,6 +114,21 @@ from utils import has_bindings, validate_geojson_polygon
 
 AREA_LEVEL_PATTERN = "^(region|county|district|ward)$"
 FEATURE_PATTERN = "^(glazing_types|fuel_types|wall_construction|wall_insulation|floor_construction|floor_insulation|roof_construction|roof_material|roof_insulation|roof_insulation_thickness|solar_panels|roof_aspect)$"
+
+EPC_FIELDS = [
+    "lodgement_date",
+    "built_form",
+    "structure_unit_type",
+    "floor_construction",
+    "floor_insulation", 
+    "roof_construction",
+    "roof_insulation_location",
+    "roof_insulation_thickness",
+    "wall_construction",
+    "wall_insulation",
+    "window_glazing",
+    "fueltype",
+]
 
 router = APIRouter()
 
@@ -826,6 +842,30 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     run_sparql_update(query=query, securityLabel=invalid.securityLabel)
     return assessment
 
+def is_missing(value):
+    return value is None or value == "" or value == "NoData"
+
+def apply_epc_fallback(building: DetailedBuilding, pg_row):
+
+    updates = {
+        "lodgement_date": str(pg_row.lodgement_date) if pg_row.lodgement_date else None,
+        "built_form": pg_row.built_form,
+        "structure_unit_type": pg_row.structure_unit_type,
+        "floor_construction": pg_row.floor_construction,
+        "floor_insulation": pg_row.floor_insulation,
+        "roof_construction": pg_row.roof_construction,
+        "roof_insulation_location": pg_row.roof_insulation_location,
+        "roof_insulation_thickness": pg_row.roof_insulation_thickness,
+        "wall_construction": pg_row.wall_construction,
+        "wall_insulation": pg_row.wall_insulation,
+        "window_glazing": pg_row.window_glazing,
+        "fueltype": pg_row.fuel_type
+    }
+
+    for field, value in updates.items():
+        if is_missing(getattr(building, field)) and not is_missing(value):
+            setattr(building, field, value)
+
 
 @router.get(
     "/buildings/{uprn}",
@@ -901,7 +941,7 @@ async def get_building_by_uprn(
                     "roof_aspect_area_facing_north_m2": pg.roof_aspect_area_facing_north_m2,
                     "roof_aspect_area_facing_north_east_m2": pg.roof_aspect_area_facing_north_east_m2,
                     "roof_aspect_area_facing_east_m2": pg.roof_aspect_area_facing_east_m2,
-                    "roof_aspect_area_facing_south_east_m2": pg.roof_aspect_area_facing_east_m2,
+                    "roof_aspect_area_facing_south_east_m2": pg.roof_aspect_area_facing_south_east_m2,
                     "roof_aspect_area_facing_south_m2": pg.roof_aspect_area_facing_south_m2,
                     "roof_aspect_area_facing_south_west_m2": pg.roof_aspect_area_facing_south_west_m2,
                     "roof_aspect_area_facing_west_m2": pg.roof_aspect_area_facing_west_m2,
@@ -909,8 +949,7 @@ async def get_building_by_uprn(
                     "roof_aspect_area_indeterminable_m2": pg.roof_aspect_area_indeterminable_m2,
                 },
             )
-
-    return map_single_building_response(
+    building = map_single_building_response(
         uprn,
         building_results,
         roof_results,
@@ -922,6 +961,15 @@ async def get_building_by_uprn(
         ngd_roof_shape_results,
         ngd_roof_aspect_areas_results,
     )
+
+    # EPC fallback
+    if any(is_missing(getattr(building, f)) for f in EPC_FIELDS):
+        geonode_results = await db.execute(text(get_epc_attributes_pg()), {"uprn": uprn})
+        geonode_row = geonode_results.first()
+        if geonode_row:
+            apply_epc_fallback(building, geonode_row)
+    
+    return building
 
 
 @router.get(

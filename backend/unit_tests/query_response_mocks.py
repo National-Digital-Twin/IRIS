@@ -3,6 +3,7 @@ from api.query import (
     get_floor_for_building,
     get_roof_for_building,
     get_walls_and_windows_for_building,
+    get_fueltype_for_building
 )
 
 
@@ -104,6 +105,21 @@ def wall_window_query_response(uprn):
                         "type": "uri",
                         "value": "http://ies.data.gov.uk/ontology/ies-building1#DoubleGlazingBefore2002",
                     },
+                }
+            ]
+        }
+    }
+
+
+def fueltype_query_response(uprn):
+    return {
+        "results": {
+            "bindings": [
+                {
+                    "fuelType": {
+                        "type": "uri",
+                        "value": "http://ies.data.gov.uk/ontology/ies-building1#NaturalFuelGas",
+                    }
                 }
             ]
         }
@@ -405,5 +421,7 @@ def mock_known_building(query, headers):
         return floor_query_response(uprn)
     if query == get_walls_and_windows_for_building(uprn):
         return wall_window_query_response(uprn)
+    if query == get_fueltype_for_building(uprn):
+        return fueltype_query_response(uprn)
     else:
         return empty_query_response()

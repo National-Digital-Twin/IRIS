@@ -1,2 +1,2 @@
 def get_nullable_float(value):
-    float(value) if value != None else None
+    return float(value) if value is not None else None
