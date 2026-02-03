@@ -22,6 +22,9 @@ on:
         type: string
         required: true
         description: "Version number passed from main workflow"
+    secrets:
+      GH_PACKAGES_PAT:
+        required: true
   workflow_dispatch:
     inputs:
       aws_account_number:

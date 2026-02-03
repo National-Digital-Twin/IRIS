@@ -221,7 +221,7 @@ def map_ngd_roof_aspect_area_facings_results(
     }
 
     def assign(field: str | None, m2) -> None:
-        if field and m2:
+        if field and m2 is not None:
             setattr(building, field, float(m2))
 
     if results and results.get("results") and results["results"].get("bindings"):

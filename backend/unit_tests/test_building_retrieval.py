@@ -42,6 +42,7 @@ def client():
         mock_db_session = AsyncMock()
         mock_db_result = AsyncMock()
         mock_db_result.__iter__ = lambda self: iter([])
+        mock_db_result.first = MagicMock(return_value=None)
         mock_db_session.execute.return_value = mock_db_result
         yield mock_db_session
 

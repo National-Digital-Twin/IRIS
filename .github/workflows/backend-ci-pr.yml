@@ -5,6 +5,9 @@ name: Backend CI on PR
 
 on:
   workflow_call:
+    secrets:
+      GH_PACKAGES_PAT:
+        required: true
   pull_request:
     branches:
       - "develop"
