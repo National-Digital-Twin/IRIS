@@ -1,7 +1,5 @@
 FROM nginxinc/nginx-unprivileged:1.29-alpine3.22
 
-RUN apk upgrade --no-cache
-
 RUN ["rm", "/etc/nginx/conf.d/default.conf"]
 
 COPY proxy.conf.template /etc/nginx/templates/proxy.conf.template
