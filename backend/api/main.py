@@ -14,12 +14,9 @@ from routes import router
 
 config_settings = get_settings()
 
-with open("README.md", "r") as file:
-    description = file.read()
-
 app = FastAPI(
     title="NDT Assessment Write-Back API",
-    description=description,
+    description="NDT Assessment Write-Back API",
     docs_url="/api-docs",
     openapi_url="/api-docs/openapi.json",
     license_info={
