@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: postgres
+    schema: "{{ env_var('DB_SCHEMA') }}"
+    tables:
+      - name: certificates
+      - name: epc_address_uprn_crossref

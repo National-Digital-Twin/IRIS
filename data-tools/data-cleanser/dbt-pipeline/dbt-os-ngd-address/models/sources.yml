@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: postgres
+    schema: "{{ env_var('DB_SCHEMA') }}"
+    tables:
+      - name: add_gb_build_addresses
+      - name: uprn_toid

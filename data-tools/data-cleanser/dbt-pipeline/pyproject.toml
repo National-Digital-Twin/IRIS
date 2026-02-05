@@ -1,0 +1,10 @@
+[project]
+name = "dbt-pipeline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dbt-core>=1.5.5",
+    "dbt-postgres>=1.5.5",
+]
