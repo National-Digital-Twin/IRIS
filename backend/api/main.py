@@ -14,8 +14,11 @@ from routes import router
 
 config_settings = get_settings()
 
-with open("README.md", "r") as file:
-    description = file.read()
+try:
+    with open("README.md", "r") as file:
+        description = file.read()
+except FileNotFoundError:
+    description = "NDT Assessment Write-Back API."
 
 app = FastAPI(
     title="NDT Assessment Write-Back API",
