@@ -10,6 +10,7 @@ This monorepo contains:
 - `frontend/` — IRIS visualisation client (Angular).
 - `backend/` — IRIS API service (Python).
 - `data-tools/data-cleanser/` — ETL pipeline using Airbyte + dbt to prepare data for IRIS.
+- `data-tools/data-pipeline/` — data pipelines to process EPC and geographic data.
 
 ## Prerequisites
 
