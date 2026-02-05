@@ -12,6 +12,7 @@ This monorepo contains:
 - `frontend/` — the IRIS visualisation client (Angular).
 - `backend/` — the IRIS API service (Python).
 - `data-tools/data-cleanser/` — ETL pipeline using Airbyte + dbt to prepare data for IRIS.
+- `data-tools/data-pipeline/` — data pipelines to process EPC and geographic data.
 
 ## Repository Structure
 
@@ -19,7 +20,8 @@ This monorepo contains:
 .
 ├── frontend/  # IRIS visualisation client
 ├── backend/   # IRIS API service
-└── data-tools/data-cleanser/ # ETL pipeline for IRIS data preparation
+├── data-tools/data-cleanser/ # ETL pipeline for IRIS data preparation
+└── data-tools/data-pipeline/ # Data pipelines for EPC and geographic processing
 ```
 
 ## Prerequisites
@@ -44,6 +46,12 @@ Data cleanser:
 - Airbyte
 - dbt
 - Docker
+
+Data pipeline:
+- Python 3.12+
+- Docker
+- Kafka
+- Zookeeper
 
 ## Quick Start
 
@@ -98,6 +106,15 @@ poetry --version
 
 For detailed install and run steps, see `data-tools/data-cleanser/INSTALLATION.MD` and `data-tools/data-cleanser/UNINSTALL.md`.
 
+### 5. Data pipeline
+
+```sh
+cd data-tools/data-pipeline
+python --version
+```
+
+For detailed install and run steps, see `data-tools/data-pipeline/INSTALLATION.md` and `data-tools/data-pipeline/UNINSTALL.md`.
+
 ## Data Cleanser (ETL)
 
 The data cleanser is an ETL pipeline that fetches and transforms EPC and OS data for IRIS. It uses Airbyte for extraction and dbt for transformations, with outputs persisted to S3.
@@ -107,6 +124,16 @@ Key components:
 - dbt models in `data-tools/data-cleanser/dbt-pipeline/`
 
 For full details, see `data-tools/data-cleanser/README.md`.
+
+## Data Pipeline
+
+The data pipeline contains two major pipelines:
+- `address-profiling-pipeline` for EPC assessment data processing.
+- `lat-long-pipeline` for geographic coordinate processing.
+
+Both pipelines use adapters and mappers to ingest source data (CSV or S3) and publish to Kafka topics as RDF outputs.
+
+For full details, see `data-tools/data-pipeline/README.md`.
 
 ## Features
 
@@ -122,6 +149,10 @@ Backend:
 Data cleanser:
 - **Core functionality** ETL pipeline to ingest EPC/OS data and prepare datasets for IRIS.
 - **Key integrations** Airbyte sources/destinations and dbt transformations with S3 outputs.
+
+Data pipeline:
+- **Core functionality** Address profiling and lat/long pipelines to transform EPC and geographic data into RDF.
+- **Key integrations** Kafka topics for adapter/mapper components.
 
 ## API Documentation
 
