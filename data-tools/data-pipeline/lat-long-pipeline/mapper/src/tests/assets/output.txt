@@ -1,0 +1,43 @@
+@prefix building: <http://ies.data.gov.uk/ontology/ies-building1#> .
+@prefix data: <http://ndtp.co.uk/data#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix geoplace: <https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#> .
+@prefix ies: <http://informationexchangestandard.org/ont/ies#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+data:UPRN_100100692468 a building:UPRN ;
+	ies:representationValue "100100692468"^^xsd:string .
+	
+data:PCODE_NP19_8GG a ies:PostalCode ;
+	ies:representationValue "NP19 8GG"^^xsd:string .
+	
+data:FirstLineOfAddress_100100692468 a ies:FirstLineOfAddress ;
+    ies:representationValue "83, VICTORIA AVENUE, NEWPORT, NP19 8GG"^^xsd:string .
+
+data:TOID_100100692468 a ies:TOID ;
+    ies:representationValue "osgb1000027605152"^^xsd:string .
+
+data:AddressableLocation_100100692468 a building:AddressableLocation ;
+	ies:isIdentifiedBy data:UPRN_100100692468,
+		data:PCODE_NP19_8GG,
+		data:FirstLineOfAddress_100100692468 .
+
+data:Location_100100692468 a ies:Location ;
+    ies:isIdentifiedBy data:PCODE_NP19_8GG .
+
+data:LocationPoint_100100692468 a ies:PointOnEarthSurface ;
+    ies:isIdentifiedBy [
+            a ies:Latitude ;
+            ies:representationValue "51.5923481"^^xsd:string
+        ], 
+        [
+            a ies:Longitude ;
+            ies:representationValue "-2.9751483"^^xsd:string
+        ] ;
+    ies:isRepresentedAs _:g1 ;
+    geo:hasGeometry _:g1 .
+
+_:g1 a ies:ISO19125-WKT ;
+    ies:representationValue "POINT(-2.9751483 51.5923481)"^^geo:wktLiteral ;
+    geo:asWKT "POINT(-2.9751483 51.5923481)"^^geo:wktLiteral .
