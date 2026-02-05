@@ -9,6 +9,7 @@
 This monorepo contains:
 - `frontend/` — IRIS visualisation client (Angular).
 - `backend/` — IRIS API service (Python).
+- `data-tools/data-cleanser/` — ETL pipeline using Airbyte + dbt to prepare data for IRIS.
 
 ## Prerequisites
 
@@ -24,6 +25,14 @@ Backend:
 - Python 3.12.0
 - make
 - Apache Jena Fuseki
+
+Data cleanser:
+- Python
+- Poetry
+- Postgres
+- Airbyte
+- dbt
+- Docker
 
 ## GitHub Packages PAT
 
@@ -134,6 +143,58 @@ npm run build
 
 ```sh
 npm run lint
+```
+
+## Data cleanser (ETL) setup
+
+### 1. Install dependencies
+
+It is recommended to use a Python virtual environment. This repository uses `poetry` to manage dependencies. The baselined versions are in `data-tools/data-cleanser/poetry.lock`.
+
+```sh
+cd data-tools/data-cleanser
+poetry install --no-root --sync
+```
+
+Airbyte and Postgres can be installed with Docker. For Postgres:
+
+```sh
+docker run --name postgres -e POSTGRES_USER=myuser -e POSTGRES_PASSWORD=mypassword -e POSTGRES_DB=mydatabase -p 5432:5432 -d postgres
+```
+
+For Airbyte, follow the OSS quickstart instructions in the Airbyte docs.
+
+### 2. Configuration
+
+After installing Airbyte, open the Airbyte UI and add Postgres as a destination. Then import the source `.yaml` files from `data-tools/data-cleanser/airbyte/`, create the connections, and sync them.
+
+Once data is loaded into Postgres, run dbt from `data-tools/data-cleanser/data_cleansing_pipeline`:
+
+```sh
+dbt run
+```
+
+To run a specific model:
+
+```sh
+dbt run --select <model_name>
+```
+
+To run all dbt models, ensure AWS keys with write access to S3 are configured and `S3_BUCKET_NAME` is set.
+
+### 3. Deployment (Airbyte connector)
+
+The EPC Recommendations source connector is in `data-tools/data-cleanser/airbyte/source-epc-recommendations` and can be run in Airbyte as a Docker image.
+
+Build and run locally:
+
+```sh
+cd data-tools/data-cleanser/airbyte/source-epc-recommendations
+docker build . -t airbyte/source-epc-recommendations:dev
+docker run --rm airbyte/source-epc-recommendations:dev spec
+docker run --rm -v $(pwd)/secrets:/secrets airbyte/source-epc-recommendations:dev check --config /secrets/config.json
+docker run --rm -v $(pwd)/secrets:/secrets airbyte/source-epc-recommendations:dev discover --config /secrets/config.json
+docker run --rm -v $(pwd)/secrets:/secrets -v $(pwd)/integration_tests:/integration_tests airbyte/source-epc-recommendations:dev read --config /secrets/config.json --catalog /integration_tests/configured_catalog.json
 ```
 
 ## Licensing

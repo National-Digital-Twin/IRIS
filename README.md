@@ -11,13 +11,15 @@ IRIS is a digital tool designed to support data-driven decision-making for retro
 This monorepo contains:
 - `frontend/` — the IRIS visualisation client (Angular).
 - `backend/` — the IRIS API service (Python).
+- `data-tools/data-cleanser/` — ETL pipeline using Airbyte + dbt to prepare data for IRIS.
 
 ## Repository Structure
 
 ```
 .
 ├── frontend/  # IRIS visualisation client
-└── backend/   # IRIS API service
+├── backend/   # IRIS API service
+└── data-tools/data-cleanser/ # ETL pipeline for IRIS data preparation
 ```
 
 ## Prerequisites
@@ -34,6 +36,14 @@ Backend:
 - Python 3.12
 - Docker
 - make
+
+Data cleanser:
+- Python
+- Poetry
+- Postgres
+- Airbyte
+- dbt
+- Docker
 
 ## Quick Start
 
@@ -79,6 +89,25 @@ System requirements (backend):
 
 For more details, see `backend/INSTALLATION.md` and `backend/UNINSTALL.md`.
 
+### 4. Data cleanser (ETL)
+
+```sh
+cd data-tools/data-cleanser
+poetry --version
+```
+
+For detailed install and run steps, see `data-tools/data-cleanser/INSTALLATION.MD` and `data-tools/data-cleanser/UNINSTALL.md`.
+
+## Data Cleanser (ETL)
+
+The data cleanser is an ETL pipeline that fetches and transforms EPC and OS data for IRIS. It uses Airbyte for extraction and dbt for transformations, with outputs persisted to S3.
+
+Key components:
+- Airbyte sources and destinations in `data-tools/data-cleanser/airbyte/`
+- dbt models in `data-tools/data-cleanser/dbt-pipeline/`
+
+For full details, see `data-tools/data-cleanser/README.md`.
+
 ## Features
 
 Frontend:
@@ -89,6 +118,10 @@ Backend:
 - **Core functionality** Provides API routes to serve and route data to and from the visualisation client.
 - **Key integrations** REST interface to query and write data to the IA node.
 - **Scalability & performance** Optimised for scalability and performance.
+
+Data cleanser:
+- **Core functionality** ETL pipeline to ingest EPC/OS data and prepare datasets for IRIS.
+- **Key integrations** Airbyte sources/destinations and dbt transformations with S3 outputs.
 
 ## API Documentation
 
