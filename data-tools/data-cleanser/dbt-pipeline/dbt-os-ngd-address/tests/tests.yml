@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: stg_epc_certificates
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "date >= current_date and count(*) > 0"
+
+  - name: certificates
+    tests:
+      - dbt_utils.expression_is_true:
+        expression: "date >= current_date and count(*) > 0"

@@ -1,0 +1,68 @@
+#  Caches
+.cache
+.cachedir/
+cachedir/
+**/.ipynb_checkpoints/*
+**/__pycache__/*
+*.pyc
+
+# Data
+data/
+notebooks/*.csv
+notebooks/*.json
+notebooks/bays/*.csv
+notebooks/bays/*.xlsx
+license_report.csv
+!**/data/**/README.md
+!**/data/**/*.gitkeep
+*.zip
+*.html
+
+# Secrets
+.env
+dbt-pipeline/profiles.yml
+
+# Personal TODO files
+TODO.txt
+JOHN.txt
+
+# VisualStudioCode
+.vscode/*
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.RData
+
+# Environment
+.venv/
+uv.lock
+
+# coverage
+.coverage
+.coverage.*
+htmlcov
+
+# IDE config
+.idea/
+ipython_config.py
+profile_default/
+
+# Other
+.DS_Store
+ignore/
+*.log
+*.pem
+
+# Editor
+pyrightconfig.json
+
+target/
+
+# Local outputs (tiles, previews, etc.)
+out/
+
+# dbt
+**/.user.yml
+
+# https://www.gitignore.io/

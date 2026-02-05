@@ -12,6 +12,7 @@ Over time, the following organisations have provided technical expertise, develo
 - Informed Solutions
 - Ove Arup & Partners
 - Coefficient Systems
+- Telicent
 
 We are grateful for the collaboration that has helped shape this repository.
 

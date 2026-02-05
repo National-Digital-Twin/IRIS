@@ -1,0 +1,78 @@
+version: "3.8"
+
+x-common-variables: &common-variables
+  FUSEKI_URL: http://<host-ip>:<secure-agent-graph-port>/knowledge
+  RECORD_COUNT_QUERY_FILE: data/get-total-buildings.sparql
+  PYTHONUNBUFFERED: 1
+  LIMIT: 1000
+
+services:
+  create_geo_view:
+    container_name: create_geo_view
+    image: iris-pipeline/create-view
+    environment:
+      <<: *common-variables
+      CREATE_VIEW_QUERY_FILE: data/create-geo-view.sparql
+      OFFSET: 0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  create_geo_filter_view_for_roof:
+    container_name: create_geo_filter_view_for_roof
+    image: iris-pipeline/create-view
+    environment:
+      <<: *common-variables
+      CREATE_VIEW_QUERY_FILE: data/create-roof-view.sparql
+      OFFSET: 0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  create_geo_filter_view_for_walls:
+    container_name: create_geo_filter_view_for_walls
+    image: iris-pipeline/create-view
+    environment:
+      <<: *common-variables
+      CREATE_VIEW_QUERY_FILE: data/create-walls-view.sparql
+      OFFSET: 0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  create_geo_filter_view_for_floors:
+    container_name: create_geo_filter_view_for_floors
+    image: iris-pipeline/create-view
+    environment:
+      <<: *common-variables
+      CREATE_VIEW_QUERY_FILE: data/create-floors-view.sparql
+      OFFSET: 0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  create_geo_filter_view_for_windows:
+    container_name: create_geo_filter_view_for_windows
+    image: iris-pipeline/create-view
+    environment:
+      <<: *common-variables
+      CREATE_VIEW_QUERY_FILE: data/create-windows-view.sparql
+      OFFSET: 0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  # create_ward_view:
+  #   container_name: create_ward_view
+  #   image: iris-pipeline/create-view
+  #   environment:
+  #     <<: *common-variables
+  #     CREATE_VIEW_QUERY_FILE: data/create-ward-view.sparql
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  # create_epc_view:
+  #   container_name: create_epc_view
+  #   image: iris-pipeline/create-view
+  #   environment:
+  #     <<: *common-variables
+  #     CREATE_VIEW_QUERY_FILE: data/create-epc-view.sparql
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  # create_stats_view:
+  #   container_name: create_stats_view
+  #   image: iris-pipeline/create-view
+  #   environment:
+  #     <<: *common-variables
+  #     CREATE_VIEW_QUERY_FILE: data/create-stats-view.sparql
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"

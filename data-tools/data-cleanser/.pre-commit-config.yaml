@@ -1,0 +1,157 @@
+# Update all versions in this file by running:
+#   $ pre-commit autoupdate
+minimum_pre_commit_version: 3.3.2
+default_language_version:
+  python: python3.11
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+        name: Check for a blank line at the end of scripts (auto-fixes)
+        exclude: |
+          (?x)^(
+              repository-configuration/.*|
+              \.github/.*|
+          )$
+      - id: trailing-whitespace
+      - id: check-builtin-literals
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-xml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: fix-encoding-pragma
+        args: ["--remove"]
+      - id: check-yaml
+      - id: check-added-large-files
+        name: Check for files larger than 5 MB
+        args: ["--maxkb=5120"]
+      - id: check-ast
+      - id: check-docstring-first
+      - id: name-tests-test
+        args: ["--django"]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.1
+    hooks:
+      # Run the linter.
+      - id: ruff
+        types_or: [python, pyi, jupyter]
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format
+        types_or: [python, pyi, jupyter]
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.1.0
+    hooks:
+      - id: add-trailing-comma
+        args: [--py36-plus]
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        args: ["-ii", "-ll"]
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 3.2.5
+    hooks:
+      - id: sqlfluff-lint
+        # For dbt projects, this installs the dbt "extras".
+        # You will need to select the relevant dbt adapter for your dialect
+        # (https://docs.getdbt.com/docs/available-adapters):
+        stages: [manual]
+        additional_dependencies:
+          ["dbt-postgres==1.5.5", "sqlfluff-templater-dbt", "dbt-core==1.5.5"]
+      - id: sqlfluff-fix
+        # Arbitrary arguments to show an example
+        # args: [--rules, "LT02,CP02"]
+        stages: [manual]
+        additional_dependencies:
+          ["dbt-postgres==1.5.5", "sqlfluff-templater-dbt", "dbt-core==1.5.5"]
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets - Detect secrets in staged code
+        args: [
+            "--baseline",
+            ".secrets.baseline",
+            # https://regex101.com/
+            "--exclude-files 'poetry\\.lock'",
+            "--exclude-files '\\.secrets\\.baseline'",
+            "--exclude-files '\\.env\\.template'",
+            "--exclude-files '.*/seeds/.*\\.csv'",
+            "--exclude-files 'os_places_api\\.yaml'",
+            "--exclude-files 'certificates\\.yaml'",
+            "--exclude-files 'config\\.json'",
+            "--exclude-files '.*\\.ipynb$'",
+            # "--exclude-files '.*build/'",
+            "--exclude-secrets 'password|ENTER_PASSWORD_HERE|INSERT_API_KEY_HERE'",
+            "--exclude-lines 'integrity=*sha'",
+          ]
+        # https://pre-commit.com/#regular-expressions
+        exclude: |
+          (?x)^(
+              poetry\.lock|
+              \.secrets\.baseline|
+              \.ipynb|
+              \.env\.template
+          )$
+  # - repo: https://github.com/python-poetry/poetry
+  #   rev: 1.4.0
+  #   hooks:
+  #     - id: poetry-check
+  #     - id: poetry-lock
+  #       args: ["--no-update"]
+  #     - id: poetry-export
+  #       args:
+  #         [
+  #           "-f",
+  #           "requirements.txt",
+  #           "-o",
+  #           "requirements.txt",
+  #           "--without-hashes",
+  #         ]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [yaml]
+        additional_dependencies:
+          - "prettier@2.8.4"
+  # - repo: https://github.com/dhatim/python-license-check
+  #   rev: 0.9.2
+  #   hooks:
+  #   - id: liccheck
+  #     language: system
+  - repo: local
+    hooks:
+      - id: pip-audit
+        name: pip-audit
+        # entry: pip-audit
+        # Exclusions example
+        entry: pip-audit --ignore-vuln GHSA-h5c8-rqwp-cp95 --ignore-vuln GHSA-h56g-gq9v-vc8r --ignore-vuln PYSEC-2024-66 --ignore-vuln GHSA-pmrx-695r-4349 --ignore-vuln GHSA-h75v-3vvj-5mfj --ignore-vuln GHSA-hrw6-wg82-cm62 --ignore-vuln GHSA-44cc-43rp-5947 --ignore-vuln GHSA-2g68-c3qc-8985
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [manual]
+      # TODO: Remove once this is resolved
+      # https://github.com/python-poetry/poetry/issues/2765
+      # https://github.com/python-poetry/poetry/issues/7075
+      - id: poetry-lock
+        name: poetry-lock
+        # entry: bash -c 'poetry lock && python add_markers.py'
+        entry: bash -c 'poetry lock --no-update'
+        language: system
+        always_run: true
+        pass_filenames: false
+      - id: poetry-export
+        name: poetry-export
+        entry: poetry export -f requirements.txt --output requirements.txt --without-hashes
+        language: system
+        always_run: true
+        pass_filenames: false

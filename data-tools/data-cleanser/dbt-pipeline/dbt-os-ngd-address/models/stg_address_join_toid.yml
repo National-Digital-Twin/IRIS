@@ -1,0 +1,22 @@
+version: 2
+models:
+  - name: stg_address_join_toid
+    description: "Pass-through staging model for OS NGD Address with light type coercions."
+    columns:
+      - name: uprn
+        tests:
+          - not_null
+          - unique
+      - name: fulladdress
+        tests:
+          - not_null
+      - name: postcode
+        tests:
+          - not_null
+      - name: latitude
+        tests:
+          - not_null
+      - name: longitude
+        tests:
+          - not_null
+

@@ -1,0 +1,19 @@
+[project]
+name = "airbyte-client"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11.4"
+dependencies = [
+    "airbyte-api==0.53.0",
+    "boto3>=1.40.74",
+    "ipykernel==6.29.5",
+    "jupyter-client==8.6.0",
+    "jupyterlab>=4.5.0",
+    "numpy>=2.3.5",
+    "pandas>=1.5.3",
+    "pip>=25.3",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.1",
+    "sqlalchemy>=2.0.44",
+]
