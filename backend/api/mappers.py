@@ -552,54 +552,19 @@ def _add_roof_aspect_area_direction_filter(
     roof_aspect_area_facing_west_m2: float,
     roof_aspect_area_facing_north_west_m2: float,
 ):
-    if (
-        roof_aspect_area_facing_north_m2
-        and roof_aspect_area_facing_north_m2 > 0
-        and "North" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("North")
-    if (
-        roof_aspect_area_facing_north_east_m2
-        and roof_aspect_area_facing_north_east_m2 > 0
-        and "NorthEast" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("NorthEast")
-    if (
-        roof_aspect_area_facing_north_west_m2
-        and roof_aspect_area_facing_north_west_m2 > 0
-        and "NorthWest" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("NorthWest")
-    if (
-        roof_aspect_area_facing_south_m2
-        and roof_aspect_area_facing_south_m2 > 0
-        and "South" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("South")
-    if (
-        roof_aspect_area_facing_south_east_m2
-        and roof_aspect_area_facing_south_east_m2 > 0
-        and "SouthEast" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("SouthEast")
-    if (
-        roof_aspect_area_facing_south_west_m2
-        and roof_aspect_area_facing_south_west_m2 > 0
-        and "SouthWest" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("SouthWest")
-    if (
-        roof_aspect_area_facing_east_m2
-        and roof_aspect_area_facing_east_m2 > 0
-        and "East" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("East")
-    if (
-        roof_aspect_area_facing_west_m2
-        and roof_aspect_area_facing_west_m2 > 0
-        and "West" not in filter_summary.roof_aspect_area_direction
-    ):
-        filter_summary.roof_aspect_area_direction.add("West")
+    directions = (
+        ("North", roof_aspect_area_facing_north_m2),
+        ("NorthEast", roof_aspect_area_facing_north_east_m2),
+        ("NorthWest", roof_aspect_area_facing_north_west_m2),
+        ("South", roof_aspect_area_facing_south_m2),
+        ("SouthEast", roof_aspect_area_facing_south_east_m2),
+        ("SouthWest", roof_aspect_area_facing_south_west_m2),
+        ("East", roof_aspect_area_facing_east_m2),
+        ("West", roof_aspect_area_facing_west_m2),
+    )
+    for label, value in directions:
+        if value and value > 0:
+            filter_summary.roof_aspect_area_direction.add(label)
 
 
 def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSummary:

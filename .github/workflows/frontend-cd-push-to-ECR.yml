@@ -65,10 +65,10 @@ jobs:
         environment: development
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
             - name: Use Provided Version
               run: |
@@ -101,7 +101,7 @@ jobs:
                   fi
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
               with:
                   node-version: '24.x'
 
@@ -120,7 +120,7 @@ jobs:
                           -f docker/Dockerfile .
 
             - name: Configure AWS credentials
-              uses: aws-actions/configure-aws-credentials@v4
+              uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
               with:
                   role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_NUMBER }}:role/ecr-access-for-github
                   aws-region: eu-west-2
@@ -128,7 +128,7 @@ jobs:
 
             - name: Login to Amazon ECR
               id: login-ecr
-              uses: aws-actions/amazon-ecr-login@v2
+              uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
 
             - name: Push Docker Image to ECR
               run: |

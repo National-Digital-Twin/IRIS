@@ -32,7 +32,7 @@ jobs:
           sudo apt-get install -y gh
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0 # Ensure full history for tagging
 
@@ -77,7 +77,7 @@ jobs:
     steps:
       # Set up AWS credentials for the source account
       - name: Set up AWS Credentials for Source Account
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
         with:
           role-to-assume: arn:aws:iam::${{ env.SOURCE_AWS_ACCOUNT_ID }}:role/ecr-access-for-github
           aws-region: eu-west-2
@@ -86,7 +86,7 @@ jobs:
       # Log in to Amazon ECR (source account)
       - name: Login to Amazon ECR - Source Account
         id: login-ecr-source
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
 
       # Pull all tags for the image from the source ECR
       - name: Pull All Tags for the Image
@@ -116,7 +116,7 @@ jobs:
 
       # Set up AWS credentials for the destination account
       - name: Set up AWS Credentials for Destination Account
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
         with:
           role-to-assume: arn:aws:iam::${{ env.DESTINATION_AWS_ACCOUNT_ID }}:role/ecr-access-for-github
           aws-region: eu-west-2
@@ -125,7 +125,7 @@ jobs:
       # Log in to Amazon ECR (destination account)
       - name: Login to Amazon ECR - Destination Account
         id: login-ecr-destination
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
 
       # Tag and push all locally available tags to the destination ECR
       - name: Tag and Push All Tags to Destination ECR
