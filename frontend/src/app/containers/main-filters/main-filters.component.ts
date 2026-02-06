@@ -85,7 +85,7 @@ export class MainFiltersComponent {
         effect(() => {
             const filterProps = this.filterProps();
 
-            if (!filterProps) {
+            if (filterProps == null) {
                 return;
             }
 
@@ -124,7 +124,7 @@ export class MainFiltersComponent {
      * @returns substring without last item
      */
     public selectAddress(result: AddressSearchData): void {
-        if (!result.ADDRESS) {
+        if (result.ADDRESS === '') {
             return;
         }
 

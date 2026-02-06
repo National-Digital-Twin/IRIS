@@ -204,7 +204,7 @@ export class DataService {
      * @param building individual building
      */
     public setSelectedBuilding(building?: BuildingModel): void {
-        if (!building) {
+        if (building == null) {
             this.selectedBuilding.set(undefined);
             return;
         }
@@ -247,7 +247,7 @@ export class DataService {
             /** add 'none' for buildings with no EPC rating */
             row.EPC ??= EPCRating.none;
             const toid = row.TOID ?? row.ParentTOID;
-            if (!toid) {
+            if (toid == null || toid === '') {
                 return;
             }
             if (toid && buildingMap[toid]) {
@@ -313,7 +313,7 @@ export class DataService {
      * Parse EPC rating from string to enum
      */
     private parseEPCRating(epcValue: string): EPCRating {
-        if (!epcValue) return EPCRating.none;
+        if (epcValue.length === 0) return EPCRating.none;
 
         if (/^[A-G]$/i.test(epcValue)) {
             const rating = epcValue.toUpperCase() as keyof typeof EPCRating;
@@ -374,7 +374,7 @@ export class DataService {
         newBuildings.forEach((building) => {
             const toid = building.TOID ?? building.ParentTOID;
 
-            if (!toid) return;
+            if (toid == null || toid === '') return;
 
             if (buildingMap[toid]) {
                 buildingMap[toid].push(building);
@@ -387,7 +387,7 @@ export class DataService {
             const mergedMap: MinimalBuildingMap = { ...currentMap };
 
             Object.entries(buildingMap).forEach(([toid, buildings]) => {
-                if (!mergedMap[toid]) {
+                if (mergedMap[toid] == null) {
                     mergedMap[toid] = buildings;
                 } else {
                     // If this TOID exists, need to merge buildings, deduplicating by UPRN
@@ -480,7 +480,7 @@ export class DataService {
      * @returns Observable of detailed BuildingModel
      */
     public loadBuildingDetails(uprn: string): Observable<BuildingModel> {
-        if (!uprn) {
+        if (uprn === '') {
             return of({} as BuildingModel);
         }
 
@@ -545,7 +545,7 @@ export class DataService {
      * Update the building cache with detailed data
      */
     private updateBuildingCache(building: BuildingModel): void {
-        if (!building.UPRN || !building.TOID) return;
+        if (building.UPRN == null || building.UPRN === '' || building.TOID == null || building.TOID === '') return;
 
         // Create a private cache
         if (!this._selectedBuildingsCache) {
@@ -561,7 +561,7 @@ export class DataService {
         }
         const buildings = this.buildings();
 
-        if (!buildings) {
+        if (buildings == null) {
             return {} as BuildingModel;
         }
 
@@ -659,7 +659,7 @@ export class DataService {
             .pipe(
                 switchMap((flagUri) => {
                     const toid = building.TOID ?? building.ParentTOID;
-                    if (!toid) throw new Error(`Building ${building.UPRN} has no TOID`);
+                    if (toid == null || toid === '') throw new Error(`Building ${building.UPRN} has no TOID`);
                     building.Flagged = flagUri;
                     const flag: FlagResponse = {
                         UPRN: building.UPRN,
@@ -703,7 +703,7 @@ export class DataService {
             .pipe(
                 switchMap(() => {
                     const toid = building.TOID ?? building.ParentTOID;
-                    if (!toid) throw new Error(`Building ${building.UPRN} has no TOID`);
+                    if (toid == null || toid === '') throw new Error(`Building ${building.UPRN} has no TOID`);
                     /* set flagged property to undefined */
                     building.Flagged = undefined;
                     this.buildingsFlagged.update((b) => {
@@ -744,7 +744,7 @@ export class DataService {
         const flagMap: FlagMap = {};
         flags.forEach((flag) => {
             const toid = flag.TOID;
-            if (!toid) throw new Error(`Flag ${flag.UPRN} has no TOID`);
+            if (toid == null || toid === '') throw new Error(`Flag ${flag.UPRN} has no TOID`);
             if (flagMap[toid]) {
                 flagMap[toid].push(flag);
             } else {

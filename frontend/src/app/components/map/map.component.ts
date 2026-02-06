@@ -410,12 +410,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         );
     }
 
-    private hideLayerGroup<T extends Record<string, boolean>>(layerGroup: T, prefix: string, suffix: string): void {
+    private hideLayerGroup(layerGroup: Record<string, boolean>, prefix: string, suffix: string): void {
         const keys = Object.keys(layerGroup);
         for (const type of keys) {
             const layerId = `${prefix}-${type}${suffix}`;
             const layerFactoryLayer = this.#layerFactory.getLayer(layerId);
-            const layerEnabled = layerGroup[type as keyof T];
+            const layerEnabled = layerGroup[type];
             if (layerFactoryLayer && layerEnabled) {
                 layerFactoryLayer.hide();
             }
@@ -424,7 +424,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
                 this.mapInstance.removeLayer(layerId);
             }
 
-            (layerGroup[type as keyof T] as boolean) = false;
+            layerGroup[type] = false;
         }
     }
 

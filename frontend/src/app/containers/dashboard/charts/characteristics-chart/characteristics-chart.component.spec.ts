@@ -34,18 +34,18 @@ const mockApiResponse: BackendBuildingAttributesResponse[] = [
     {
         region_name: 'London',
         attributes: [
-            { label: 'Single glazing', value: 12.0 },
-            { label: 'Double glazing', value: 80.0 },
-            { label: 'Triple glazing', value: 8.0 },
-            { label: 'Solar panels', value: 10.0 },
+            { label: 'Single glazing', value: 12 },
+            { label: 'Double glazing', value: 80 },
+            { label: 'Triple glazing', value: 8 },
+            { label: 'Solar panels', value: 10 },
         ],
     },
     {
         region_name: 'South East',
         attributes: [
-            { label: 'Single glazing', value: 18.0 },
-            { label: 'Double glazing', value: 72.0 },
-            { label: 'Triple glazing', value: 10.0 },
+            { label: 'Single glazing', value: 18 },
+            { label: 'Double glazing', value: 72 },
+            { label: 'Triple glazing', value: 10 },
             { label: 'Solar panels', value: 7.5 },
         ],
     },
@@ -108,8 +108,8 @@ describe('CharacteristicsChartComponent', () => {
                 {
                     region_name: 'Test Region',
                     attributes: [
-                        { label: 'Single glazing', value: 20.0 },
-                        { label: 'Double glazing', value: 80.0 },
+                        { label: 'Single glazing', value: 20 },
+                        { label: 'Double glazing', value: 80 },
                     ],
                 },
             ];
@@ -191,7 +191,7 @@ describe('CharacteristicsChartComponent', () => {
 
             const chartData = component.chartData();
             const plotData = chartData[0] as PlotData;
-            expect(plotData.x).toEqual([7.5, 8.5, 10.0]);
+            expect(plotData.x).toEqual([7.5, 8.5, 10]);
             expect(plotData.y).toEqual(['South East', 'North West', 'London']);
         });
 
@@ -201,7 +201,7 @@ describe('CharacteristicsChartComponent', () => {
 
             const chartData = component.chartData();
             const plotData = chartData[0] as PlotData;
-            expect(plotData.x).toEqual([7.5, 8.5, 10.0]);
+            expect(plotData.x).toEqual([7.5, 8.5, 10]);
         });
 
         it('should update chart and resort when selected characteristic changes', () => {
@@ -214,7 +214,7 @@ describe('CharacteristicsChartComponent', () => {
             const glazingData = component.chartData();
 
             expect(solarData).not.toEqual(glazingData);
-            expect((glazingData[0] as PlotData).x).toEqual([12.0, 15.5, 18.0]);
+            expect((glazingData[0] as PlotData).x).toEqual([12, 15.5, 18]);
             expect((glazingData[0] as PlotData).y).toEqual(['London', 'North West', 'South East']);
         });
     });
@@ -224,7 +224,7 @@ describe('CharacteristicsChartComponent', () => {
             const responseWithMissing: BackendBuildingAttributesResponse[] = [
                 {
                     region_name: 'Test Region',
-                    attributes: [{ label: 'Single glazing', value: 20.0 }],
+                    attributes: [{ label: 'Single glazing', value: 20 }],
                 },
             ];
             jest.spyOn(dashboardService, 'getAllBuildingAttributesPerRegion').mockReturnValue(of(responseWithMissing));
@@ -255,7 +255,7 @@ describe('CharacteristicsChartComponent', () => {
             expect(updatedData).not.toEqual(initialData);
 
             const plotData = updatedData[0] as PlotData;
-            expect(plotData.x).toEqual([10.0]);
+            expect(plotData.x).toEqual([10]);
             expect(plotData.y).toEqual(['London']);
         });
     });

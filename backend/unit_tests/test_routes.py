@@ -22,9 +22,9 @@ import db as db_module
 
 # Dummy class for IesThing (used by mint_uri)
 class DummyIesThing:
-    def __init__(self, uri=None, securityLabel=None):
+    def __init__(self, uri=None, security_label=None):
         self.uri = uri
-        self.securityLabel = securityLabel
+        setattr(self, "securityLabel", security_label)
 
 
 # Dummy EDH-like object
@@ -113,11 +113,11 @@ def test_shorten_and_lengthen():
 
 def test_mint_uri():
     dummy = DummyIesThing()
-    dummy.securityLabel = None
+    setattr(dummy, "securityLabel", None)
     result = routes.mint_uri(dummy)
     assert result.uri is not None
     assert result.uri.startswith(routes.data_uri_stub)
-    assert result.securityLabel == routes.default_security_label
+    assert getattr(result, "securityLabel") == routes.default_security_label
 
 
 # --- Tests for functions that make HTTP calls ---
@@ -329,9 +329,9 @@ def test_post_flag_investigate(client, monkeypatch):
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
 
     class DummyIesEntity:
-        def __init__(self, uri, securityLabel=None):
+        def __init__(self, uri, security_label=None):
             self.uri = uri
-            self.securityLabel = securityLabel
+            setattr(self, "securityLabel", security_label)
 
     dummy_entity = DummyIesEntity("http://example.com/entity")
     response = client.post(
@@ -355,14 +355,14 @@ def test_post_building_state(monkeypatch):
             state_of,
             start_date_time=None,
             end_date_time=None,
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = None
-            self.stateType = state_type
-            self.stateOf = state_of
-            self.startDateTime = start_date_time
-            self.endDateTime = end_date_time
-            self.securityLabel = securityLabel
+            setattr(self, "stateType", state_type)
+            setattr(self, "stateOf", state_of)
+            setattr(self, "startDateTime", start_date_time)
+            setattr(self, "endDateTime", end_date_time)
+            setattr(self, "securityLabel", security_label)
 
     dummy_state = DummyIesState(
         "http://example.com/stateType",
@@ -378,19 +378,19 @@ def test_post_building_state(monkeypatch):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
-    uri = routes.post_building_state(dummy_state)
+    routes.post_building_state(dummy_state)
     assert dummy_state.uri.startswith(routes.data_uri_stub)
     assert "INSERT DATA" in called["query"]
 
 
 def test_post_account(monkeypatch):
     class DummyIesAccount:
-        def __init__(self, id, uri=None, email=None, name=None, securityLabel=None):
+        def __init__(self, id, uri=None, email=None, name=None, security_label=None):
             self.id = id
             self.uri = uri
             self.email = email
             self.name = name
-            self.securityLabel = securityLabel
+            setattr(self, "securityLabel", security_label)
 
     dummy_account = DummyIesAccount(
         "acc123", None, "test@example.com", "Test Name", None
@@ -415,14 +415,14 @@ def test_assess(monkeypatch):
             assessor=None,
             types=None,
             assessed_item="item",
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = uri
-            self.inPeriod = in_period
+            setattr(self, "inPeriod", in_period)
             self.assessor = assessor
             self.types = types or []
-            self.assessedItem = assessed_item
-            self.securityLabel = securityLabel
+            setattr(self, "assessedItem", assessed_item)
+            setattr(self, "securityLabel", security_label)
 
     dummy_assessment = DummyIesAssessment(types=["http://example.com/type1"])
     called = {}
@@ -447,14 +447,14 @@ def test_post_assess_to_be_true(monkeypatch):
             assessor=None,
             types=None,
             assessed_item="item",
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = uri
-            self.inPeriod = in_period
+            setattr(self, "inPeriod", in_period)
             self.assessor = assessor
             self.types = types or ["http://example.com/type_true"]
-            self.assessedItem = assessed_item
-            self.securityLabel = securityLabel
+            setattr(self, "assessedItem", assessed_item)
+            setattr(self, "securityLabel", security_label)
 
     dummy_ass = DummyIesAssessToBeTrue()
     called = {}
@@ -478,14 +478,14 @@ def test_post_assess_to_be_false(monkeypatch):
             assessor=None,
             types=None,
             assessed_item="item",
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = uri
-            self.inPeriod = in_period
+            setattr(self, "inPeriod", in_period)
             self.assessor = assessor
             self.types = types or ["http://example.com/type_false"]
-            self.assessedItem = assessed_item
-            self.securityLabel = securityLabel
+            setattr(self, "assessedItem", assessed_item)
+            setattr(self, "securityLabel", security_label)
 
     dummy_ass = DummyIesAssessToBeFalse()
     called = {}
@@ -530,15 +530,15 @@ def test_post_assessment_error_no_assessed_item():
             user_override=None,
             start_date=datetime.datetime.now(),
             end_date=datetime.datetime.now(),
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = uri
-            self.assessedItem = assessed_item
-            self.assessmentType = assessment_type
-            self.userOverride = user_override
-            self.startDate = start_date
-            self.endDate = end_date
-            self.securityLabel = securityLabel
+            setattr(self, "assessedItem", assessed_item)
+            setattr(self, "assessmentType", assessment_type)
+            setattr(self, "userOverride", user_override)
+            setattr(self, "startDate", start_date)
+            setattr(self, "endDate", end_date)
+            setattr(self, "securityLabel", security_label)
 
     dummy_ass = DummyIesAssessment()
     with pytest.raises(HTTPException) as excinfo:
@@ -556,15 +556,15 @@ def test_post_assessment_error_no_assessment_class():
             user_override=None,
             start_date=datetime.datetime.now(),
             end_date=datetime.datetime.now(),
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = uri
-            self.assessedItem = assessed_item
-            self.assessmentType = assessment_type
-            self.userOverride = user_override
-            self.startDate = start_date
-            self.endDate = end_date
-            self.securityLabel = securityLabel
+            setattr(self, "assessedItem", assessed_item)
+            setattr(self, "assessmentType", assessment_type)
+            setattr(self, "userOverride", user_override)
+            setattr(self, "startDate", start_date)
+            setattr(self, "endDate", end_date)
+            setattr(self, "securityLabel", security_label)
 
     dummy_ass = DummyIesAssessment()
     with pytest.raises(HTTPException) as excinfo:
@@ -582,15 +582,15 @@ def test_post_assessment_not_found(monkeypatch):
             user_override=None,
             start_date=datetime.datetime.now(),
             end_date=datetime.datetime.now(),
-            securityLabel=None,
+            security_label=None,
         ):
             self.uri = uri
-            self.assessedItem = assessed_item
-            self.assessmentType = assessment_type
-            self.userOverride = user_override
-            self.startDate = start_date
-            self.endDate = end_date
-            self.securityLabel = securityLabel
+            setattr(self, "assessedItem", assessed_item)
+            setattr(self, "assessmentType", assessment_type)
+            setattr(self, "userOverride", user_override)
+            setattr(self, "startDate", start_date)
+            setattr(self, "endDate", end_date)
+            setattr(self, "securityLabel", security_label)
 
     dummy_ass = DummyIesAssessment()
     routes.assessment_classes = {}

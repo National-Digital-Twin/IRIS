@@ -135,12 +135,12 @@ describe('NumberPipe', () => {
         });
 
         it('should handle decimal inputs correctly', () => {
-            expect(pipe.transform(356.0)).toBe('356');
-            expect(pipe.transform(10174.0)).toBe('10k');
-            expect(pipe.transform(1000000.0)).toBe('1m');
-            expect(pipe.transform(356.0, 1)).toBe('356');
-            expect(pipe.transform(10174.0, 1)).toBe('10.2k');
-            expect(pipe.transform(1000000.0, 1)).toBe('1m');
+            expect(pipe.transform(356)).toBe('356');
+            expect(pipe.transform(10174)).toBe('10k');
+            expect(pipe.transform(1000000)).toBe('1m');
+            expect(pipe.transform(356, 1)).toBe('356');
+            expect(pipe.transform(10174, 1)).toBe('10.2k');
+            expect(pipe.transform(1000000, 1)).toBe('1m');
         });
     });
 

@@ -12,9 +12,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class CamelCaseSpacePipe implements PipeTransform {
     public transform(value: string): string {
         return value
-            .replace(/([a-z])([A-Z])/g, '$1 $2')
-            .replace(/(2002)([A-Z])/g, '$1 $2')
-            .replace(/([a-z])(2002)/g, '$1 $2');
+            .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+            .replaceAll(/(2002)([A-Z])/g, '$1 $2')
+            .replaceAll(/([a-z])(2002)/g, '$1 $2');
     }
 }
 

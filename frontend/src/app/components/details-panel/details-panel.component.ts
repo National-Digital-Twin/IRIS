@@ -131,10 +131,10 @@ export class DetailsPanelComponent implements OnInit {
     }
 
     public formatRoofAspectAreas(building?: BuildingModel): string {
-        if (!building) return '';
+        if (building == null) return '';
         const entries: string[] = [];
         const add = (dir: string, value?: string): void => {
-            if (!value) return;
+            if (value == null || value === '') return;
             const n = Number(value);
             if (!Number.isNaN(n)) {
                 if (n === 0) return; // skip zeros
