@@ -4,6 +4,7 @@
 
 import asyncio
 import json
+from typing import Annotated
 
 import asyncpg.exceptions
 import pytest
@@ -104,7 +105,9 @@ def test_query_timeout_integration():
     test_router = APIRouter()
 
     @test_router.get("/test-timeout")
-    async def test_timeout_endpoint(db: AsyncSession = Depends(db_module.get_db)):
+    async def test_timeout_endpoint(
+        db: Annotated[AsyncSession, Depends(db_module.get_db)]
+    ):
         await db.execute(text("SELECT * FROM buildings"))
         return {"status": "ok"}
 

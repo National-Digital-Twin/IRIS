@@ -180,8 +180,8 @@ class EpcAndOsBuildingSchema(BaseModel):
     toid: str
     lattitude: float
     longitude: float
-    epc_rating: Optional[str]
-    structure_unit_type: Optional[str]
+    epc_rating: Optional[str] = None
+    structure_unit_type: Optional[str] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -202,27 +202,27 @@ class EpcAndOsBuildingSchema(BaseModel):
 class FilterableBuildingSchema(BaseModel):
     uprn: str
     post_code: str
-    built_form: Optional[str]
-    lodgement_date: Optional[datetime.date]
-    fuel_type: Optional[str]
-    window_glazing: Optional[str]
-    wall_construction: Optional[str]
-    wall_insulation: Optional[str]
-    floor_construction: Optional[str]
-    floor_insulation: Optional[str]
-    has_roof_solar_panels: Optional[bool]
-    roof_material: Optional[str]
-    roof_aspect_area_facing_north_m2: Optional[float]
-    roof_aspect_area_facing_north_east_m2: Optional[float]
-    roof_aspect_area_facing_east_m2: Optional[float]
-    roof_aspect_area_facing_south_east_m2: Optional[float]
-    roof_aspect_area_facing_south_m2: Optional[float]
-    roof_aspect_area_facing_south_west_m2: Optional[float]
-    roof_aspect_area_facing_west_m2: Optional[float]
-    roof_aspect_area_facing_north_west_m2: Optional[float]
-    roof_construction: Optional[str]
-    roof_insulation: Optional[str]
-    roof_insulation_thickness: Optional[str]
+    built_form: Optional[str] = None
+    lodgement_date: Optional[datetime.date] = None
+    fuel_type: Optional[str] = None
+    window_glazing: Optional[str] = None
+    wall_construction: Optional[str] = None
+    wall_insulation: Optional[str] = None
+    floor_construction: Optional[str] = None
+    floor_insulation: Optional[str] = None
+    has_roof_solar_panels: Optional[bool] = None
+    roof_material: Optional[str] = None
+    roof_aspect_area_facing_north_m2: Optional[float] = None
+    roof_aspect_area_facing_north_east_m2: Optional[float] = None
+    roof_aspect_area_facing_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_east_m2: Optional[float] = None
+    roof_aspect_area_facing_south_m2: Optional[float] = None
+    roof_aspect_area_facing_south_west_m2: Optional[float] = None
+    roof_aspect_area_facing_west_m2: Optional[float] = None
+    roof_aspect_area_facing_north_west_m2: Optional[float] = None
+    roof_construction: Optional[str] = None
+    roof_insulation: Optional[str] = None
+    roof_insulation_thickness: Optional[str] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -368,7 +368,7 @@ class FuelTypesByBuildingType(BaseModel):
 class AverageSapRatingPerLodgementDate(BaseModel):
     date: datetime.date
     national_avg_sap_rating: float
-    filtered_avg_sap_rating: Optional[float]
+    filtered_avg_sap_rating: Optional[float] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -420,9 +420,9 @@ class EpcRatingCountsOvertime(BaseModel):
 class BuildingsAffectedByExtremeWeather(BaseModel):
     number_of_buildings: int
     filtered_number_of_buildings: Optional[int] = None
-    affected_by_icing_days: Optional[bool]
-    affected_by_hsds: Optional[bool]
-    affected_by_wdr: Optional[bool]
+    affected_by_icing_days: Optional[bool] = None
+    affected_by_hsds: Optional[bool] = None
+    affected_by_wdr: Optional[bool] = None
 
     @classmethod
     def from_orm(cls, obj, has_filter: bool = True):
