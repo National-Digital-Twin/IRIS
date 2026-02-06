@@ -18,6 +18,14 @@ import mapboxgl, {
 import { AsyncSubject, EMPTY, Observable, catchError, finalize, first, forkJoin, from, map, of, switchMap } from 'rxjs';
 import { MapService } from './map.token';
 
+function contrastColor(epcColor: string, lightColor: string, darkColor: string): string {
+    const color = epcColor.startsWith('#') ? epcColor.substring(1, 7) : epcColor;
+    const r = Number.parseInt(color.substring(0, 2), 16);
+    const g = Number.parseInt(color.substring(2, 4), 16);
+    const b = Number.parseInt(color.substring(4, 6), 16);
+    return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? darkColor : lightColor;
+}
+
 export class MapBoxService implements MapService<mapboxgl.Map> {
     readonly #document = inject(DOCUMENT);
     readonly #zone = inject(NgZone);
@@ -395,15 +403,6 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
 
         /** Generate SVG */
         function genSVG(epcColor: string): HTMLElement {
-            /** Contrast colour of Epc colour */
-            function contrastColor(epcColor: string, lightColor: string, darkColor: string): string {
-                const color = epcColor.startsWith('#') ? epcColor.substring(1, 7) : epcColor;
-                const r = Number.parseInt(color.substring(0, 2), 16);
-                const g = Number.parseInt(color.substring(2, 4), 16);
-                const b = Number.parseInt(color.substring(4, 6), 16);
-                return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? darkColor : lightColor;
-            }
-
             /** SVG element */
             const svg = document.createElement('svg');
             svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');

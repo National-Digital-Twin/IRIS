@@ -274,7 +274,6 @@ class TestFlagHistory:
         assert data[1]["AssessmentDate"] == "2020-01-02T00:00:00"
         assert data[1]["AssessorName"] == "Jane Smith"
         assert data[1]["AssessmentReason"] == "Reason1"
-        return
     
     def test_retrieve_no_flags(self, client, monkeypatch):
         mock_query = MagicMock(return_value=empty_query_response())

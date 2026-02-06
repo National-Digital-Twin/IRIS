@@ -14,15 +14,14 @@ on:
             - '.github/workflows/frontend-cd-pr-merge.yml'
     workflow_dispatch:
 
-permissions:
-    contents: read
-    packages: read
-    statuses: write # To report GitHub Actions status checks
-
 jobs:
     dependencies:
         name: Dependency Checks
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: read
+            statuses: write # To report GitHub Actions status checks
         timeout-minutes: 10
         defaults:
             run:
@@ -48,6 +47,10 @@ jobs:
     linting:
         name: Code Linting
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: read
+            statuses: write # To report GitHub Actions status checks
         timeout-minutes: 10
         needs: dependencies
         defaults:
@@ -78,6 +81,10 @@ jobs:
     testing:
         name: Testing
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: read
+            statuses: write # To report GitHub Actions status checks
         needs: dependencies
         timeout-minutes: 10
         defaults:
@@ -102,6 +109,10 @@ jobs:
     security-scanning:
         name: Security Scanning
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: read
+            statuses: write # To report GitHub Actions status checks
         needs: linting
         timeout-minutes: 10
         steps:
@@ -122,6 +133,10 @@ jobs:
     docker-build-test-scan:
         name: Build, Docker Build, Test & Scan
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: read
+            statuses: write # To report GitHub Actions status checks
         needs: security-scanning
         timeout-minutes: 20
         defaults:

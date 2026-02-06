@@ -212,7 +212,7 @@ def test_get_subtypes_with_results(monkeypatch):
     monkeypatch.setattr(
         routes, "run_sparql_query", lambda q, h, query_dataset="ontology": dummy_result
     )
-    sub_classes, sub_list = routes.get_subtypes(
+    sub_classes, _ = routes.get_subtypes(
         "super_class", {"header": "value"}, "exclude"
     )
     assert "http://example.com/sub1" in sub_classes
@@ -323,7 +323,7 @@ def test_post_flag_investigate(client, monkeypatch):
     )
     called = {}
 
-    def dummy_run_sparql_update(query, forwarding_headers, securityLabel):
+    def dummy_run_sparql_update(query, forwarding_headers, security_label):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
@@ -351,17 +351,17 @@ def test_post_building_state(monkeypatch):
     class DummyIesState:
         def __init__(
             self,
-            stateType,
-            stateOf,
-            startDateTime=None,
-            endDateTime=None,
+            state_type,
+            state_of,
+            start_date_time=None,
+            end_date_time=None,
             securityLabel=None,
         ):
             self.uri = None
-            self.stateType = stateType
-            self.stateOf = stateOf
-            self.startDateTime = startDateTime
-            self.endDateTime = endDateTime
+            self.stateType = state_type
+            self.stateOf = state_of
+            self.startDateTime = start_date_time
+            self.endDateTime = end_date_time
             self.securityLabel = securityLabel
 
     dummy_state = DummyIesState(
@@ -374,7 +374,7 @@ def test_post_building_state(monkeypatch):
     routes.building_state_classes = {"http://example.com/stateType": {}}
     called = {}
 
-    def dummy_run_sparql_update(query, securityLabel):
+    def dummy_run_sparql_update(query, security_label):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
@@ -397,7 +397,7 @@ def test_post_account(monkeypatch):
     )
     called = {}
 
-    def dummy_run_sparql_update(query, securityLabel):
+    def dummy_run_sparql_update(query, security_label):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
@@ -411,17 +411,17 @@ def test_assess(monkeypatch):
         def __init__(
             self,
             uri=None,
-            inPeriod=None,
+            in_period=None,
             assessor=None,
             types=None,
-            assessedItem="item",
+            assessed_item="item",
             securityLabel=None,
         ):
             self.uri = uri
-            self.inPeriod = inPeriod
+            self.inPeriod = in_period
             self.assessor = assessor
             self.types = types or []
-            self.assessedItem = assessedItem
+            self.assessedItem = assessed_item
             self.securityLabel = securityLabel
 
     dummy_assessment = DummyIesAssessment(types=["http://example.com/type1"])
@@ -429,7 +429,7 @@ def test_assess(monkeypatch):
     # Monkeypatch the datetime module reference so that datetime.datetime.now() works.
     monkeypatch.setattr(routes, "datetime", __import__("datetime"))
 
-    def dummy_run_sparql_update(query, securityLabel):
+    def dummy_run_sparql_update(query, security_label):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
@@ -443,24 +443,24 @@ def test_post_assess_to_be_true(monkeypatch):
         def __init__(
             self,
             uri=None,
-            inPeriod=None,
+            in_period=None,
             assessor=None,
             types=None,
-            assessedItem="item",
+            assessed_item="item",
             securityLabel=None,
         ):
             self.uri = uri
-            self.inPeriod = inPeriod
+            self.inPeriod = in_period
             self.assessor = assessor
             self.types = types or ["http://example.com/type_true"]
-            self.assessedItem = assessedItem
+            self.assessedItem = assessed_item
             self.securityLabel = securityLabel
 
     dummy_ass = DummyIesAssessToBeTrue()
     called = {}
     monkeypatch.setattr(routes, "datetime", __import__("datetime"))
 
-    def dummy_run_sparql_update(query, securityLabel):
+    def dummy_run_sparql_update(query, security_label):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
@@ -474,24 +474,24 @@ def test_post_assess_to_be_false(monkeypatch):
         def __init__(
             self,
             uri=None,
-            inPeriod=None,
+            in_period=None,
             assessor=None,
             types=None,
-            assessedItem="item",
+            assessed_item="item",
             securityLabel=None,
         ):
             self.uri = uri
-            self.inPeriod = inPeriod
+            self.inPeriod = in_period
             self.assessor = assessor
             self.types = types or ["http://example.com/type_false"]
-            self.assessedItem = assessedItem
+            self.assessedItem = assessed_item
             self.securityLabel = securityLabel
 
     dummy_ass = DummyIesAssessToBeFalse()
     called = {}
     monkeypatch.setattr(routes, "datetime", __import__("datetime"))
 
-    def dummy_run_sparql_update(query, securityLabel):
+    def dummy_run_sparql_update(query, security_label):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
@@ -525,19 +525,19 @@ def test_post_assessment_error_no_assessed_item():
         def __init__(
             self,
             uri=None,
-            assessedItem="",
-            assessmentType="class",
-            userOverride=None,
-            startDate=datetime.datetime.now(),
-            endDate=datetime.datetime.now(),
+            assessed_item="",
+            assessment_type="class",
+            user_override=None,
+            start_date=datetime.datetime.now(),
+            end_date=datetime.datetime.now(),
             securityLabel=None,
         ):
             self.uri = uri
-            self.assessedItem = assessedItem
-            self.assessmentType = assessmentType
-            self.userOverride = userOverride
-            self.startDate = startDate
-            self.endDate = endDate
+            self.assessedItem = assessed_item
+            self.assessmentType = assessment_type
+            self.userOverride = user_override
+            self.startDate = start_date
+            self.endDate = end_date
             self.securityLabel = securityLabel
 
     dummy_ass = DummyIesAssessment()
@@ -551,19 +551,19 @@ def test_post_assessment_error_no_assessment_class():
         def __init__(
             self,
             uri=None,
-            assessedItem="item",
-            assessmentType="",
-            userOverride=None,
-            startDate=datetime.datetime.now(),
-            endDate=datetime.datetime.now(),
+            assessed_item="item",
+            assessment_type="",
+            user_override=None,
+            start_date=datetime.datetime.now(),
+            end_date=datetime.datetime.now(),
             securityLabel=None,
         ):
             self.uri = uri
-            self.assessedItem = assessedItem
-            self.assessmentType = assessmentType
-            self.userOverride = userOverride
-            self.startDate = startDate
-            self.endDate = endDate
+            self.assessedItem = assessed_item
+            self.assessmentType = assessment_type
+            self.userOverride = user_override
+            self.startDate = start_date
+            self.endDate = end_date
             self.securityLabel = securityLabel
 
     dummy_ass = DummyIesAssessment()
@@ -577,19 +577,19 @@ def test_post_assessment_not_found(monkeypatch):
         def __init__(
             self,
             uri=None,
-            assessedItem="item",
-            assessmentType="not_found",
-            userOverride=None,
-            startDate=datetime.datetime.now(),
-            endDate=datetime.datetime.now(),
+            assessed_item="item",
+            assessment_type="not_found",
+            user_override=None,
+            start_date=datetime.datetime.now(),
+            end_date=datetime.datetime.now(),
             securityLabel=None,
         ):
             self.uri = uri
-            self.assessedItem = assessedItem
-            self.assessmentType = assessmentType
-            self.userOverride = userOverride
-            self.startDate = startDate
-            self.endDate = endDate
+            self.assessedItem = assessed_item
+            self.assessmentType = assessment_type
+            self.userOverride = user_override
+            self.startDate = start_date
+            self.endDate = end_date
             self.securityLabel = securityLabel
 
     dummy_ass = DummyIesAssessment()

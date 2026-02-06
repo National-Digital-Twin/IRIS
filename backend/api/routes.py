@@ -259,10 +259,12 @@ def run_sparql_query(
 
 
 def run_sparql_update(
-    query: str, forwarding_headers: dict[str, str] = {}, securityLabel=None
+    query: str,
+    forwarding_headers: dict[str, str] = {},
+    security_label=None,
 ):
     global jena_url, default_security_label
-    sec_label = securityLabel
+    sec_label = security_label
 
     if sec_label is None:
         sec_label = default_security_label
@@ -457,7 +459,7 @@ def post_person(per: IesPerson):
                 <{per.uri + "_GIVENNAME"}> ies:inRepresentation <{per.uri + "_NAME"}> .
                 <{per.uri + "_GIVENNAME"}> ies:representationValue "{per.givenName}" .
             }}"""
-    run_sparql_update(query=query, securityLabel=per.securityLabel)
+    run_sparql_update(query=query, security_label=per.securityLabel)
     return per.uri
 
 
@@ -855,7 +857,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
             <{assessment}> ies:inPeriod <{assessment_time}> .
         }}
     """
-    run_sparql_update(query=query, securityLabel=invalid.securityLabel)
+    run_sparql_update(query=query, security_label=invalid.securityLabel)
     return assessment
 
 def is_missing(value):
@@ -1112,7 +1114,7 @@ def post_flag_investigate(request: Request, visited: IesEntity):
     run_sparql_update(
         query=query,
         forwarding_headers=get_forwarding_headers(request.headers),
-        securityLabel=visited.securityLabel,
+        security_label=visited.securityLabel,
     )
     return flag_state
 
@@ -1232,7 +1234,7 @@ def post_building_state(bs: IesState):
                 {start_sparql}
                 {end_sparql}
             }}"""
-    run_sparql_update(query=query, securityLabel=bs.securityLabel)
+    run_sparql_update(query=query, security_label=bs.securityLabel)
     return bs.uri
 
 
@@ -1267,7 +1269,7 @@ def post_account(acc: IesAccount):
             {email_sparql}
             {name_sparql}
         }}"""
-    run_sparql_update(query=query, securityLabel=acc.securityLabel)
+    run_sparql_update(query=query, security_label=acc.securityLabel)
     return acc.uri
 
 
@@ -1288,7 +1290,7 @@ def assess(ass: IesAssessment):
                 <{ass.uri}> ies:assessor <{ass.assessor}> .
                 <{ass.uri}> ies:inPeriod "{ass.inPeriod}"
             }}"""
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
+    run_sparql_update(query=query, security_label=ass.securityLabel)
 
     return ass.uri
 
@@ -1385,7 +1387,7 @@ def post_assessment(ass: IesAssessment):
         <{ass.uri}> ies:assessed <{state_uri}> .
         <{ass.uri}> ies:assessor <{user}> .
     }}"""
-    run_sparql_update(query=query, securityLabel=ass.securityLabel)
+    run_sparql_update(query=query, security_label=ass.securityLabel)
     return ass.uri
 
 

@@ -8,16 +8,15 @@ on:
     branches:
       - "release/*"
 
-permissions:
-  id-token: write
-  contents: write
-  packages: read
-  statuses: write
-
 jobs:
   versioning:
     name: Extract Version
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     env:
       RELEASE_REF: ${{ github.ref }}
     outputs:
@@ -59,20 +58,40 @@ jobs:
 
   api-ci:
     needs: [versioning]
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     uses: ./.github/workflows/backend-ci-pr.yml
     secrets:
       GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   frontend-ci:
     needs: [versioning]
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     uses: ./.github/workflows/frontend-ci-pr.yml
 
   proxy-ci:
     needs: [versioning]
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     uses: ./.github/workflows/transparent-proxy-ci-pr.yml
 
   api-push-to-ECR:
     needs: [api-ci, versioning]
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     uses: ./.github/workflows/backend-cd-push-to-ECR.yml
     with:
       aws_account_number: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"
@@ -84,6 +103,11 @@ jobs:
 
   frontend-push-to-ECR:
     needs: [frontend-ci, versioning]
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     uses: ./.github/workflows/frontend-cd-push-to-ECR.yml
     with:
       aws_account_number: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"
@@ -93,6 +117,11 @@ jobs:
 
   proxy-push-to-ECR:
     needs: [proxy-ci, versioning]
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     uses: ./.github/workflows/transparent-proxy-cd-push-to-ECR.yml
     with:
       aws_account_number: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"

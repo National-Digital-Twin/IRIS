@@ -41,16 +41,15 @@ on:
                 required: true
                 description: 'Version number passed from main workflow'
 
-permissions:
-    id-token: write
-    contents: read
-    packages: read
-    statuses: write
-
 jobs:
     docker-build-push:
         name: Docker Build & Push
         runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
+            packages: read
+            statuses: write
         timeout-minutes: 10
         defaults:
             run:

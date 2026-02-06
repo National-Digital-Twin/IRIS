@@ -23,6 +23,7 @@ interface ExpressionAndMapLayerFilter {
 }
 
 type CurrentExpressions = Record<MapLayerPaintKeys, ExpressionAndMapLayerFilter>;
+type ToidBuckets = { flaggedTOIDS: string[]; excludeFromDefault: string[] };
 
 @Injectable({ providedIn: 'root' })
 export class UtilService {
@@ -80,15 +81,16 @@ export class UtilService {
 
         const expressions = this.#createBaseExpressions();
 
-        const flaggedTOIDS: string[] = [];
-        /** TOIDS to exclude from the default layer */
-        const excludeFromDefault: string[] = [];
+        const toidBuckets: ToidBuckets = {
+            flaggedTOIDS: [],
+            excludeFromDefault: [],
+        };
 
         /** Iterate through the filtered toids */
         Object.keys(filteredBuildings).forEach((toid) => {
             /** Get the buildings UPRN's for a TOID */
             const dwellings: BuildingModel[] = filteredBuildings[toid];
-            this.#addToidVisuals(toid, dwellings, unfilteredBuildings, defaultColor, defaultPattern, expressions, flaggedTOIDS, excludeFromDefault);
+            this.#addToidVisuals(toid, dwellings, unfilteredBuildings, defaultColor, defaultPattern, expressions, toidBuckets);
         });
 
         this.#appendExpressionDefaults(expressions, defaultColor, defaultPattern);
@@ -98,7 +100,7 @@ export class UtilService {
 
         this.#syncSelectedDwelling(filteredBuildings);
         this.#syncSelectedBuildingsIfFiltered(filteredBuildings, spatialFilter);
-        this.#applyToidFilters(flaggedTOIDS, excludeFromDefault);
+        this.#applyToidFilters(toidBuckets.flaggedTOIDS, toidBuckets.excludeFromDefault);
     }
 
     #createBaseExpressions(): CurrentExpressions {
@@ -134,8 +136,7 @@ export class UtilService {
         defaultColor: string,
         defaultPattern: string,
         expressions: CurrentExpressions,
-        flaggedTOIDS: string[],
-        excludeFromDefault: string[],
+        toidBuckets: ToidBuckets,
     ): void {
         if (dwellings.length === 0) {
             this.#addToidExpression(expressions, 'fill-extrusion-color', toid, defaultColor);
@@ -143,11 +144,11 @@ export class UtilService {
         }
 
         if (dwellings.length === 1) {
-            this.#addSingleDwellingVisuals(toid, dwellings[0], unfilteredBuildings, defaultPattern, expressions, flaggedTOIDS, excludeFromDefault);
+            this.#addSingleDwellingVisuals(toid, dwellings[0], unfilteredBuildings, defaultPattern, expressions, toidBuckets);
             return;
         }
 
-        this.#addMultiDwellingVisuals(toid, dwellings, defaultPattern, expressions, flaggedTOIDS, excludeFromDefault);
+        this.#addMultiDwellingVisuals(toid, dwellings, defaultPattern, expressions, toidBuckets);
     }
 
     #addSingleDwellingVisuals(
@@ -156,13 +157,12 @@ export class UtilService {
         unfilteredBuildings: BuildingMap,
         defaultPattern: string,
         expressions: CurrentExpressions,
-        flaggedTOIDS: string[],
-        excludeFromDefault: string[],
+        toidBuckets: ToidBuckets,
     ): void {
         const { EPC, Flagged } = dwelling;
         const color = EPC ? this.getEPCColour(EPC) : defaultPattern;
-        if (Flagged) flaggedTOIDS.push(toid);
-        excludeFromDefault.push(toid);
+        if (Flagged) toidBuckets.flaggedTOIDS.push(toid);
+        toidBuckets.excludeFromDefault.push(toid);
 
         const multiDwelling = unfilteredBuildings[toid].length > 1;
         if (multiDwelling) {
@@ -178,15 +178,14 @@ export class UtilService {
         dwellings: BuildingModel[],
         defaultPattern: string,
         expressions: CurrentExpressions,
-        flaggedTOIDS: string[],
-        excludeFromDefault: string[],
+        toidBuckets: ToidBuckets,
     ): void {
         const epcs = dwellings.map(({ EPC }) => EPC).filter((epc): epc is NonNullable<BuildingModel['EPC']> => !!epc);
         const flagged = dwellings.some(({ Flagged }) => Flagged);
         const epcStrings = epcs.map((epc) => epc.toString());
         const pattern = epcStrings.length === 0 ? defaultPattern : this.getEPCPattern(epcStrings);
-        if (flagged) flaggedTOIDS.push(toid);
-        excludeFromDefault.push(toid);
+        if (flagged) toidBuckets.flaggedTOIDS.push(toid);
+        toidBuckets.excludeFromDefault.push(toid);
         this.#addToidExpression(expressions, 'fill-extrusion-pattern', toid, pattern);
     }
 
@@ -351,14 +350,16 @@ export class UtilService {
         const buildingsArray = Array.from(Object.values(buildings).flat());
         const filterKeys = Object.keys(filterProps) as Array<keyof FilterProps>;
         // filter buildings
-        const filteredUprns = filterableBuildingModels
-            .filter((filterableBuildingModel: FilterableBuildingModel) =>
-                filterKeys.every((key) => {
-                    return this.#matchesFilterKey(filterableBuildingModel, buildingsArray, filterProps, key);
-                }),
-            )
-            .map((filteredDetailedBuildingModel) => filteredDetailedBuildingModel.UPRN);
-        const filtered = buildingsArray.filter((building) => filteredUprns.includes(building.UPRN));
+        const filteredUprns = new Set(
+            filterableBuildingModels
+                .filter((filterableBuildingModel: FilterableBuildingModel) =>
+                    filterKeys.every((key) => {
+                        return this.#matchesFilterKey(filterableBuildingModel, buildingsArray, filterProps, key);
+                    }),
+                )
+                .map((filteredDetailedBuildingModel) => filteredDetailedBuildingModel.UPRN),
+        );
+        const filtered = buildingsArray.filter((building) => filteredUprns.has(building.UPRN));
         const filteredBuildings: BuildingMap = this.#dataService.mapBuildings(filtered);
         return filteredBuildings;
     }

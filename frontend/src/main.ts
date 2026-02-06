@@ -8,10 +8,11 @@ import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token'
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
-fetch('configuration/config.json')
-    .then((response) => response.json())
-    .then((config) =>
-        bootstrapApplication(AppComponent, {
+void (async (): Promise<void> => {
+    try {
+        const response = await fetch('configuration/config.json');
+        const config = await response.json();
+        await bootstrapApplication(AppComponent, {
             providers: [
                 ...appConfig.providers,
                 { provide: RUNTIME_CONFIGURATION, useValue: config },
@@ -24,5 +25,8 @@ fetch('configuration/config.json')
                 provideHttpClient(withFetch(), withInterceptorsFromDi()),
                 provideAnimations(),
             ],
-        }).catch((err) => console.error(err)),
-    );
+        });
+    } catch (err) {
+        console.error(err);
+    }
+})();

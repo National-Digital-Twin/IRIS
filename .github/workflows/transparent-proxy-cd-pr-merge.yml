@@ -20,16 +20,15 @@ on:
         default: "0"
         type: string
 
-permissions:
-  id-token: write
-  contents: read
-  packages: read
-  statuses: write
-
 jobs:
   versioning:
     name: Semantic Versioning
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      statuses: write
     outputs:
       version: ${{ steps.generate-version.outputs.version }}
     steps:
@@ -72,10 +71,20 @@ jobs:
 
   transparent-proxy-ci:
     needs: [versioning]
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      statuses: write
     uses: ./.github/workflows/transparent-proxy-ci-pr.yml
 
   push-to-ECR:
     needs: [transparent-proxy-ci, versioning]
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      statuses: write
     uses: ./.github/workflows/transparent-proxy-cd-push-to-ECR.yml
     with:
       aws_account_number: "${{ vars.DEV_AWS_ACCOUNT_ID }}"

@@ -13,15 +13,14 @@ on:
       - ".github/workflows/transparent-proxy-ci-pr.yml"
       - ".github/workflows/transparent-proxy-cd-pr-merge.yml"
   workflow_dispatch:
-permissions:
-  contents: read
-  packages: read
-  statuses: write # To report GitHub Actions status checks
-
 jobs:
   linting:
     name: Linting
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      statuses: write # To report GitHub Actions status checks
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -37,6 +36,10 @@ jobs:
   security-scanning:
     name: Security Scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      statuses: write # To report GitHub Actions status checks
     needs: linting
     timeout-minutes: 10
     steps:
@@ -57,6 +60,10 @@ jobs:
   docker-build-test-scan:
     name: Docker Build, Test & Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      statuses: write # To report GitHub Actions status checks
     needs: security-scanning
     timeout-minutes: 20
     env:

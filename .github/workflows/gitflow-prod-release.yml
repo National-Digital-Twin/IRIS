@@ -12,14 +12,13 @@ env:
   SOURCE_AWS_ACCOUNT_ID: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"
   DESTINATION_AWS_ACCOUNT_ID: "${{ vars.PROD_AWS_ACCOUNT_ID }}"
 
-permissions:
-  contents: read
-  id-token: write
-  pull-requests: read
-
 jobs:
   determine-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
@@ -70,6 +69,10 @@ jobs:
   copy-docker-image:
     needs: determine-tag
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
     strategy:
       matrix:
         repo_name:
