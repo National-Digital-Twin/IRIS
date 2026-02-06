@@ -78,15 +78,15 @@
             <button
                 mat-icon-button
                 class="control"
-                aria-label="profile button"
+                aria-label="Profile"
                 [matMenuTriggerFor]="menu"
                 (menuOpened)="handleMenuOpened()"
                 (menuClosed)="handleMenuClosed()"
             >
                 @if (!menuOpened) {
-                    <mat-icon aria-label="profille icon">account_circle</mat-icon>
+                    <mat-icon aria-hidden="true">account_circle</mat-icon>
                 } @else {
-                    <mat-icon aria-label="profile icon clicked" svgIcon="account_circle_clicked"></mat-icon>
+                    <mat-icon aria-hidden="true" svgIcon="account_circle_clicked"></mat-icon>
                 }
             </button>
             <mat-menu #menu="matMenu" class="profile-menu">

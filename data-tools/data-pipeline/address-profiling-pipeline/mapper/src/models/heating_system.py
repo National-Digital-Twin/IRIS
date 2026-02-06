@@ -43,7 +43,6 @@ class HeatingSystem:
             "Fuel": "Fuel",
             "Biomass": "Biomass",
             "Coal": "Coal",
-            "Fuel": "Fuel",
             "Electricity": "Electricity",
             "LPG": "LPG",
             "NaturalFuelGas": "NaturalFuelGas",

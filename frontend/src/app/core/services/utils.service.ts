@@ -78,49 +78,7 @@ export class UtilService {
         const defaultColor = this.#runtimeConfig.epcColours['default'];
         const defaultPattern = 'default-pattern';
 
-        /**
-         * Create a new expressions object.
-         *
-         * This object is used to set both a combined
-         * expression and filter options to a map layer.
-         *
-         * For single dwelling buildings, we use a solid
-         * epc colour.  For multi dwelling buildings, we
-         * use a patterned epc colour.
-         */
-        const expressions = {} as CurrentExpressions;
-        expressions['fill-extrusion-color'] = {
-            mapLayerFilter: {
-                layerId: 'OS/TopographicArea_2/Building/1_3D-Single-Dwelling',
-                expression: ['all', ['==', '_symbol', 4], ['in', 'TOID']],
-            },
-            expression: ['match', ['get', 'TOID']],
-        };
-
-        expressions['fill-extrusion-pattern'] = {
-            mapLayerFilter: {
-                layerId: 'OS/TopographicArea_2/Building/1_3D-Multi-Dwelling',
-                expression: ['all', ['==', '_symbol', 4], ['in', 'TOID']],
-            },
-            expression: ['match', ['get', 'TOID']],
-        };
-
-        /**
-         *  Add To Expression.
-         *
-         * Add a toid to an expression. The toid is only added
-         * to the corresponding layer filter if it doesn't
-         * already exist.
-         */
-        function addToidExpression(expressionKey: keyof CurrentExpressions, toid: string, value: string): void {
-            expressions[expressionKey].expression.push(toid, value);
-
-            if (expressions[expressionKey].mapLayerFilter.expression[2].includes(toid)) {
-                return;
-            }
-
-            expressions[expressionKey].mapLayerFilter.expression[2].push(toid);
-        }
+        const expressions = this.#createBaseExpressions();
 
         const flaggedTOIDS: string[] = [];
         /** TOIDS to exclude from the default layer */
@@ -130,85 +88,136 @@ export class UtilService {
         Object.keys(filteredBuildings).forEach((toid) => {
             /** Get the buildings UPRN's for a TOID */
             const dwellings: BuildingModel[] = filteredBuildings[toid];
-
-            if (dwellings.length === 0) {
-                /** No UPRNs for a TOID */
-
-                addToidExpression('fill-extrusion-color', toid, defaultColor);
-            } else if (dwellings.length === 1) {
-                /* One UPRN for a TOID */
-
-                const { EPC, Flagged } = dwellings[0];
-                const color = EPC ? this.getEPCColour(EPC) : defaultPattern;
-
-                /* Add toid to flagged array if flagged */
-                if (Flagged) flaggedTOIDS.push(toid);
-                /** Add toid to default layer array */
-                excludeFromDefault.push(toid);
-
-                /* if the building was originally a multi dwelling building
-                 * before filtering then set an epc pattern over epc color */
-                const multiDwelling = unfilteredBuildings![toid].length > 1;
-                if (multiDwelling) {
-                    const pattern = EPC ? this.getEPCPattern([EPC]) : defaultPattern;
-                    addToidExpression('fill-extrusion-pattern', toid, pattern);
-                } else {
-                    addToidExpression('fill-extrusion-color', toid, color);
-                }
-            } else if (dwellings.length > 1) {
-                /* Multiple UPRNs for a TOID */
-
-                const epcs: string[] = [];
-                const Flagged = dwellings.some(({ Flagged }) => Flagged);
-                dwellings.forEach(({ EPC }) => {
-                    if (EPC) epcs.push(EPC);
-                });
-                const pattern = epcs.length === 0 ? defaultPattern : this.getEPCPattern(epcs);
-
-                /* Add toid to flagged array if flagged */
-                if (Flagged) flaggedTOIDS.push(toid);
-                /** Add toid to default layer array */
-                excludeFromDefault.push(toid);
-
-                addToidExpression('fill-extrusion-pattern', toid, pattern);
-            }
+            this.#addToidVisuals(toid, dwellings, unfilteredBuildings, defaultColor, defaultPattern, expressions, flaggedTOIDS, excludeFromDefault);
         });
 
-        /**
-         * Set the default color and pattern for all
-         * other toids not covered by the expression
-         * but are filtered in the layer.
-         */
-        expressions['fill-extrusion-color'].expression.push(defaultColor);
-        expressions['fill-extrusion-pattern'].expression.push(defaultPattern);
+        this.#appendExpressionDefaults(expressions, defaultColor, defaultPattern);
 
         /** apply the expression to update map layers */
         this.setCurrentMapExpression(expressions);
 
-        /**
-         * If there is a building currently selected, check if it's in the
-         * filtered buildings data and if not deselect it
-         */
-        const selectedUPRN = this.#dataService.selectedUPRN();
-        if (selectedUPRN) {
-            const exists = this.uprnInFilteredBuildings(selectedUPRN, filteredBuildings);
-            if (!exists) this.singleDwellingDeselected();
+        this.#syncSelectedDwelling(filteredBuildings);
+        this.#syncSelectedBuildingsIfFiltered(filteredBuildings, spatialFilter);
+        this.#applyToidFilters(flaggedTOIDS, excludeFromDefault);
+    }
+
+    #createBaseExpressions(): CurrentExpressions {
+        const expressions = {} as CurrentExpressions;
+        expressions['fill-extrusion-color'] = {
+            mapLayerFilter: {
+                layerId: 'OS/TopographicArea_2/Building/1_3D-Single-Dwelling',
+                expression: ['all', ['==', '_symbol', 4], ['in', 'TOID']],
+            },
+            expression: ['match', ['get', 'TOID']],
+        };
+        expressions['fill-extrusion-pattern'] = {
+            mapLayerFilter: {
+                layerId: 'OS/TopographicArea_2/Building/1_3D-Multi-Dwelling',
+                expression: ['all', ['==', '_symbol', 4], ['in', 'TOID']],
+            },
+            expression: ['match', ['get', 'TOID']],
+        };
+        return expressions;
+    }
+
+    #addToidExpression(expressions: CurrentExpressions, expressionKey: keyof CurrentExpressions, toid: string, value: string): void {
+        expressions[expressionKey].expression.push(toid, value);
+        if (!expressions[expressionKey].mapLayerFilter.expression[2].includes(toid)) {
+            expressions[expressionKey].mapLayerFilter.expression[2].push(toid);
+        }
+    }
+
+    #addToidVisuals(
+        toid: string,
+        dwellings: BuildingModel[],
+        unfilteredBuildings: BuildingMap,
+        defaultColor: string,
+        defaultPattern: string,
+        expressions: CurrentExpressions,
+        flaggedTOIDS: string[],
+        excludeFromDefault: string[],
+    ): void {
+        if (dwellings.length === 0) {
+            this.#addToidExpression(expressions, 'fill-extrusion-color', toid, defaultColor);
+            return;
         }
 
-        /**
-         * if there are filters set filtered buildings to
-         * display results
-         */
+        if (dwellings.length === 1) {
+            this.#addSingleDwellingVisuals(toid, dwellings[0], unfilteredBuildings, defaultPattern, expressions, flaggedTOIDS, excludeFromDefault);
+            return;
+        }
+
+        this.#addMultiDwellingVisuals(toid, dwellings, defaultPattern, expressions, flaggedTOIDS, excludeFromDefault);
+    }
+
+    #addSingleDwellingVisuals(
+        toid: string,
+        dwelling: BuildingModel,
+        unfilteredBuildings: BuildingMap,
+        defaultPattern: string,
+        expressions: CurrentExpressions,
+        flaggedTOIDS: string[],
+        excludeFromDefault: string[],
+    ): void {
+        const { EPC, Flagged } = dwelling;
+        const color = EPC ? this.getEPCColour(EPC) : defaultPattern;
+        if (Flagged) flaggedTOIDS.push(toid);
+        excludeFromDefault.push(toid);
+
+        const multiDwelling = unfilteredBuildings[toid].length > 1;
+        if (multiDwelling) {
+            const pattern = EPC ? this.getEPCPattern([EPC]) : defaultPattern;
+            this.#addToidExpression(expressions, 'fill-extrusion-pattern', toid, pattern);
+            return;
+        }
+        this.#addToidExpression(expressions, 'fill-extrusion-color', toid, color);
+    }
+
+    #addMultiDwellingVisuals(
+        toid: string,
+        dwellings: BuildingModel[],
+        defaultPattern: string,
+        expressions: CurrentExpressions,
+        flaggedTOIDS: string[],
+        excludeFromDefault: string[],
+    ): void {
+        const epcs = dwellings.map(({ EPC }) => EPC).filter((epc): epc is NonNullable<BuildingModel['EPC']> => !!epc);
+        const flagged = dwellings.some(({ Flagged }) => Flagged);
+        const epcStrings = epcs.map((epc) => epc.toString());
+        const pattern = epcStrings.length === 0 ? defaultPattern : this.getEPCPattern(epcStrings);
+        if (flagged) flaggedTOIDS.push(toid);
+        excludeFromDefault.push(toid);
+        this.#addToidExpression(expressions, 'fill-extrusion-pattern', toid, pattern);
+    }
+
+    #appendExpressionDefaults(expressions: CurrentExpressions, defaultColor: string, defaultPattern: string): void {
+        expressions['fill-extrusion-color'].expression.push(defaultColor);
+        expressions['fill-extrusion-pattern'].expression.push(defaultPattern);
+    }
+
+    #syncSelectedDwelling(filteredBuildings: BuildingMap): void {
+        const selectedUPRN = this.#dataService.selectedUPRN();
+        if (!selectedUPRN) {
+            return;
+        }
+
+        const exists = this.uprnInFilteredBuildings(selectedUPRN, filteredBuildings);
+        if (!exists) {
+            this.singleDwellingDeselected();
+        }
+    }
+
+    #syncSelectedBuildingsIfFiltered(filteredBuildings: BuildingMap, spatialFilter?: mapboxgl.Point[]): void {
         if (Object.keys(this.filterProps()).length || spatialFilter) {
             this.#dataService.setSelectedBuildings(Object.values(filteredBuildings));
         }
+    }
 
-        /* Apply the flagged filter */
+    #applyToidFilters(flaggedTOIDS: string[], excludeFromDefault: string[]): void {
         this.#mapService.filterMapLayer({
             layerId: 'OS/TopographicArea_2/Building/1_3D-Dwelling-Flagged',
             expression: ['all', ['==', '_symbol', 4], ['in', 'TOID', ...flaggedTOIDS]],
         });
-        /** Remove from toids from default layer so they're not rendered */
         this.#mapService.filterMapLayer({
             layerId: 'OS/TopographicArea_2/Building/1_3D',
             expression: ['all', ['==', '_symbol', 4], ['!in', 'TOID', ...excludeFromDefault]],
@@ -416,12 +425,13 @@ export class UtilService {
         }
 
         let mappedKeys = removeQuotes;
-        if (key === 'HasRoofSolarPanels') {
+        if (key === 'RoofHasSolarPanels') {
             mappedKeys = removeQuotes.map((value) => {
                 if (value === 'HasSolarPanels') return 'true';
                 if (value === 'NoSolarPanels') return 'false';
                 return '';
             });
+            return mappedKeys.includes(filterableBuildingModel.HasRoofSolarPanels?.toString() ?? '');
         }
 
         // eslint-disable-next-line

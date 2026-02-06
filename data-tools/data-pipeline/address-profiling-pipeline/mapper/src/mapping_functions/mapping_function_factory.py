@@ -28,9 +28,13 @@ from .roof import roof_function
 from .structure_unit import structure_unit_function
 from .wall import wall_function
 from .window import window_function
+from collections.abc import Callable
+from typing import Any
 
 
-def get_mapping_function(mapper_sub_type: str) -> str:
+def get_mapping_function(
+    mapper_sub_type: str,
+) -> Callable[[dict, Any, bool], str | None]:
     """
     Returns a mapping function for the provided sub type.
 

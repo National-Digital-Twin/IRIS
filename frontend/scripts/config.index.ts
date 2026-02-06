@@ -1,4 +1,4 @@
-import { writeFile } from 'fs';
+import { writeFile } from 'node:fs';
 
 const env = process.env.ENV;
 

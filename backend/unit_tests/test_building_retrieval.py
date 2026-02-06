@@ -55,84 +55,15 @@ def client():
 class TestGetBuildingsInBoundingBox:
     def test_successful_get_buildings(self, client, monkeypatch):
         """Test successful retrieval of buildings in a bounding box"""
-        # TODO: update test to work with SQL db
-
-        # response = client.get(
-        #     "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        #
-        # assert len(buildings) == 2
-        # building = buildings[0]
-        #
-        # assert building["uprn"] == "100060763456"
-        # assert building["first_line_of_address"] == "1 Apple Avenue"
-        # assert building["energy_rating"] == "C"
-        # assert building["structure_unit_type"] == "Bungalow"
-        # assert building["toid"] == "osgb1000013062259"
-        # assert building["longitude"] == -1.1834759844410794
-        # assert building["latitude"] == 50.72234886358317
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
+        # TODO: update test to work with SQL db.
 
     def test_successful_get_buildings_two_forms(self, client, monkeypatch):
         """Test successful retrieval of buildings in a bounding box"""
-        # TODO: update test to work with SQL db
-
-        # mock_query = MagicMock(return_value=bounded_buildings_response_two_forms())
-        #
-        # response = client.get(
-        #     "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        #
-        # assert len(buildings) == 2
-        # apple_bungalow = buildings[0]
-        # cherry_flat = buildings[1]
-        # self.verify_building_data(
-        #     apple_bungalow,
-        #     "100060763456",
-        #     "1 Apple Avenue",
-        #     "C",
-        #     "Bungalow",
-        #     "osgb1000013062259",
-        #     -1.1834759844410794,
-        #     50.72234886358317,
-        # )
-        # self.verify_building_data(
-        #     cherry_flat,
-        #     "100060768638",
-        #     "3a Cherry Street",
-        #     "D",
-        #     "Maisonette",
-        #     "osgb1000013076936",
-        #     -1.178467890878929,
-        #     50.725098060722736,
-        # )
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
-        #
+        # TODO: update test to work with SQL db.
 
     def test_empty_results(self, client, monkeypatch):
         """Test when no buildings are found"""
-        # TODO: update test to work with SQL db
-
-        # mock_query = MagicMock(return_value=empty_query_response())
-        #
-        # response = client.get(
-        #     "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        # assert len(buildings) == 0
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
-        #
+        # TODO: update test to work with SQL db.
 
     def verify_building_data(
         self,
@@ -167,48 +98,9 @@ class TestGetFilterableBuildingsInBoundingBox:
         """Test successful retrieval of filterable buildings in a bounding box"""
         # TODO: update test to work with SQL db.
 
-        # mock_query = MagicMock(return_value=bounded_filterable_buildings_response())
-        #
-        # response = client.get(
-        #     "/filterable-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        #
-        # assert len(buildings) == 2
-        # building = buildings[0]
-        #
-        # assert building["uprn"] == "10003319738"
-        # assert building["postcode"] == "PO36 9JA"
-        # assert building["window_glazing"] == "DoubleGlazingBefore2002"
-        # assert building["wall_construction"] == "CavityWall"
-        # assert building["wall_insulation"] == "InsulatedWall"
-        # assert building["floor_construction"] == "Suspended"
-        # assert building["floor_insulation"] == "NoInsulationInFloor"
-        # assert building["roof_construction"] == ""
-        # assert building["roof_insulation_location"] == ""
-        # assert building["roof_insulation_thickness"] == ""
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
-        #
-
     def test_empty_results(self, client, monkeypatch):
         """Test when no buildings are found"""
         # TODO: update test to work with SQL db.
-
-        # mock_query = MagicMock(return_value=empty_query_response())
-        # monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
-        #
-        # response = client.get(
-        #     "/filterable-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        # assert len(buildings) == 0
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
 
 
 ##TODO: reinstate this test with bounding box params

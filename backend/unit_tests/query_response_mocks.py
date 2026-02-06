@@ -117,7 +117,7 @@ def wall_window_query_response(uprn):
     }
 
 
-def fueltype_query_response(uprn):
+def fueltype_query_response():
     return {
         "results": {
             "bindings": [
@@ -265,7 +265,7 @@ def flag_history_response(active):
     return result
 
 
-def multiple_flag_history_response(active):
+def multiple_flag_history_response():
     return {
         "results": {
             "bindings": [
@@ -417,7 +417,7 @@ def filter_summary_query_response():
     }
 
 
-def mock_known_building(query, headers):
+def mock_known_building(query, _headers):
     uprn = 10023456789
     if query == get_building(uprn):
         return building_query_response(uprn)
@@ -428,6 +428,6 @@ def mock_known_building(query, headers):
     if query == get_walls_and_windows_for_building(uprn):
         return wall_window_query_response(uprn)
     if query == get_fueltype_for_building(uprn):
-        return fueltype_query_response(uprn)
+        return fueltype_query_response()
     else:
         return empty_query_response()

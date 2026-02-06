@@ -21,7 +21,7 @@ describe('NumberPipe', () => {
         });
 
         it('should handle invalid numbers', () => {
-            expect(pipe.transform(NaN)).toBe('-');
+            expect(pipe.transform(Number.NaN)).toBe('-');
             expect(pipe.transform(Infinity)).toBe('-');
             expect(pipe.transform(-Infinity)).toBe('-');
         });

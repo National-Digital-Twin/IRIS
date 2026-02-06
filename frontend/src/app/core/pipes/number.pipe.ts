@@ -7,7 +7,7 @@ export class NumberPipe implements PipeTransform {
             return '0';
         }
 
-        if (!isFinite(original)) {
+        if (!Number.isFinite(original)) {
             return '-';
         }
 

@@ -293,14 +293,7 @@ def run_sparql_update(
 
 
 def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
-    sub_classes = {}
-    sub_list = []
-    if exclude_super is not None and exclude_super != "":
-        filter_clause = (
-            f"""FILTER NOT EXISTS {{ ?sub rdfs:subClassOf* <{exclude_super}>  }}  """
-        )
-    else:
-        filter_clause = """"""
+    filter_clause = _get_subtypes_filter_clause(exclude_super)
     results = run_sparql_query(
         f"""
         SELECT ?sub ?parent ?comment WHERE
@@ -313,45 +306,62 @@ def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
         headers,
         query_dataset=config_settings.ONTO_DATASET,
     )
-
-    if results and results["results"] and results["results"]["bindings"]:
-        for sub in results["results"]["bindings"]:
-            sub_uri = sub["sub"]["value"]
-            if sub_uri not in sub_classes:
-                # create a new empty(ish) item
-                my_obj = {
-                    "uri": sub_uri,
-                    "shortName": shorten(sub_uri),
-                    "superClasses": [],
-                    "description": [],
-                }
-                sub_classes[sub_uri] = my_obj
-            else:
-                my_obj = sub_classes[sub_uri]
-            # If there are any comments, append them
-            if (
-                "comment" in sub
-                and sub["comment"]["value"]
-                not in sub_classes[sub["sub"]["value"]]["description"]
-            ):
-                sub_classes[sub_uri]["description"].append(sub["comment"]["value"])
-            # There may be more than one parent, so append them as we find them
-            if sub["parent"]["value"] not in my_obj["superClasses"]:
-                my_obj["superClasses"].append(sub["parent"]["value"])
-
-    sub_list = []
-    for key in sub_classes:
-        sub = sub_classes[key]
-        sub_list.append(
-            {
-                "uri": key,
-                "shortName": sub["shortName"],
-                "superClasses": sub["superClasses"],
-                "description": sub["description"],
-            }
-        )
-
+    sub_classes = _build_subtype_class_map(results)
+    sub_list = _build_subtype_list(sub_classes)
     return sub_classes, sub_list
+
+
+def _get_subtypes_filter_clause(exclude_super):
+    if exclude_super is not None and exclude_super != "":
+        return f"""FILTER NOT EXISTS {{ ?sub rdfs:subClassOf* <{exclude_super}>  }}  """
+    return ""
+
+
+def _get_subtype_obj(sub_classes, sub_uri):
+    if sub_uri not in sub_classes:
+        sub_classes[sub_uri] = {
+            "uri": sub_uri,
+            "shortName": shorten(sub_uri),
+            "superClasses": [],
+            "description": [],
+        }
+    return sub_classes[sub_uri]
+
+
+def _append_unique(values: list[str], value: str):
+    if value not in values:
+        values.append(value)
+
+
+def _build_subtype_class_map(results):
+    sub_classes = {}
+    bindings = (
+        results.get("results", {}).get("bindings", [])
+        if isinstance(results, dict)
+        else []
+    )
+    for sub in bindings:
+        sub_uri = sub["sub"]["value"]
+        my_obj = _get_subtype_obj(sub_classes, sub_uri)
+
+        comment = sub.get("comment", {}).get("value")
+        if comment:
+            _append_unique(my_obj["description"], comment)
+
+        _append_unique(my_obj["superClasses"], sub["parent"]["value"])
+    return sub_classes
+
+
+def _build_subtype_list(sub_classes):
+    return [
+        {
+            "uri": key,
+            "shortName": sub["shortName"],
+            "superClasses": sub["superClasses"],
+            "description": sub["description"],
+        }
+        for key, sub in sub_classes.items()
+    ]
 
 
 def create_person_insert(user_id, username):
@@ -1377,7 +1387,6 @@ def post_assessment(ass: IesAssessment):
     }}"""
     run_sparql_update(query=query, securityLabel=ass.securityLabel)
     return ass.uri
-    raise HTTPException(status_code=400, detail="Could not create assessment")
 
 
 @router.get("/user-details")
