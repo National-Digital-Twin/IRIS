@@ -6,6 +6,12 @@ from api.query import (
     get_fueltype_for_building
 )
 
+APPLE_AVENUE = "1 Apple Avenue"
+POINT_ONE = "POINT(-1.1834759844410794 50.72234886358317)"
+POINT_TWO = "POINT(-1.178467890878929 50.725098060722736)"
+INTERESTED_IN_INVESTIGATING = "http://ndtp.co.uk/data#InterestedInInvestigating"
+XSD_INTEGER = "http://www.w3.org/2001/XMLSchema#integer"
+
 
 def building_query_response(uprn):
     return {
@@ -133,9 +139,9 @@ def empty_query_response():
 def bounded_buildings_response():
     first = bounded_building_response(
         100060763456,
-        "1 Apple Avenue",
+        APPLE_AVENUE,
         "osgb1000013062259",
-        "POINT(-1.1834759844410794 50.72234886358317)",
+        POINT_ONE,
         "C",
         "Bungalow",
     )
@@ -143,7 +149,7 @@ def bounded_buildings_response():
         100060768637,
         "2 Orange Road",
         "osgb1000013076936",
-        "POINT(-1.178467890878929 50.725098060722736)",
+        POINT_TWO,
         "C",
         "House",
     )
@@ -153,9 +159,9 @@ def bounded_buildings_response():
 def bounded_buildings_response_two_forms():
     first = bounded_building_response(
         100060763456,
-        "1 Apple Avenue",
+        APPLE_AVENUE,
         "osgb1000013062259",
-        "POINT(-1.1834759844410794 50.72234886358317)",
+        POINT_ONE,
         "C",
         "House",
     )
@@ -163,15 +169,15 @@ def bounded_buildings_response_two_forms():
         100060768638,
         "3a Cherry Street",
         "osgb1000013076936",
-        "POINT(-1.178467890878929 50.725098060722736)",
+        POINT_TWO,
         "D",
         "Maisonette",
     )
     third = bounded_building_response(
         100060763456,
-        "1 Apple Avenue",
+        APPLE_AVENUE,
         "osgb1000013062259",
-        "POINT(-1.1834759844410794 50.72234886358317)",
+        POINT_ONE,
         "C",
         "Bungalow",
     )
@@ -179,7 +185,7 @@ def bounded_buildings_response_two_forms():
         100060768638,
         "3a Cherry Street",
         "osgb1000013076936",
-        "POINT(-1.178467890878929 50.725098060722736)",
+        POINT_TWO,
         "D",
         "Flat",
     )
@@ -242,7 +248,7 @@ def flag_history_response(active):
                     "uprn": {"value": "12345"},
                     "flag": {"value": "http://ndtp.co.uk/data#flag1"},
                     "flagType": {
-                        "value": "http://ndtp.co.uk/data#InterestedInInvestigating"
+                        "value": INTERESTED_IN_INVESTIGATING
                     },
                     "retrofitterName": {"value": "John Doe"},
                     "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"},
@@ -267,7 +273,7 @@ def multiple_flag_history_response(active):
                     "uprn": {"value": "12345"},
                     "flag": {"value": "http://ndtp.co.uk/data#flag1"},
                     "flagType": {
-                        "value": "http://ndtp.co.uk/data#InterestedInInvestigating"
+                        "value": INTERESTED_IN_INVESTIGATING
                     },
                     "retrofitterName": {"value": "Simon Smith"},
                     "flagDate": {"value": "http://iso.org/iso8601#2020-01-03T00:00:00"},
@@ -279,7 +285,7 @@ def multiple_flag_history_response(active):
                     "uprn": {"value": "67890"},
                     "flag": {"value": "http://ndtp.co.uk/data#flag2"},
                     "flagType": {
-                        "value": "http://ndtp.co.uk/data#InterestedInInvestigating"
+                        "value": INTERESTED_IN_INVESTIGATING
                     },
                     "retrofitterName": {"value": "John Doe"},
                     "flagDate": {"value": "http://iso.org/iso8601#2020-01-01T00:00:00"},
@@ -302,42 +308,42 @@ def statistics_response():
                     "wardName": {"type": "literal", "value": "Bembridge"},
                     "EPC_Rating_A": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "0",
                     },
                     "EPC_Rating_B": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "1",
                     },
                     "EPC_Rating_C": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "11",
                     },
                     "EPC_Rating_D": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "8",
                     },
                     "EPC_Rating_E": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "0",
                     },
                     "EPC_Rating_F": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "0",
                     },
                     "EPC_Rating_G": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "0",
                     },
                     "No_EPC_Rating": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "4",
                     },
                 },
@@ -345,42 +351,42 @@ def statistics_response():
                     "wardName": {"type": "literal", "value": "Binstead & Fishbourne"},
                     "EPC_Rating_A": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "0",
                     },
                     "EPC_Rating_B": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "2",
                     },
                     "EPC_Rating_C": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "12",
                     },
                     "EPC_Rating_D": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "6",
                     },
                     "EPC_Rating_E": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "2",
                     },
                     "EPC_Rating_F": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "0",
                     },
                     "EPC_Rating_G": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "1",
                     },
                     "No_EPC_Rating": {
                         "type": "literal",
-                        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+                        "datatype": XSD_INTEGER,
                         "value": "1",
                     },
                 },

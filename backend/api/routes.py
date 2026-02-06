@@ -802,6 +802,12 @@ class InvalidateFlag(BaseModel):
     "/invalidate-flag",
     description="Post to this endpoint to invalidate an existing flag.",
     response_model=str,
+    responses={
+        422: {
+            "description": "assessmentTypeOverride must be a subclass of ndt_ont:AssessToBeFalse",
+        },
+        500: {"description": ACCESS_API_CALL_ERROR},
+    },
 )
 def invalidate_flag(request: Request, invalid: InvalidateFlag):
     try:
@@ -998,6 +1004,10 @@ def get_all_flagged_buildings(req: Request):
     "/flag-to-investigate",
     description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
     response_model=str,
+    responses={
+        422: {"description": "URI of flagged entity must be provided"},
+        500: {"description": ACCESS_API_CALL_ERROR},
+    },
 )
 def post_flag_investigate(request: Request, visited: IesEntity):
     if not visited or not visited.uri:
@@ -1262,47 +1272,49 @@ def get_default_security_label():
 # @app.post("/assessments")
 def post_assessment(ass: IesAssessment):
     mint_uri(ass)
+
+    if ass.assessedItem is None or ass.assessedItem == "":
+        raise HTTPException(status_code=400, detail="No assessed object provided")
+
+    if ass.assessmentType is None or ass.assessmentType == "":
+        raise HTTPException(status_code=400, detail="No assessment class provided")
+
+    # Keep existing behavior: only proceed after refreshing classes when this type
+    # was not initially present.
+    if ass.assessmentType in assessment_classes:
+        raise HTTPException(status_code=400, detail="Could not create assessment")
+
+    get_assessments()
+    if ass.assessmentType not in assessment_classes:
+        safe_type = sanitize_for_message(ass.assessmentType)
+        raise HTTPException(
+            status_code=404,
+            detail=f"Assessment Class: {safe_type} not found",
+        )
+
+    user = ass.userOverride if ass.userOverride else data_uri_stub + "JaneDoe"
+    start_date = ISO_8601_URL + ass.startDate.isoformat().replace(" ", "T")
+    end_date = ISO_8601_URL + ass.endDate.isoformat().replace(" ", "T")
     state_uri = ""
     start_state = ""
     end_state = ""
     state_type = ""
-    if ass.assessedItem is None or ass.assessedItem == "":
-        raise HTTPException(status_code=400, detail="No assessed object provided")
-    if ass.assessmentType is None or ass.assessmentType == "":
-        raise HTTPException(status_code=400, detail="No assessment class provided")
-    if ass.assessmentType not in assessment_classes:
-        get_assessments()
-        if ass.assessmentType not in assessment_classes:
-            safe_type = sanitize_for_message(ass.assessmentType)
-            raise HTTPException(
-                status_code=404,
-                detail=f"Assessment Class: {safe_type} not found",
-            )
-        else:
-            if ass.userOverride:
-                user = ass.userOverride
-            else:
-                user = data_uri_stub + "JaneDoe"  # DON'T KNOW HOW TO GET THE USER ID
-
-            start_date = ISO_8601_URL + ass.startDate.isoformat().replace(" ", "T")
-            end_date = ISO_8601_URL + ass.endDate.isoformat().replace(" ", "T")
-            query = f"""INSERT DATA
-            {{
-                <{state_uri}> a <{state_type}> .
-                <{state_uri}> ies:isStateOf <{ass.assessedItem}>
-                <{start_state}> a ies:BoundingState .
-                <{start_state}> ies:isStartOf <{state_uri}> .
-                <{start_state}> ies:inPeriod <{start_date}> .
-                <{end_state}> a ies:BoundingState .
-                <{end_state}> ies:isEndOf <{state_uri}> .
-                <{end_state}> ies:inPeriod <{end_date}> .
-                <{ass.uri}> a <{ass.assessmentType}>  .
-                <{ass.uri}> ies:assessed <{state_uri}> .
-                <{ass.uri}> ies:assessor <{user}> .
-            }}"""
-            run_sparql_update(query=query, securityLabel=ass.securityLabel)
-
-            return ass.uri
+    query = f"""INSERT DATA
+    {{
+        <{state_uri}> a <{state_type}> .
+        <{state_uri}> ies:isStateOf <{ass.assessedItem}>
+        <{start_state}> a ies:BoundingState .
+        <{start_state}> ies:isStartOf <{state_uri}> .
+        <{start_state}> ies:inPeriod <{start_date}> .
+        <{end_state}> a ies:BoundingState .
+        <{end_state}> ies:isEndOf <{state_uri}> .
+        <{end_state}> ies:inPeriod <{end_date}> .
+        <{ass.uri}> a <{ass.assessmentType}>  .
+        <{ass.uri}> ies:assessed <{state_uri}> .
+        <{ass.uri}> ies:assessor <{user}> .
+    }}"""
+    run_sparql_update(query=query, securityLabel=ass.securityLabel)
+    return ass.uri
     raise HTTPException(status_code=400, detail="Could not create assessment")
 
 

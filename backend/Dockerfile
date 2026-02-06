@@ -23,11 +23,10 @@ RUN --mount=type=secret,id=pat_token \
     export GITHUB_ACCESS_TOKEN=$(cat /run/secrets/pat_token) && \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
-COPY --chown=appuser:appuser api api
-COPY --chown=appuser:appuser developer-resources developer-resources
-COPY --chown=appuser:appuser developer-resources/load_gpkg_to_postgis.py ./load_gpkg_to_postgis.py
-COPY --chown=appuser:appuser alembic.ini entrypoint.sh setup.cfg version.txt ./
-
-RUN chmod +x ./entrypoint.sh
+COPY --chown=appuser:appuser --chmod=0555 api api
+COPY --chown=appuser:appuser --chmod=0555 developer-resources developer-resources
+COPY --chown=appuser:appuser --chmod=0555 developer-resources/load_gpkg_to_postgis.py ./load_gpkg_to_postgis.py
+COPY --chown=appuser:appuser --chmod=0444 alembic.ini setup.cfg version.txt ./
+COPY --chown=appuser:appuser --chmod=0555 entrypoint.sh ./entrypoint.sh
 USER appuser
 ENTRYPOINT ["./entrypoint.sh"]
