@@ -39,11 +39,9 @@
 
             <div class="actions">
                 @if (building.Flagged === undefined) {
-                    <button mat-flat-button aria-label="Flag property" (click)="flag.emit([building!])"><mat-icon>flag</mat-icon> Add a flag</button>
+                    <button mat-flat-button (click)="flag.emit([building!])"><mat-icon>flag</mat-icon> Add a flag</button>
                 } @else {
-                    <button mat-flat-button class="remove" aria-label="Remove property flag" (click)="removeFlag.emit(building!)">
-                        <mat-icon>flag</mat-icon> Remove a flag
-                    </button>
+                    <button mat-flat-button class="remove" (click)="removeFlag.emit(building!)"><mat-icon>flag</mat-icon> Remove a flag</button>
                 }
                 <button mat-flat-button (click)="openDownloadWarning()"><mat-icon>download</mat-icon> Download</button>
             </div>

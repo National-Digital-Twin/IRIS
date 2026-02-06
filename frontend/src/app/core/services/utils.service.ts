@@ -340,75 +340,93 @@ export class UtilService {
 
         // convert building object to array to ease filtering
         const buildingsArray = Array.from(Object.values(buildings).flat());
-        const filterKeys = Object.keys(filterProps);
+        const filterKeys = Object.keys(filterProps) as Array<keyof FilterProps>;
         // filter buildings
         const filteredUprns = filterableBuildingModels
             .filter((filterableBuildingModel: FilterableBuildingModel) =>
                 filterKeys.every((key) => {
-                    if (!filterProps[key as keyof FilterProps]?.length) {
-                        return true;
-                    }
-                    // remove additional quotes for year filter
-                    // may not need this any more?
-                    const removeQuotes = filterProps[key as keyof FilterProps]?.map((k) => k.replace(/['"]+/g, ''));
-                    /** if flagged filter exists return the building if it has a flag */
-                    if (key === 'Flagged') {
-                        return filterableBuildingModel.Flagged;
-                    }
-                    // compare inspection dates to 10 years ago
-                    else if (key === 'EPCExpiry') {
-                        const tenYearsAgo = new Date();
-                        tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
-                        if (
-                            filterableBuildingModel.LodgementDate &&
-                            ((filterProps[key as keyof FilterProps]?.includes('EPC Expired') &&
-                                new Date(filterableBuildingModel.LodgementDate) < tenYearsAgo) ||
-                                (filterProps[key as keyof FilterProps]?.includes('EPC In Date') &&
-                                    new Date(filterableBuildingModel.LodgementDate) >= tenYearsAgo))
-                        ) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } else if (key === 'StructureUnitType' || key === 'EPC') {
-                        const matchedBuildingModel = buildingsArray.find((building) => building.UPRN === filterableBuildingModel.UPRN);
-                        return (
-                            matchedBuildingModel &&
-                            removeQuotes?.includes(
-                                // eslint-disable-next-line
-                                // @ts-ignore
-                                matchedBuildingModel[key as keyof BuildingModel],
-                            )
-                        );
-                    } else {
-                        let mappedKeys: string[] | undefined = removeQuotes;
-
-                        if (key === 'RoofAspectAreaDirection') {
-                            return removeQuotes
-                                ?.map((r) => filterableBuildingModel[this.#roofAspectAreaDirectionFieldMap[r] as keyof FilterableBuildingModel])
-                                .every((f) => !!f);
-                        }
-
-                        if (key === 'HasRoofSolarPanels') {
-                            mappedKeys = removeQuotes?.map((f) => {
-                                if (f === 'HasSolarPanels') return 'true';
-                                else if (f === 'NoSolarPanels') return 'false';
-                                return '';
-                            });
-                        }
-
-                        return mappedKeys?.includes(
-                            // eslint-disable-next-line
-                            // @ts-ignore
-                            filterableBuildingModel[key as keyof FilterableBuildingModel]?.toString(),
-                        );
-                    }
+                    return this.#matchesFilterKey(filterableBuildingModel, buildingsArray, filterProps, key);
                 }),
             )
             .map((filteredDetailedBuildingModel) => filteredDetailedBuildingModel.UPRN);
         const filtered = buildingsArray.filter((building) => filteredUprns.includes(building.UPRN));
         const filteredBuildings: BuildingMap = this.#dataService.mapBuildings(filtered);
         return filteredBuildings;
+    }
+
+    #matchesFilterKey(
+        filterableBuildingModel: FilterableBuildingModel,
+        buildingsArray: BuildingModel[],
+        filterProps: FilterProps,
+        key: keyof FilterProps,
+    ): boolean {
+        const selectedFilterValues = filterProps[key];
+        if (!selectedFilterValues?.length) {
+            return true;
+        }
+
+        // remove additional quotes for year filter
+        // may not need this any more?
+        const removeQuotes = selectedFilterValues.map((item) => item.replace(/['"]+/g, ''));
+        if (key === 'Flagged') {
+            return filterableBuildingModel.Flagged;
+        }
+        if (key === 'EPCExpiry') {
+            return this.#matchesEpcExpiry(filterableBuildingModel, selectedFilterValues);
+        }
+        if (key === 'StructureUnitType' || key === 'EPC') {
+            return this.#matchesBuildingModelField(filterableBuildingModel, buildingsArray, key, removeQuotes);
+        }
+        return this.#matchesFilterableBuildingField(filterableBuildingModel, key, removeQuotes);
+    }
+
+    #matchesEpcExpiry(filterableBuildingModel: FilterableBuildingModel, selectedFilterValues: string[]): boolean {
+        const lodgementDate = filterableBuildingModel.LodgementDate;
+        if (!lodgementDate) {
+            return false;
+        }
+
+        const tenYearsAgo = new Date();
+        tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+        const isExpired = new Date(lodgementDate) < tenYearsAgo;
+        return (selectedFilterValues.includes('EPC Expired') && isExpired) || (selectedFilterValues.includes('EPC In Date') && !isExpired);
+    }
+
+    #matchesBuildingModelField(
+        filterableBuildingModel: FilterableBuildingModel,
+        buildingsArray: BuildingModel[],
+        key: 'StructureUnitType' | 'EPC',
+        removeQuotes: string[],
+    ): boolean {
+        const matchedBuildingModel = buildingsArray.find((building) => building.UPRN === filterableBuildingModel.UPRN);
+        if (!matchedBuildingModel) {
+            return false;
+        }
+
+        // eslint-disable-next-line
+        // @ts-ignore
+        return removeQuotes.includes(matchedBuildingModel[key as keyof BuildingModel]);
+    }
+
+    #matchesFilterableBuildingField(filterableBuildingModel: FilterableBuildingModel, key: keyof FilterProps, removeQuotes: string[]): boolean {
+        if (key === 'RoofAspectAreaDirection') {
+            return removeQuotes
+                .map((direction) => filterableBuildingModel[this.#roofAspectAreaDirectionFieldMap[direction] as keyof FilterableBuildingModel])
+                .every((fieldValue) => !!fieldValue);
+        }
+
+        let mappedKeys = removeQuotes;
+        if (key === 'HasRoofSolarPanels') {
+            mappedKeys = removeQuotes.map((value) => {
+                if (value === 'HasSolarPanels') return 'true';
+                if (value === 'NoSolarPanels') return 'false';
+                return '';
+            });
+        }
+
+        // eslint-disable-next-line
+        // @ts-ignore
+        return mappedKeys.includes(filterableBuildingModel[key as keyof FilterableBuildingModel]?.toString());
     }
 
     public epcExpired(lodgementDate?: string): boolean {

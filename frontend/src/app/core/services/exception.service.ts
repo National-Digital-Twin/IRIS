@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpEvent, HttpStatusCode } from '@angular/common/ht
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { environment } from '@environment';
-import { EMPTY, OperatorFunction, catchError, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, Observable, OperatorFunction, catchError, switchMap, tap, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ExceptionService implements ErrorHandler {
@@ -30,23 +30,37 @@ export class ExceptionService implements ErrorHandler {
             request$.pipe(
                 catchError((httpError: HttpErrorResponse) => {
                     const { url, status, error } = httpError;
-                    const message = error instanceof ErrorEvent ? `Client-side/network error: ${error.message}` : `Server error ${status}: ${error.message}`;
-
-                    if (url?.includes(environment.transparent_proxy.url) && (status === HttpStatusCode.Unauthorized || status === HttpStatusCode.Forbidden)) {
-                        this.handleError(new Error(`Unauthorized API request. ${error.message}`));
-
-                        return this.#snackBar
-                            .open('Your session has expired. Please login again.', 'Ok', { duration: 0, politeness: 'assertive' })
-                            .afterDismissed()
-                            .pipe(
-                                tap(() => this.#location.reload()),
-                                switchMap(() => throwError(() => EMPTY)),
-                            );
+                    if (this.#isUnauthorizedTransparentProxyRequest(url, status)) {
+                        return this.#handleUnauthorizedRequest(error);
                     }
 
-                    this.handleError(new Error(message));
+                    this.handleError(new Error(this.#formatHttpErrorMessage(error, status)));
                     return throwError(() => httpError);
                 }),
+            );
+    }
+
+    #formatHttpErrorMessage(error: unknown, status: number): string {
+        if (error instanceof ErrorEvent) {
+            return `Client-side/network error: ${error.message}`;
+        }
+        return `Server error ${status}: ${(error as { message?: string })?.message}`;
+    }
+
+    #isUnauthorizedTransparentProxyRequest(url: string | null, status: number): boolean {
+        const isTransparentProxyUrl = url?.includes(environment.transparent_proxy.url) ?? false;
+        const isUnauthorizedStatus = status === HttpStatusCode.Unauthorized || status === HttpStatusCode.Forbidden;
+        return isTransparentProxyUrl && isUnauthorizedStatus;
+    }
+
+    #handleUnauthorizedRequest(error: unknown): Observable<never> {
+        this.handleError(new Error(`Unauthorized API request. ${(error as { message?: string })?.message}`));
+        return this.#snackBar
+            .open('Your session has expired. Please login again.', 'Ok', { duration: 0, politeness: 'assertive' })
+            .afterDismissed()
+            .pipe(
+                tap(() => this.#location.reload()),
+                switchMap(() => throwError(() => EMPTY)),
             );
     }
 }

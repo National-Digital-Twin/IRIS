@@ -267,6 +267,38 @@ def write_records(engine, records):
     logger.info(f"Committing {len(records)} records to the cross reference table.")
 
 
+def _update_match_counts(record, matched, unmatched):
+    if record["uprn"] is None and record["match_score"] is None:
+        return matched, unmatched + 1
+    return matched + 1, unmatched
+
+
+def _log_progress(matched, unmatched):
+    total_processed = matched + unmatched
+    if total_processed == 10:
+        logger.debug(f"UPRN found for {matched} records so far.")
+        logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
+    if total_processed % LOG_INTERVAL == 0:
+        logger.info(f"UPRN found for {matched} records so far.")
+        logger.info(f"A UPRN could not be found for {unmatched} records so far.")
+
+
+def _flush_batch_if_needed(engine, batch):
+    if len(batch) == COMMIT_INTERVAL:
+        write_records(engine, batch)
+        return []
+    return batch
+
+
+def _handle_output_record(engine, record, batch, matched, unmatched, written):
+    matched, unmatched = _update_match_counts(record, matched, unmatched)
+    batch.append(record)
+    written += 1
+    _log_progress(matched, unmatched)
+    batch = _flush_batch_if_needed(engine, batch)
+    return batch, matched, unmatched, written
+
+
 def main():
 
     engine = get_db_connection(DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
@@ -316,26 +348,9 @@ def main():
             except Empty:
                 continue # wait for more records to be added to the out queue by the workers
 
-            if record["uprn"] is None and record["match_score"] is None:
-                unmatched += 1
-            else:
-                matched += 1
-
-            batch.append(record)
-            written += 1
-
-            if (matched+unmatched) == 10:
-                logger.debug(f"UPRN found for {matched} records so far.")
-                logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
-
-            if (matched+unmatched) % LOG_INTERVAL == 0:
-                logger.info(f"UPRN found for {matched} records so far.")
-                logger.info(f"A UPRN could not be found for {unmatched} records so far.")
-            
-            # write to DB 
-            if len(batch) == COMMIT_INTERVAL:
-                write_records(engine, batch)
-                batch = []
+            batch, matched, unmatched, written = _handle_output_record(
+                engine, record, batch, matched, unmatched, written
+            )
 
         # write any leftover records
         if batch:
@@ -348,6 +363,5 @@ def main():
 
 if __name__ == "__main__":
      main()
-
 
 

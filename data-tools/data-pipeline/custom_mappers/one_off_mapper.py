@@ -58,18 +58,14 @@ class OneOffMapper:
                                     f"None returned by mapping function for offset {index}"
                                 )
 
-                            if index > 0 and index % 25000 == 0:
-                                logger.info(
-                                    f"Processed {index} records, {total_records_sent_to_dlq} records sent to DLQ, {source.remaining()} records remaining"
-                                )
+                            self.__log_progress_if_needed(
+                                logger, source, index, total_records_sent_to_dlq
+                            )
 
-                            if (
-                                total_records_processed >= total_records_to_map
-                                and source.remaining() == 0
+                            if self.__is_finished(
+                                source, total_records_processed, total_records_to_map
                             ):
-                                logger.info(
-                                    f"Finished processing all records in {self.source_topic}!"
-                                )
+                                self.__log_finished(logger)
                                 break
 
                         except Exception as err:
@@ -78,13 +74,10 @@ class OneOffMapper:
                             target_dlq.send(record)
                             total_records_sent_to_dlq += 1
 
-                            if (
-                                total_records_processed >= total_records_to_map
-                                and source.remaining() == 0
+                            if self.__is_finished(
+                                source, total_records_processed, total_records_to_map
                             ):
-                                logger.info(
-                                    f"Finished processing all records in {self.source_topic}!"
-                                )
+                                self.__log_finished(logger)
                                 break
 
     def __create_logger(self) -> CoreLoggerAdapter:
@@ -93,3 +86,26 @@ class OneOffMapper:
             kafka_config=self.kafka_producer_config,
             topic=f"{self.target_topic}-logging",
         )
+
+    def __log_progress_if_needed(
+        self,
+        logger: CoreLoggerAdapter,
+        source: KafkaSource,
+        index: int,
+        total_records_sent_to_dlq: int,
+    ) -> None:
+        if index > 0 and index % 25000 == 0:
+            logger.info(
+                f"Processed {index} records, {total_records_sent_to_dlq} records sent to DLQ, {source.remaining()} records remaining"
+            )
+
+    def __is_finished(
+        self, source: KafkaSource, total_records_processed: int, total_records_to_map: int
+    ) -> bool:
+        return (
+            total_records_processed >= total_records_to_map
+            and source.remaining() == 0
+        )
+
+    def __log_finished(self, logger: CoreLoggerAdapter) -> None:
+        logger.info(f"Finished processing all records in {self.source_topic}!")

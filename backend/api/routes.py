@@ -873,6 +873,104 @@ def apply_epc_fallback(building: DetailedBuilding, pg_row):
             setattr(building, field, value)
 
 
+def _merge_ngd_pg_fallback(
+    pg: DetailedBuildingSchema,
+    ngd_roof_material_results,
+    ngd_solar_panel_presence_results,
+    ngd_roof_shape_results,
+    ngd_roof_aspect_areas_results,
+):
+    def or_pg(current, builder):
+        return current if has_bindings(current) else builder()
+
+    ngd_roof_material_results = or_pg(
+        ngd_roof_material_results, lambda: {"roof_material": pg.roof_material}
+    )
+    ngd_solar_panel_presence_results = or_pg(
+        ngd_solar_panel_presence_results,
+        lambda: {"solar_panel_presence": pg.solar_panel_presence},
+    )
+    ngd_roof_shape_results = or_pg(
+        ngd_roof_shape_results, lambda: {"roof_shape": pg.roof_shape}
+    )
+    ngd_roof_aspect_areas_results = or_pg(
+        ngd_roof_aspect_areas_results,
+        lambda: {
+            "roof_aspect_area_facing_north_m2": pg.roof_aspect_area_facing_north_m2,
+            "roof_aspect_area_facing_north_east_m2": pg.roof_aspect_area_facing_north_east_m2,
+            "roof_aspect_area_facing_east_m2": pg.roof_aspect_area_facing_east_m2,
+            "roof_aspect_area_facing_south_east_m2": pg.roof_aspect_area_facing_south_east_m2,
+            "roof_aspect_area_facing_south_m2": pg.roof_aspect_area_facing_south_m2,
+            "roof_aspect_area_facing_south_west_m2": pg.roof_aspect_area_facing_south_west_m2,
+            "roof_aspect_area_facing_west_m2": pg.roof_aspect_area_facing_west_m2,
+            "roof_aspect_area_facing_north_west_m2": pg.roof_aspect_area_facing_north_west_m2,
+            "roof_aspect_area_indeterminable_m2": pg.roof_aspect_area_indeterminable_m2,
+        },
+    )
+    return (
+        ngd_roof_material_results,
+        ngd_solar_panel_presence_results,
+        ngd_roof_shape_results,
+        ngd_roof_aspect_areas_results,
+    )
+
+
+async def _apply_ngd_pg_fallback_if_required(
+    uprn: str,
+    db: AsyncSession,
+    ngd_roof_material_results,
+    ngd_solar_panel_presence_results,
+    ngd_roof_shape_results,
+    ngd_roof_aspect_areas_results,
+):
+    fallback_required = any(
+        not has_bindings(r)
+        for r in (
+            ngd_roof_material_results,
+            ngd_solar_panel_presence_results,
+            ngd_roof_shape_results,
+            ngd_roof_aspect_areas_results,
+        )
+    )
+    if not fallback_required:
+        return (
+            ngd_roof_material_results,
+            ngd_solar_panel_presence_results,
+            ngd_roof_shape_results,
+            ngd_roof_aspect_areas_results,
+        )
+
+    data = await db.execute(text(get_all_ngd_attributes_pg()), {"uprn": uprn})
+    rows = [DetailedBuildingSchema.from_orm(row) for row in data]
+    if len(rows) != 1:
+        return (
+            ngd_roof_material_results,
+            ngd_solar_panel_presence_results,
+            ngd_roof_shape_results,
+            ngd_roof_aspect_areas_results,
+        )
+
+    return _merge_ngd_pg_fallback(
+        rows[0],
+        ngd_roof_material_results,
+        ngd_solar_panel_presence_results,
+        ngd_roof_shape_results,
+        ngd_roof_aspect_areas_results,
+    )
+
+
+async def _apply_epc_pg_fallback_if_required(
+    building: DetailedBuilding, db: AsyncSession, uprn: str
+):
+    if not any(is_missing(getattr(building, field)) for field in EPC_FIELDS):
+        return
+
+    geonode_results = await db.execute(text(get_epc_attributes_pg()), {"uprn": uprn})
+    geonode_row = geonode_results.first()
+    if geonode_row:
+        apply_epc_fallback(building, geonode_row)
+
+
 @router.get(
     "/buildings/{uprn}",
     response_model=DetailedBuilding,
@@ -911,50 +1009,19 @@ async def get_building_by_uprn(
         get_forwarding_headers(req.headers),
     )
 
-    # OS NGD Buildings PG fallback
-    fallback_required = any(
-        not has_bindings(r)
-        for r in (
-            ngd_roof_material_results,
-            ngd_solar_panel_presence_results,
-            ngd_roof_shape_results,
-            ngd_roof_aspect_areas_results,
-        )
+    (
+        ngd_roof_material_results,
+        ngd_solar_panel_presence_results,
+        ngd_roof_shape_results,
+        ngd_roof_aspect_areas_results,
+    ) = await _apply_ngd_pg_fallback_if_required(
+        uprn,
+        db,
+        ngd_roof_material_results,
+        ngd_solar_panel_presence_results,
+        ngd_roof_shape_results,
+        ngd_roof_aspect_areas_results,
     )
-    if fallback_required:
-        data = await db.execute(text(get_all_ngd_attributes_pg()), {"uprn": uprn})
-        rows = [DetailedBuildingSchema.from_orm(row) for row in data]
-
-        if len(rows) == 1:
-            pg = rows[0]
-
-            def or_pg(current, builder):
-                return current if has_bindings(current) else builder()
-
-            ngd_roof_material_results = or_pg(
-                ngd_roof_material_results, lambda: {"roof_material": pg.roof_material}
-            )
-            ngd_solar_panel_presence_results = or_pg(
-                ngd_solar_panel_presence_results,
-                lambda: {"solar_panel_presence": pg.solar_panel_presence},
-            )
-            ngd_roof_shape_results = or_pg(
-                ngd_roof_shape_results, lambda: {"roof_shape": pg.roof_shape}
-            )
-            ngd_roof_aspect_areas_results = or_pg(
-                ngd_roof_aspect_areas_results,
-                lambda: {
-                    "roof_aspect_area_facing_north_m2": pg.roof_aspect_area_facing_north_m2,
-                    "roof_aspect_area_facing_north_east_m2": pg.roof_aspect_area_facing_north_east_m2,
-                    "roof_aspect_area_facing_east_m2": pg.roof_aspect_area_facing_east_m2,
-                    "roof_aspect_area_facing_south_east_m2": pg.roof_aspect_area_facing_south_east_m2,
-                    "roof_aspect_area_facing_south_m2": pg.roof_aspect_area_facing_south_m2,
-                    "roof_aspect_area_facing_south_west_m2": pg.roof_aspect_area_facing_south_west_m2,
-                    "roof_aspect_area_facing_west_m2": pg.roof_aspect_area_facing_west_m2,
-                    "roof_aspect_area_facing_north_west_m2": pg.roof_aspect_area_facing_north_west_m2,
-                    "roof_aspect_area_indeterminable_m2": pg.roof_aspect_area_indeterminable_m2,
-                },
-            )
     building = map_single_building_response(
         uprn,
         building_results,
@@ -968,12 +1035,7 @@ async def get_building_by_uprn(
         ngd_roof_aspect_areas_results,
     )
 
-    # EPC fallback
-    if any(is_missing(getattr(building, f)) for f in EPC_FIELDS):
-        geonode_results = await db.execute(text(get_epc_attributes_pg()), {"uprn": uprn})
-        geonode_row = geonode_results.first()
-        if geonode_row:
-            apply_epc_fallback(building, geonode_row)
+    await _apply_epc_pg_fallback_if_required(building, db, uprn)
     
     return building
 

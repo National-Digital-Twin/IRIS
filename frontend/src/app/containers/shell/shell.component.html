@@ -92,19 +92,19 @@
             <mat-menu #menu="matMenu" class="profile-menu">
                 <p>{{ this.userEmail }}</p>
                 <mat-divider></mat-divider>
-                <button mat-menu-item class="control" aria-label="help" (keydown.space)="showInfo()" (click)="showInfo()">
+                <button mat-menu-item class="control" aria-label="User guide" (keydown.space)="showInfo()" (click)="showInfo()">
                     <mat-icon aria-label="user guide">account_box</mat-icon>
                     <span>User guide</span>
                 </button>
-                <button mat-menu-item class="control" aria-label="accessibility settings button" (click)="sidenav.open()">
+                <button mat-menu-item class="control" aria-label="Settings" (click)="sidenav.open()">
                     <mat-icon aria-label="accessibility settings">settings</mat-icon>
                     <span>Settings</span>
                 </button>
-                <button mat-menu-item class="control" aria-label="privacy notice button" (click)="showPrivacy = true">
+                <button mat-menu-item class="control" aria-label="Privacy notice" (click)="showPrivacy = true">
                     <mat-icon aria-label="privacy notice">lock</mat-icon>
                     <span>Privacy notice</span>
                 </button>
-                <button mat-menu-item class="control" aria-label="sign out button" (click)="handleSignout()">
+                <button mat-menu-item class="control" aria-label="Sign out" (click)="handleSignout()">
                     <mat-icon aria-label="sign out">logout</mat-icon>
                     <span>Sign out</span>
                 </button>
