@@ -13,4 +13,4 @@ DATA_VIEW=iris.district_borough_unitary_epc_data MATERIALIZED_VIEW=iris.district
 DATA_VIEW=iris.boundary_line_ceremonial_counties_epc_data MATERIALIZED_VIEW=iris.boundary_line_ceremonial_counties_epc TARGET_TABLE=boundary_line_ceremonial_counties GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=boundary_line_ceremonial_counties python developer-resources/load_gpkg_to_postgis.py
 TARGET_TABLE=country_region GPKG_SOURCE='https://api.os.uk/downloads/v1/products/BoundaryLine/downloads?area=GB&format=GeoPackage&redirect' GPKG_TABLE=country_region python developer-resources/load_gpkg_to_postgis.py
 python developer-resources/sync_region_fks_dbu.py
-python api/main.py --host 0.0.0.0
+HOST=0.0.0.0 python api/main.py

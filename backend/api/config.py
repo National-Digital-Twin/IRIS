@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "DEV"
     PORT: int = 5021
+    HOST: str = "127.0.0.1"
 
     DB_USERNAME: str
     DB_PASSWORD: str
