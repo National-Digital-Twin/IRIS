@@ -18,15 +18,16 @@ RUN groupadd --system appuser && useradd --system --gid appuser --create-home ap
 
 ENV PATH /home/worker/.local/bin:${PATH}
 
-COPY requirements.txt .
+COPY --chmod=0444 requirements.txt ./requirements.txt
 RUN --mount=type=secret,id=pat_token \
     export GITHUB_ACCESS_TOKEN=$(cat /run/secrets/pat_token) && \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
-COPY --chown=appuser:appuser --chmod=0555 api api
-COPY --chown=appuser:appuser --chmod=0555 developer-resources developer-resources
-COPY --chown=appuser:appuser --chmod=0555 developer-resources/load_gpkg_to_postgis.py ./load_gpkg_to_postgis.py
-COPY --chown=appuser:appuser --chmod=0444 alembic.ini setup.cfg version.txt ./
-COPY --chown=appuser:appuser --chmod=0555 entrypoint.sh ./entrypoint.sh
+COPY --chmod=0555 api api
+COPY --chmod=0555 developer-resources developer-resources
+COPY --chmod=0444 alembic.ini ./alembic.ini
+COPY --chmod=0444 setup.cfg ./setup.cfg
+COPY --chmod=0444 version.txt ./version.txt
+COPY --chmod=0555 entrypoint.sh ./entrypoint.sh
 USER appuser
 ENTRYPOINT ["./entrypoint.sh"]
