@@ -90,6 +90,11 @@ export class DetailsPanelComponent {
         switchMap((b) => (b ? this.#climateDataService.getIcingDaysBuildingData(b.UPRN) : EMPTY)),
     );
 
+    public readonly buildingHotSummerDaysData$ = toObservable(this.buildingDetails).pipe(
+        takeUntilDestroyed(),
+        switchMap((b) => (b ? this.#climateDataService.getHotSummerDaysBuildingData(b.UPRN) : EMPTY)),
+    );
+
     public getAddressSegment(index: number): string {
         return this.#utilService.splitAddress(index, this.buildingDetails()?.FullAddress);
     }

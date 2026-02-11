@@ -6,7 +6,7 @@ import { HotSummerDaysSectionItem } from '@components/hot-summer-days-section-it
 import { HoursOfSunlightSectionItem } from '@components/hours-of-sunlight-section-item/hours-of-sunlight-section-item';
 import { IcingDaysSectionItem } from '@components/icing-days-section-item/icing-days-section-item';
 import { WindDrivenRainSectionItem } from '@components/wind-driven-rain-section-item/wind-driven-rain-section-item';
-import { BuildingIcingDaysData, BuildingWindDrivenRainData } from '@core/services/climate-data.service';
+import { BuildingHotSummerDaysData, BuildingIcingDaysData, BuildingWindDrivenRainData } from '@core/services/climate-data.service';
 
 @Component({
     selector: 'c477-more-info-section',
@@ -25,6 +25,7 @@ import { BuildingIcingDaysData, BuildingWindDrivenRainData } from '@core/service
 export class MoreInfoSection {
     @Input() public buildingWindDrivenRainData: BuildingWindDrivenRainData | null = null;
     @Input() public buildingIcingDaysData: BuildingIcingDaysData | null = null;
+    @Input() public buildingHotSummerDaysData: BuildingHotSummerDaysData | null = null;
 }
 
 // SPDX-License-Identifier: Apache-2.0
