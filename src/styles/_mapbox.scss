@@ -61,6 +61,90 @@
             }
         }
 
+        &.deprivation-popup {
+            .popup-header {
+                display: flex;
+                gap: 0.5rem;
+                align-items: flex-start;
+
+                margin-bottom: 0.25rem;
+                padding-right: 3.5rem;
+
+                h3 {
+                    flex: 1;
+                    line-height: 1.25;
+                }
+
+                .info-tooltip-container {
+                    position: relative;
+
+                    .info-button {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        width: 1.4rem;
+                        height: 1.5rem;
+                        border: 2px solid var(--mat-sys-outline);
+                        border-radius: 9999px;
+
+                        color: var(--mat-sys-on-surface);
+
+                        &:hover {
+                            background-color: var(--mat-sys-surface-container-high);
+                        }
+                    }
+
+                    .info-tooltip {
+                        position: absolute;
+                        z-index: 1000;
+                        left: 3rem;
+                        transform: translateY(calc(-50% - 0.75rem));
+
+                        width: 18rem;
+                        padding: 1rem;
+                        border-radius: 0.5rem;
+
+                        background-color: var(--mat-sys-surface-container-low);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+                        .info-tooltip-header {
+                            font-weight: var(--mat-sys-label-large-weight);
+                        }
+                    }
+                }
+            }
+        }
+
+        .deprivation-histogram {
+            .chart {
+                gap: 0.25rem;
+
+                .bar {
+                    max-width: none;
+                    margin: 0;
+
+                    .line {
+                        width: 100%;
+                        margin-right: 0;
+                    }
+                }
+            }
+
+            .labels {
+                gap: 0.25rem;
+                align-items: flex-start;
+                margin-top: 0.5rem;
+
+                span {
+                    line-height: 1.15;
+                    text-wrap: wrap;
+                    overflow-wrap: anywhere;
+                    white-space: normal;
+                }
+            }
+        }
+
         .footnote {
             justify-self: center;
             font-size: var(--mat-sys-label-small-size);

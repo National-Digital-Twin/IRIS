@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { ClimateDataService } from '@core/services/climate-data.service';
+import { DemographicsDataService } from '@core/services/demographics-data.service';
 import { EPCDataService, EPCType } from '@core/services/epc-data.service';
 import { ScriptLoaderService } from '@core/services/script-loader.service';
 import { AbstractBaseLayer } from './base-layer.abstract';
 import { BaseLayer } from './base-layer.interface';
 import { DemoLayer } from './demo-layer';
+import { DeprivationLayer } from './deprivation.layer';
 import { EPCLayer } from './epc.layer';
 import { HotSummerDaysLayer } from './hot-summer-days.layer';
 import { IcingDaysLayer } from './icing-days.layer';
@@ -13,6 +15,7 @@ import { WindDrivenRainLayer, WindDrivenRainLayerConfig } from './wind-driven-ra
 @Injectable({ providedIn: 'root' })
 export class LayerFactoryService {
     readonly #climateDataService = inject(ClimateDataService);
+    readonly #demographicsDataService = inject(DemographicsDataService);
     readonly #epcDataService = inject(EPCDataService);
     readonly #scriptLoader = inject(ScriptLoaderService);
 
@@ -57,6 +60,9 @@ export class LayerFactoryService {
 
         const icingDaysLayer = new IcingDaysLayer(this.#climateDataService);
         this.layers.set('icing-days-layer', icingDaysLayer);
+
+        const deprivationLayer = new DeprivationLayer(this.#demographicsDataService);
+        this.layers.set('deprivation-layer', deprivationLayer);
     }
 
     private initializeEPCLayers(): void {
