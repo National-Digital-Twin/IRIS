@@ -94,6 +94,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
             },
             icingDays: false,
             hotSummerDays: false,
+            deprivation: false,
         };
     }
 
@@ -387,6 +388,24 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    public toggleDeprivationLayer(): void {
+        const layerId = 'deprivation-layer';
+        const layer = this.#layerFactory.getLayer(layerId);
+
+        if (layer) {
+            if (this.layerStates.deprivation) {
+                layer.hide();
+                this.hideOutlineLayer(`${layerId}-outline`);
+                this.layerStates.deprivation = false;
+            } else {
+                this.hideAllLayers();
+                layer.show();
+                this.layerStates.deprivation = true;
+            }
+            this.updateLayersVisibility();
+        }
+    }
+
     private hideAllLayers(): void {
         this.hideLayerGroup(this.layerStates.epc, 'epc', '-layer');
         this.hideLayerGroup(this.layerStates.epc, 'epc', '-layer-outline');
@@ -407,6 +426,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
             `${hotSummerDaysLayer}-outline`,
             () => this.layerStates.hotSummerDays,
             (value) => (this.layerStates.hotSummerDays = value),
+        );
+
+        const deprivationLayer = 'deprivation-layer';
+        this.hideSingleLayerWithOutline(
+            deprivationLayer,
+            `${deprivationLayer}-outline`,
+            () => this.layerStates.deprivation,
+            (value) => (this.layerStates.deprivation = value),
         );
     }
 
