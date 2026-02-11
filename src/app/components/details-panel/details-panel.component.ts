@@ -1,5 +1,6 @@
-import { DatePipe, NgClass, NgTemplateOutlet } from '@angular/common';
+import { AsyncPipe, DatePipe, NgClass, NgTemplateOutlet } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, InputSignal, OutputEmitterRef, inject, input, output } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -27,8 +28,10 @@ import { RoofShape } from '@core/enums/roof-shape';
 import { SolarPanelPresence } from '@core/enums/solar-panel-presence';
 import { BuildingModel } from '@core/models/building.model';
 import { DownloadDataWarningData, DownloadDataWarningResponse } from '@core/models/download-data-warning.model';
+import { ClimateDataService } from '@core/services/climate-data.service';
 import { DataService } from '@core/services/data.service';
 import { UtilService } from '@core/services/utils.service';
+import { EMPTY, switchMap } from 'rxjs';
 
 @Component({
     selector: 'c477-details-panel',
@@ -44,6 +47,7 @@ import { UtilService } from '@core/services/utils.service';
         LabelComponent,
         InfoPanelComponent,
         MoreInfoSection,
+        AsyncPipe,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     templateUrl: './details-panel.component.html',
@@ -53,6 +57,7 @@ export class DetailsPanelComponent {
     readonly #dataService = inject(DataService);
     readonly #dialog = inject(MatDialog);
     readonly #utilService = inject(UtilService);
+    readonly #climateDataService = inject(ClimateDataService);
 
     public resultsPanelCollapsed: InputSignal<boolean> = input(false);
 
@@ -74,6 +79,11 @@ export class DetailsPanelComponent {
     public roofMaterial: Record<string, string> = RoofMaterial;
     public roofShape: Record<string, string> = RoofShape;
     public solarPanelPresence: Record<string, string> = SolarPanelPresence;
+
+    public readonly buildingWindDrivenRainData$ = toObservable(this.buildingDetails).pipe(
+        takeUntilDestroyed(),
+        switchMap((b) => (b ? this.#climateDataService.getWindDrivenRainBuildingData(b.UPRN) : EMPTY)),
+    );
 
     public getAddressSegment(index: number): string {
         return this.#utilService.splitAddress(index, this.buildingDetails()?.FullAddress);
