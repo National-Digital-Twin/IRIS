@@ -14,6 +14,10 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
+## Unreleased
+
+- [DPAV-2487]: added high deprivation layer and associated popover
+
 ## [0.95.1] - 2026-01-22
 
 - [DPAV-2532]: refactored popup registration and management within the map to fix routing issues
