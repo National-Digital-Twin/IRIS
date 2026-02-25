@@ -133,5 +133,29 @@ describe('SunlightHoursByAreaChartComponent', () => {
 
             expect(trace.x).toEqual([4.8]);
         });
+
+        it('should colour the "National average" bar dark blue (#002244)', () => {
+            const dataWithNationalAverage: SunlightHoursRegionData[] = [
+                { area_name: 'Area average', average_daily_sunlight_hours: 4.8 },
+                { area_name: 'National average', average_daily_sunlight_hours: 5.0 },
+            ];
+
+            component['sunlightHoursAreaData'].set(dataWithNationalAverage);
+
+            component.selectedAreas.set(dataWithNationalAverage.map((d) => d.area_name));
+
+            fixture.detectChanges();
+
+            const chartData = component.chartData();
+            const trace = chartData[0] as PlotData;
+
+            const yValues = trace.y as string[];
+            const colors = trace.marker?.color as string[];
+
+            const nationalIndex = yValues.indexOf('National average');
+
+            expect(nationalIndex).toBeGreaterThan(-1);
+            expect(colors[nationalIndex]).toBe('#002244');
+        });
     });
 });
