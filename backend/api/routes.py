@@ -6,108 +6,102 @@ import configparser
 import re
 import uuid
 from datetime import datetime
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Tuple
 
 import requests
 from access import AccessClient
 from config import get_settings
 from db import execute_with_timeout, get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from mappers import (
-    map_bounded_buildings_response,
-    map_bounded_filterable_buildings_response,
-    map_percentage_building_attributes_per_region_response,
-    map_epc_statistics_response,
-    map_filter_summary_response,
-    map_flagged_buildings_response,
-    map_single_building_response,
-    map_structure_unit_flag_history_response,
-)
-from models.dto_models import (
-    AverageSapRatingPerLodgementDate,
-    BuildingAttributePercentagesPerRegion,
-    BuildingsAffectedByExtremeWeather,
-    CountOfEpcRatings,
-    CountOfEpcRatingsPerRegion,
-    DetailedBuilding,
-    DetailedBuildingSchema,
-    EPCRatingsByCategory,
-    EpcAndOsBuildingSchema,
-    EpcRatingCountsOvertime,
-    EpcStatistics,
-    FilterableBuilding,
-    FilterableBuildingSchema,
-    FilterSummary,
-    FlaggedBuilding,
-    FlagHistory,
-    FuelTypesByBuildingType,
-    NumberOfInDateAndExpiredEpcs,
-    SapRatingTimelineDataPoint,
-    SimpleBuilding,
-)
-from models.ies_models import (
-    EDH,
-    ClassificationEmum,
-    IesAccount,
-    IesAssessment,
-    IesAssessToBeFalse,
-    IesAssessToBeTrue,
-    IesClass,
-    IesEntity,
-    IesPerson,
-    IesState,
-    IesThing,
-    ies,
-)
+from mappers import (map_bounded_buildings_response,
+                     map_bounded_filterable_buildings_response,
+                     map_building_details_for_bulk_download,
+                     map_building_hot_summer_days_response,
+                     map_building_icing_days_response,
+                     map_building_sunlight_hours_response,
+                     map_building_weather_summary_response,
+                     map_building_wind_driven_rain_response,
+                     map_epc_statistics_response, map_filter_summary_response,
+                     map_flagged_buildings_response,
+                     map_percentage_building_attributes_per_region_response,
+                     map_single_building_response,
+                     map_structure_unit_flag_history_response)
+from models.dto_models import (AverageDailySunlightHoursPerArea,
+                               AverageSapRatingPerLodgementDate,
+                               BuildingAttributePercentagesPerRegion,
+                               BuildingDetailsForBulkDownload,
+                               BuildingDetailsForBulkDownloadSchema,
+                               BuildingExtremeWeatherSummaryData,
+                               BuildingExtremeWeatherSummarySchema,
+                               BuildingHotSummerDaysData,
+                               BuildingHotSummerDaysSchema,
+                               BuildingIcingDaysData, BuildingIcingDaysSchema,
+                               BuildingsAffectedByExtremeWeather,
+                               BuildingsByDeprivationDimension,
+                               BuildingSunlightHoursData,
+                               BuildingSunlightHoursSchema,
+                               BuildingWindDrivenRainData,
+                               BuildingWindDrivenRainSchema, CountOfEpcRatings,
+                               CountOfEpcRatingsPerRegion, DetailedBuilding,
+                               DetailedBuildingSchema, EpcAndOsBuildingSchema,
+                               EpcRatingCountsOvertime, EPCRatingsByCategory,
+                               EpcStatistics, FilterableBuilding,
+                               FilterableBuildingSchema, FilterSummary,
+                               FuelTypesByBuildingType,
+                               NumberOfInDateAndExpiredEpcs,
+                               SapRatingTimelineDataPoint, SimpleBuilding)
+from models.ies_models import (EDH, ClassificationEmum, IesAccount,
+                               IesAssessment, IesAssessToBeFalse,
+                               IesAssessToBeTrue, IesClass, IesEntity,
+                               IesPerson, IesState, IesThing, ies)
 from pydantic import AfterValidator, BaseModel
-from query import (
-    get_all_ngd_attributes_pg,
-    get_building,
-    get_epc_attributes_pg,
-    get_buildings_affected_by_extreme_weather_data_query,
-    get_buildings_in_bounding_box_query,
-    get_count_of_epc_rating_by_area_level_query,
-    get_count_of_epc_rating_by_features_query,
-    get_count_of_epc_rating_query,
-    get_county_names_query,
-    get_district_names_query,
-    get_epc_ratings_overtime_query,
-    get_filterable_buildings_in_bounding_box_query,
-    get_filtered_avg_sap_rating_overtime_query,
-    get_flag_history,
-    get_flagged_buildings,
-    get_floor_for_building,
-    get_fuel_types_by_building_type_query,
-    get_fueltype_for_building,
-    get_national_avg_sap_rating_overtime_query,
-    get_ngd_roof_aspect_areas_for_building,
-    get_ngd_roof_material_for_building,
-    get_ngd_roof_shape_for_building,
-    get_ngd_solar_panel_presence_for_building,
-    get_number_of_in_date_and_expired_epcs_query,
-    get_percentage_of_buildings_attributes_per_region_query,
-    get_region_names_query,
-    get_roof_for_building,
-    get_sap_rating_overtime_by_area_query,
-    get_sap_rating_overtime_by_property_type_query,
-    get_statistics_for_wards,
-    get_walls_and_windows_for_building,
-    get_ward_names_query,
-)
+from query import (get_all_ngd_attributes_pg,
+                   get_average_daily_sunlight_hours_query,
+                   get_building, get_building_details_for_bulk_download_query,
+                   get_buildings_affected_by_extreme_weather_data_query,
+                   get_buildings_by_deprivation_dimension_query,
+                   get_buildings_in_bounding_box_query,
+                   get_count_of_epc_rating_by_area_level_query,
+                   get_count_of_epc_rating_by_features_query,
+                   get_count_of_epc_rating_query, get_county_names_query,
+                   get_district_names_query, get_epc_attributes_pg,
+                   get_epc_ratings_overtime_query,
+                   get_filterable_buildings_in_bounding_box_query,
+                   get_filtered_avg_sap_rating_overtime_query,
+                   get_flag_history, get_flagged_buildings,
+                   get_floor_for_building,
+                   get_fuel_types_by_building_type_query,
+                   get_fueltype_for_building,
+                   get_hot_summer_days_data_for_building_query,
+                   get_icing_days_data_for_building_query,
+                   get_national_avg_sap_rating_overtime_query,
+                   get_ngd_roof_aspect_areas_for_building,
+                   get_ngd_roof_material_for_building,
+                   get_ngd_roof_shape_for_building,
+                   get_ngd_solar_panel_presence_for_building,
+                   get_number_of_in_date_and_expired_epcs_query,
+                   get_percentage_of_buildings_attributes_per_region_query,
+                   get_region_names_query, get_roof_for_building,
+                   get_sap_rating_overtime_by_area_query,
+                   get_sap_rating_overtime_by_property_type_query,
+                   get_statistics_for_wards,
+                   get_sunlight_hours_data_for_building_query,
+                   get_walls_and_windows_for_building, get_ward_names_query,
+                   get_weather_summary_data_for_building_query,
+                   get_wind_driven_rain_data_for_building_query)
 from rdflib import Graph
 from requests import codes, exceptions
-from services.climate_service import (
-    fetch_geojson_for_hot_summer_days,
-    fetch_geojson_for_icing_days,
-    fetch_geojson_for_wind_driven_rain,
-)
+from services.climate_service import (fetch_geojson_for_hot_summer_days,
+                                      fetch_geojson_for_icing_days,
+                                      fetch_geojson_for_sunlight_hours,
+                                      fetch_geojson_for_wind_driven_rain)
+from services.demographics_service import fetch_geojson_for_deprivation
 from services.energy_performance_service import (
     fetch_geojson_for_energy_performance_by_counties,
     fetch_geojson_for_energy_performance_by_districts,
     fetch_geojson_for_energy_performance_by_regions,
-    fetch_geojson_for_energy_performance_by_wards,
-)
-from sqlalchemy import text
+    fetch_geojson_for_energy_performance_by_wards)
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_headers as get_forwarding_headers
 from utils import has_bindings, validate_geojson_polygon
@@ -120,7 +114,7 @@ EPC_FIELDS = [
     "built_form",
     "structure_unit_type",
     "floor_construction",
-    "floor_insulation", 
+    "floor_insulation",
     "roof_construction",
     "roof_insulation_location",
     "roof_insulation_thickness",
@@ -453,10 +447,10 @@ def post_person(per: IesPerson):
 
 @router.get("/dashboard/epc-ratings", response_model=List[CountOfEpcRatings])
 async def get_epc_ratings_for_dashboard(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -471,10 +465,10 @@ async def get_epc_ratings_for_dashboard(
     "/dashboard/epc-ratings-per-region", response_model=List[CountOfEpcRatingsPerRegion]
 )
 async def get_epc_ratings_per_region_for_dashboard(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_query(
         per_region=True, polygon=polygon, area_level=area_level, area_names=area_names
@@ -489,10 +483,12 @@ async def get_epc_ratings_per_region_for_dashboard(
     "/dashboard/epc-ratings-by-area-level", response_model=List[EPCRatingsByCategory]
 )
 async def get_epc_ratings_by_area_level_for_dashboard(
-    db: AsyncSession = Depends(get_db),
-    group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
-    filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    filter_area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    group_by_level: Annotated[str, Query(..., pattern=AREA_LEVEL_PATTERN)],
+    filter_area_level: Annotated[
+        Optional[str], Query(pattern=AREA_LEVEL_PATTERN)
+    ] = None,
+    filter_area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_by_area_level_query(
         group_by_level=group_by_level,
@@ -508,11 +504,11 @@ async def get_epc_ratings_by_area_level_for_dashboard(
     "/dashboard/epc-ratings-by-feature", response_model=List[EPCRatingsByCategory]
 )
 async def get_epc_ratings_by_feature_for_dashboard(
-    db: AsyncSession = Depends(get_db),
-    feature: str = Query(..., pattern=FEATURE_PATTERN),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    feature: Annotated[str, Query(..., pattern=FEATURE_PATTERN)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_count_of_epc_rating_by_features_query(
         feature=feature, polygon=polygon, area_level=area_level, area_names=area_names
@@ -527,10 +523,10 @@ async def get_epc_ratings_by_feature_for_dashboard(
     response_model=List[BuildingAttributePercentagesPerRegion],
 )
 async def get_percentage_building_attributes_per_region(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_percentage_of_buildings_attributes_per_region_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -545,10 +541,10 @@ async def get_percentage_building_attributes_per_region(
     response_model=List[AverageSapRatingPerLodgementDate],
 )
 async def get_sap_rating_overtime(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     national_query = get_national_avg_sap_rating_overtime_query()
     national_results = await db.execute(text(national_query))
@@ -580,8 +576,8 @@ async def get_sap_rating_overtime(
     response_model=List[SapRatingTimelineDataPoint],
 )
 async def get_sap_rating_overtime_by_property_type(
-    db: AsyncSession = Depends(get_db),
-    polygon: GeoJSONPolygon = Query(...),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[GeoJSONPolygon, Query(...)],
 ):
     query, params = get_sap_rating_overtime_by_property_type_query(polygon=polygon)
     results = await db.execute(text(query), params)
@@ -593,10 +589,12 @@ async def get_sap_rating_overtime_by_property_type(
     response_model=List[SapRatingTimelineDataPoint],
 )
 async def get_sap_rating_overtime_by_area(
-    db: AsyncSession = Depends(get_db),
-    group_by_level: str = Query(..., pattern=AREA_LEVEL_PATTERN),
-    filter_area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    filter_area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    group_by_level: Annotated[str, Query(..., pattern=AREA_LEVEL_PATTERN)],
+    filter_area_level: Annotated[
+        Optional[str], Query(pattern=AREA_LEVEL_PATTERN)
+    ] = None,
+    filter_area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_sap_rating_overtime_by_area_query(
         group_by_level=group_by_level,
@@ -612,10 +610,10 @@ async def get_sap_rating_overtime_by_area(
     response_model=List[EpcRatingCountsOvertime],
 )
 async def get_epc_ratings_overtime(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_epc_ratings_overtime_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -631,10 +629,10 @@ async def get_epc_ratings_overtime(
     response_model=List[FuelTypesByBuildingType],
 )
 async def get_fuel_types_by_building_type(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_fuel_types_by_building_type_query(
         polygon=polygon, area_level=area_level, area_names=area_names
@@ -650,10 +648,10 @@ async def get_fuel_types_by_building_type(
     response_model=List[BuildingsAffectedByExtremeWeather],
 )
 async def get_buildings_affected_by_extreme_weather(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None, pattern=AREA_LEVEL_PATTERN),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     has_filter = bool(polygon or (area_level and area_names))
     query, params = get_buildings_affected_by_extreme_weather_data_query(
@@ -674,16 +672,57 @@ async def get_buildings_affected_by_extreme_weather(
     response_model=List[NumberOfInDateAndExpiredEpcs],
 )
 async def get_number_of_in_date_and_expired_epcs(
-    db: AsyncSession = Depends(get_db),
-    polygon: Optional[GeoJSONPolygon] = Query(None),
-    area_level: Optional[str] = Query(None),
-    area_names: Optional[List[str]] = Query(None),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
 ):
     query, params = get_number_of_in_date_and_expired_epcs_query(
         polygon=polygon, area_level=area_level, area_names=area_names
     )
     results = await db.execute(text(query), params)
     mapped_results = [NumberOfInDateAndExpiredEpcs.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get(
+    "/dashboard/buildings-by-deprivation-dimension",
+    response_model=List[BuildingsByDeprivationDimension],
+)
+async def get_buildings_by_deprivation_dimension_for_dashboard(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
+):
+    query, params = get_buildings_by_deprivation_dimension_query(
+        polygon=polygon, area_level=area_level, area_names=area_names
+    )
+    results = await db.execute(text(query), params)
+    mapped_results = [BuildingsByDeprivationDimension.from_orm(row) for row in results]
+
+    return mapped_results
+
+
+@router.get(
+    "/dashboard/average-daily-sunlight-hours-by-area-level",
+    response_model=List[AverageDailySunlightHoursPerArea],
+)
+async def get_average_daily_sunlight_hours(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    group_by_level: Annotated[str, Query(..., pattern=AREA_LEVEL_PATTERN)],
+    area_level: Annotated[Optional[str], Query(pattern=AREA_LEVEL_PATTERN)] = None,
+    area_names: Annotated[Optional[List[str]], Query()] = None,
+    polygon: Annotated[Optional[GeoJSONPolygon], Query()] = None,
+):
+    query, params = get_average_daily_sunlight_hours_query(
+        group_by_level=group_by_level, area_level=area_level, area_names=area_names, polygon=polygon
+    )
+    results = await db.execute(text(query), params)
+    mapped_results = [
+        AverageDailySunlightHoursPerArea.from_orm(row) for row in results
+    ]
 
     return mapped_results
 
@@ -699,7 +738,7 @@ async def get_buildings_in_bounding_box(
     min_lat: float,
     max_lat: float,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     buildings_in_bounding_box_results = await db.execute(
         text(get_buildings_in_bounding_box_query()),
@@ -729,7 +768,7 @@ async def get_filter_summary(
     min_lat: float,
     max_lat: float,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     detailed_buildings_in_bounding_box_results = await execute_with_timeout(
         db,
@@ -762,7 +801,7 @@ async def get_filterable_buildings_in_bounding_box(
     min_lat: float,
     max_lat: float,
     req: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     filterable_buildings_in_bounding_box_results = await db.execute(
         text(get_filterable_buildings_in_bounding_box_query()),
@@ -798,11 +837,19 @@ class InvalidateFlag(BaseModel):
     securityLabel: EDH = default_security_label
 
 
-@router.post(
-    "/invalidate-flag",
-    description="Post to this endpoint to invalidate an existing flag.",
-    response_model=str,
-)
+# @router.post(
+#     "/invalidate-flag",
+#     description="Post to this endpoint to invalidate an existing flag.",
+#     response_model=str,
+#     responses={
+#         422: {
+#             "description": "assessmentTypeOverride must be a subclass of ndt_ont:AssessToBeFalse"
+#         },
+#         500: {
+#             "description": ACCESS_API_CALL_ERROR,
+#         },
+#     },
+# )
 def invalidate_flag(request: Request, invalid: InvalidateFlag):
     try:
         user = access_client.get_user_details(request.headers)
@@ -817,7 +864,7 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     assessor, person = create_person_insert(user["user_id"], user["username"])
     assessment_time = ISO_8601_URL + datetime.now().isoformat()
     assessment = data_uri_stub + str(uuid.uuid4())
-    (assessment_subclasses, assessment_list) = get_subtypes(
+    assessment_subclasses, _ = get_subtypes(
         prefix_dict["ndt_ont"] + "AssessToBeFalse",
         get_forwarding_headers(request.headers),
     )
@@ -842,13 +889,17 @@ def invalidate_flag(request: Request, invalid: InvalidateFlag):
     run_sparql_update(query=query, securityLabel=invalid.securityLabel)
     return assessment
 
+
 def is_missing(value):
     return value is None or value == "" or value == "NoData"
+
 
 def apply_epc_fallback(building: DetailedBuilding, pg_row):
 
     updates = {
+        "post_code": pg_row.post_code,
         "lodgement_date": str(pg_row.lodgement_date) if pg_row.lodgement_date else None,
+        "sap_rating": pg_row.sap_rating,
         "built_form": pg_row.built_form,
         "structure_unit_type": pg_row.structure_unit_type,
         "floor_construction": pg_row.floor_construction,
@@ -859,7 +910,7 @@ def apply_epc_fallback(building: DetailedBuilding, pg_row):
         "wall_construction": pg_row.wall_construction,
         "wall_insulation": pg_row.wall_insulation,
         "window_glazing": pg_row.window_glazing,
-        "fueltype": pg_row.fuel_type
+        "fueltype": pg_row.fuel_type,
     }
 
     for field, value in updates.items():
@@ -873,7 +924,9 @@ def apply_epc_fallback(building: DetailedBuilding, pg_row):
     description="returns the building that corresponds to the provided UPRN",
 )
 async def get_building_by_uprn(
-    uprn: str, req: Request, db: AsyncSession = Depends(get_db)
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     building_results = run_sparql_query(
         get_building(uprn), get_forwarding_headers(req.headers)
@@ -964,41 +1017,47 @@ async def get_building_by_uprn(
 
     # EPC fallback
     if any(is_missing(getattr(building, f)) for f in EPC_FIELDS):
-        geonode_results = await db.execute(text(get_epc_attributes_pg()), {"uprn": uprn})
+        geonode_results = await db.execute(
+            text(get_epc_attributes_pg()), {"uprn": uprn}
+        )
         geonode_row = geonode_results.first()
         if geonode_row:
             apply_epc_fallback(building, geonode_row)
-    
+
     return building
 
 
-@router.get(
-    "/buildings/{uprn}/flag-history",
-    response_model=list[FlagHistory],
-    description="Gets the flagging and assessment history for a specific building identified by its UPRN",
-)
+# @router.get(
+#     "/buildings/{uprn}/flag-history",
+#     response_model=list[FlagHistory],
+#     description="Gets the flagging and assessment history for a specific building identified by its UPRN",
+# )
 def get_building_flag_history(uprn: str, req: Request):
     query = get_flag_history(uprn)
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_structure_unit_flag_history_response(results)
 
 
-@router.get(
-    "/flagged-buildings",
-    description="Gets all buildings that have been flagged",
-    response_model=list[FlaggedBuilding],
-)
+# @router.get(
+#     "/flagged-buildings",
+#     description="Gets all buildings that have been flagged",
+#     response_model=list[FlaggedBuilding],
+# )
 def get_all_flagged_buildings(req: Request):
     query = get_flagged_buildings()
     results = run_sparql_query(query, get_forwarding_headers(req.headers))
     return map_flagged_buildings_response(results)
 
 
-@router.post(
-    "/flag-to-investigate",
-    description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
-    response_model=str,
-)
+# @router.post(
+#     "/flag-to-investigate",
+#     description="Add a flag to an Entity instance as being worth investigating- URI of Entity must be provided",
+#     response_model=str,
+#     responses={
+#         422: {"description": "URI of flagged entity must be provided"},
+#         500: {"description": ACCESS_API_CALL_ERROR},
+#     },
+# )
 def post_flag_investigate(request: Request, visited: IesEntity):
     if not visited or not visited.uri:
         raise HTTPException(422, "URI of flagged entity must be provided")
@@ -1037,51 +1096,75 @@ def post_flag_investigate(request: Request, visited: IesEntity):
 
 @router.get("/data/climate/wind-driven-rain")
 async def get_wind_driven_rain_data(
-    geojson=Depends(fetch_geojson_for_wind_driven_rain),
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_wind_driven_rain)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/climate/icing-days")
-async def get_icing_days_data(geojson=Depends(fetch_geojson_for_icing_days)):
+async def get_icing_days_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_icing_days)],
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/climate/hot-summer-days")
-async def get_hot_summer_days_data(geojson=Depends(fetch_geojson_for_hot_summer_days)):
+async def get_hot_summer_days_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_hot_summer_days)],
+):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+
+@router.get("/data/climate/sunlight-hours")
+async def get_sunlight_hours_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_sunlight_hours)],
+):
+    return Response(content=geojson, media_type=APPLICATION_JSON)
+
+
+@router.get("/data/demographics/deprivation")
+async def get_deprivation_data(
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_deprivation)],
+):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/wards")
 async def get_energy_performance_data_by_wards(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_wards),
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_energy_performance_by_wards)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/districts")
 async def get_energy_performance_data_by_districts(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_districts),
+    geojson: Annotated[
+        Tuple, Depends(fetch_geojson_for_energy_performance_by_districts)
+    ],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/counties")
 async def get_energy_performance_data_by_counties(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_counties),
+    geojson: Annotated[
+        Tuple, Depends(fetch_geojson_for_energy_performance_by_counties)
+    ],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/data/energy-performance/regions")
 async def get_energy_performance_data_by_regions(
-    geojson=Depends(fetch_geojson_for_energy_performance_by_regions),
+    geojson: Annotated[Tuple, Depends(fetch_geojson_for_energy_performance_by_regions)],
 ):
     return Response(content=geojson, media_type=APPLICATION_JSON)
 
 
 @router.get("/areas/regions", response_model=List[str])
-async def get_regions(db: AsyncSession = Depends(get_db)):
+async def get_regions(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct region names."""
     query = get_region_names_query()
     result = await db.execute(text(query))
@@ -1089,7 +1172,9 @@ async def get_regions(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/areas/counties", response_model=List[str])
-async def get_counties(db: AsyncSession = Depends(get_db)):
+async def get_counties(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct county names."""
     query = get_county_names_query()
     result = await db.execute(text(query))
@@ -1097,7 +1182,9 @@ async def get_counties(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/areas/districts", response_model=List[str])
-async def get_districts(db: AsyncSession = Depends(get_db)):
+async def get_districts(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct district names."""
     query = get_district_names_query()
     result = await db.execute(text(query))
@@ -1105,7 +1192,9 @@ async def get_districts(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/areas/wards", response_model=List[str])
-async def get_wards(db: AsyncSession = Depends(get_db)):
+async def get_wards(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get list of all distinct ward names."""
     query = get_ward_names_query()
     result = await db.execute(text(query))
@@ -1342,3 +1431,174 @@ def get_signout_links():
             )
         else:
             raise HTTPException(codes.internal_server_error, IDENTITY_API_CALL_ERROR)
+
+
+@router.get(
+    "/buildings/{uprn}/wind-driven-rain",
+    response_model=BuildingWindDrivenRainData,
+    description="returns wind driven rain data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {"detail": "Unable to find wind driven rain data for the provided UPRN!"}
+    },
+)
+async def get_wind_driven_rain_data_by_uprn(
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_wind_driven_rain_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find wind driven rain data for the provided UPRN!",
+        )
+
+    row = BuildingWindDrivenRainSchema.from_orm(row)
+    return map_building_wind_driven_rain_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/hot-summer-days",
+    response_model=BuildingHotSummerDaysData,
+    description="returns hot summer days data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find hot summer days data for the provided UPRN!"
+        }
+    },
+)
+async def get_hot_summer_days_data_by_uprn(
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_hot_summer_days_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find hot summer days data for the provided UPRN!",
+        )
+
+    row = BuildingHotSummerDaysSchema.from_orm(row)
+    return map_building_hot_summer_days_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/icing-days",
+    response_model=BuildingIcingDaysData,
+    description="returns icing days data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {"description": "Unable to find icing days data for the provided UPRN!"}
+    },
+)
+async def get_icing_days_data_by_uprn(
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_icing_days_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find icing days data for the provided UPRN!",
+        )
+
+    row = BuildingIcingDaysSchema.from_orm(row)
+    return map_building_icing_days_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/hours-of-sunlight",
+    response_model=BuildingSunlightHoursData,
+    description="returns hours of sunlight data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find hours of sunlight data for the provided UPRN!"
+        }
+    },
+)
+async def get_sunlight_hours_data_by_uprn(
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_sunlight_hours_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find hours of sunlight data for the provided UPRN!",
+        )
+
+    row = BuildingSunlightHoursSchema.from_orm(row)
+    return map_building_sunlight_hours_response(row)
+
+
+@router.get(
+    "/buildings/{uprn}/weather-summary",
+    response_model=BuildingExtremeWeatherSummaryData,
+    description="returns weather summary data for the building that corresponds to the provided UPRN",
+    responses={
+        404: {
+            "description": "Unable to find weather summary data for the provided UPRN!"
+        }
+    },
+)
+async def get_weather_summary_data_by_uprn(
+    uprn: str,
+    req: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_weather_summary_data_for_building_query(uprn)
+    result = await db.execute(text(query), params)
+
+    row = result.first()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unable to find weather summary data for the provided UPRN!",
+        )
+
+    row = BuildingExtremeWeatherSummarySchema.from_orm(row)
+    return map_building_weather_summary_response(row)
+
+
+@router.get(
+    "/data/buildings/download",
+    response_model=List[BuildingDetailsForBulkDownload],
+    description="returns a list of building details for the provided uprns",
+)
+async def get_building_details_for_bulk_download(
+    uprns: Annotated[List[str], Query()],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query, params = get_building_details_for_bulk_download_query(uprns)
+    query_text = text(query)
+    query_text = query_text.bindparams(bindparam("uprns", expanding=True))
+
+    results = await db.execute(query_text, params)
+
+    schema_results = [
+        BuildingDetailsForBulkDownloadSchema.from_orm(row) for row in results
+    ]
+    mapped_results = [
+        map_building_details_for_bulk_download(result) for result in schema_results
+    ]
+
+    return mapped_results
