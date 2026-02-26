@@ -2,9 +2,10 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from utils import expand_wales_region, WELSH_REGIONS
+from utils import WELSH_REGIONS, expand_wales_region
 
 EPC_ACTIVE_TRUE = "epc_active = true"
+REGION_NAME_PRESENT = "region_name IS NOT NULL AND region_name != ''"
 WELSH_REGIONS_SQL = ", ".join(f"'{region}'" for region in sorted(WELSH_REGIONS))
 
 
@@ -240,6 +241,7 @@ def get_fueltype_for_building(uprn: str) -> str:
         }}
     """
 
+
 def get_epc_attributes_pg() -> str:
     return """
         WITH selected_dwelling AS (
@@ -253,7 +255,7 @@ def get_epc_attributes_pg() -> str:
             su.built_form, 
             su.type as structure_unit_type,
             su.fuel_type,
-            ea.lodgement_date, su.window_glazing,
+            ea.lodgement_date, ea.sap_rating, su.window_glazing,
             su.wall_construction, su.wall_insulation,
             su.floor_construction, su.floor_insulation,
             su.roof_construction, 
@@ -264,8 +266,7 @@ def get_epc_attributes_pg() -> str:
         LEFT JOIN LATERAL (
             SELECT
                 id,
-                uprn,
-                epc_rating,
+                sap_rating,
                 lodgement_date
             FROM
                 iris.epc_assessment
@@ -281,6 +282,7 @@ def get_epc_attributes_pg() -> str:
         ON
             su.epc_assessment_id = ea.id;
     """
+
 
 def get_all_ngd_attributes_pg() -> str:
     return """
@@ -637,7 +639,7 @@ def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
         "ST_Within(point, ST_GeomFromGeoJSON(:polygon))",
     ]
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -677,7 +679,7 @@ def _get_epc_rating_query_from_aggregates(
         params["area_names"] = area_names
 
     if per_region:
-        where_conditions.append("region_name IS NOT NULL AND region_name != ''")
+        where_conditions.append(REGION_NAME_PRESENT)
 
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
@@ -709,6 +711,82 @@ def get_count_of_epc_rating_query(
     if polygon:
         return _get_epc_rating_query_with_polygon(per_region, polygon)
     return _get_epc_rating_query_from_aggregates(per_region, area_level, area_names)
+
+
+def _get_average_daily_sunlight_hours_per_area_query(
+    group_by_level: str,
+    area_level: str = None,
+    area_names: list = None,
+):
+    where_conditions = []
+    params = {}
+    other_area_level_group_by = ""
+
+    area_level_column = area_level_to_column(group_by_level)
+
+    if area_level and area_names:
+        area_names = expand_wales_region(area_names)
+
+        where_conditions.append(
+            f"{area_level_to_column(area_level)} = ANY(:area_names)"
+        )
+        params["area_names"] = area_names
+        other_area_level_group_by = ", " + area_level_to_column(area_level)
+
+    per_region = area_level == "region" and group_by_level == "region"
+
+    if per_region:
+        where_conditions.append(REGION_NAME_PRESENT)
+
+        area_level_select = _wales_grouped_column("region_name") + " AS area_name,"
+
+        group_by = "GROUP BY " + _wales_grouped_column("region_name")
+    else:
+        area_level_select = area_level_column + " AS area_name,"
+
+        group_by = "GROUP BY " + area_level_column + other_area_level_group_by
+
+    query = f"""
+        SELECT {area_level_select}
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics_aggregates
+        {"WHERE " + " AND ".join(where_conditions) if any(where_conditions) else ""}
+        {group_by};
+    """
+    return query, params
+
+def _get_average_daily_sunlight_hours_query_with_polygon(
+        polygon: str
+    ):
+
+    params = {"polygon": polygon}
+    where_conditions = ["ST_Within(point, ST_GeomFromGeoJSON(:polygon))"]
+
+    query = f"""
+        SELECT
+            'Area average' AS area_name,
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics
+        WHERE {" AND ".join(where_conditions)}
+
+        UNION ALL
+
+        SELECT
+            'National average' AS area_name,
+            AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
+        FROM iris.building_weather_analytics
+    """
+    return query, params
+
+def get_average_daily_sunlight_hours_query(
+    group_by_level: str,
+    polygon: str = None,
+    area_level: str = None,
+    area_names: list = None,
+):
+    if polygon:
+        return _get_average_daily_sunlight_hours_query_with_polygon(polygon)
+    return _get_average_daily_sunlight_hours_per_area_query(group_by_level, area_level, area_names)
 
 
 def get_percentage_of_buildings_attributes_per_region_query(
@@ -945,6 +1023,105 @@ def get_number_of_in_date_and_expired_epcs_query(
         {where_clause}
         GROUP BY snapshot_date
         ORDER BY snapshot_date;
+    """
+
+    return query, params
+
+
+def get_buildings_by_deprivation_dimension_query(
+    polygon: str = None, area_level: str = None, area_names: list = None
+):
+    """Get percentage of households in each deprivation dimension (0-4)."""
+    params = {}
+    where_conditions = []
+    has_filter = bool(polygon or (area_level and area_names))
+    params["has_filter"] = has_filter
+    join_clause = ""
+
+    if polygon:
+        params["polygon"] = polygon
+        where_conditions.append(
+            "ST_Intersects(mb.geom, ST_Transform(ST_GeomFromGeoJSON(:polygon), 27700))"
+        )
+    elif area_level and area_names:
+        area_names = expand_wales_region(area_names)
+        params["area_names"] = area_names
+        params["area_level"] = area_level
+        join_clause = """
+            JOIN (
+                SELECT DISTINCT oa21cd
+                FROM iris.oa_area_membership_mv
+                WHERE area_level = :area_level
+                  AND area_name = ANY(:area_names)
+            ) am
+              ON dm.oa_id = am.oa21cd
+        """
+
+    where_clause = ""
+    if where_conditions:
+        where_clause = "WHERE " + " AND ".join(where_conditions)
+
+    query = f"""
+        WITH filtered_metrics AS (
+            SELECT dm.dep_0, dm.dep_1, dm.dep_2, dm.dep_3, dm.dep_4
+            FROM iris.ons_deprivation_metrics_analytics dm
+            JOIN iris.oa_boundaries_analytics mb
+              ON dm.oa_id = mb.oa21cd
+            {join_clause}
+            {where_clause}
+        ),
+        filtered_oa_percentages AS (
+            SELECT
+                COALESCE(100.0 * dep_3 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 0) AS dep_3_pct,
+                COALESCE(100.0 * dep_4 / NULLIF(dep_0 + dep_1 + dep_2 + dep_3 + dep_4, 0), 0) AS dep_4_pct
+            FROM filtered_metrics
+        ),
+        filtered_bounds AS (
+            SELECT
+                COALESCE(ROUND(MIN(dep_3_pct), 2), 0) AS min_dep_3_pct,
+                COALESCE(ROUND(MAX(dep_3_pct), 2), 0) AS max_dep_3_pct,
+                COALESCE(ROUND(MIN(dep_4_pct), 2), 0) AS min_dep_4_pct,
+                COALESCE(ROUND(MAX(dep_4_pct), 2), 0) AS max_dep_4_pct
+            FROM filtered_oa_percentages
+        ),
+        totals AS (
+            SELECT
+                COALESCE(SUM(dep_0), 0) AS dep_0,
+                COALESCE(SUM(dep_1), 0) AS dep_1,
+                COALESCE(SUM(dep_2), 0) AS dep_2,
+                COALESCE(SUM(dep_3), 0) AS dep_3,
+                COALESCE(SUM(dep_4), 0) AS dep_4
+            FROM filtered_metrics
+        ),
+        unfiltered_totals AS (
+            SELECT
+                COALESCE(SUM(dm.dep_0), 0) AS dep_0,
+                COALESCE(SUM(dm.dep_1), 0) AS dep_1,
+                COALESCE(SUM(dm.dep_2), 0) AS dep_2,
+                COALESCE(SUM(dm.dep_3), 0) AS dep_3,
+                COALESCE(SUM(dm.dep_4), 0) AS dep_4
+            FROM iris.ons_deprivation_metrics_analytics dm
+        )
+        SELECT
+            CASE
+                WHEN :has_filter THEN COALESCE(ROUND(100.0 * totals.dep_3 / NULLIF(totals.dep_0 + totals.dep_1 + totals.dep_2 + totals.dep_3 + totals.dep_4, 0), 2), 0)
+                ELSE NULL
+            END AS dep_3_pct,
+            CASE
+                WHEN :has_filter THEN COALESCE(ROUND(100.0 * totals.dep_4 / NULLIF(totals.dep_0 + totals.dep_1 + totals.dep_2 + totals.dep_3 + totals.dep_4, 0), 2), 0)
+                ELSE NULL
+            END AS dep_4_pct,
+            totals.dep_3 AS dep_3_count,
+            totals.dep_4 AS dep_4_count,
+            COALESCE(ROUND(100.0 * unfiltered_totals.dep_3 / NULLIF(unfiltered_totals.dep_0 + unfiltered_totals.dep_1 + unfiltered_totals.dep_2 + unfiltered_totals.dep_3 + unfiltered_totals.dep_4, 0), 2), 0) AS unfiltered_dep_3_pct,
+            COALESCE(ROUND(100.0 * unfiltered_totals.dep_4 / NULLIF(unfiltered_totals.dep_0 + unfiltered_totals.dep_1 + unfiltered_totals.dep_2 + unfiltered_totals.dep_3 + unfiltered_totals.dep_4, 0), 2), 0) AS unfiltered_dep_4_pct,
+            filtered_bounds.min_dep_3_pct,
+            filtered_bounds.max_dep_3_pct,
+            filtered_bounds.min_dep_4_pct,
+            filtered_bounds.max_dep_4_pct
+        FROM totals
+        CROSS JOIN unfiltered_totals
+        CROSS JOIN filtered_bounds;
     """
 
     return query, params
@@ -1252,5 +1429,171 @@ def get_sap_rating_overtime_by_area_query(
         GROUP BY {group_by}
         ORDER BY date ASC, name ASC;
     """
+
+    return query, params
+
+
+def get_wind_driven_rain_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT mpps.wdr20_0,
+            mpps.wdr40_0,
+            mpps.wdr20_45,
+            mpps.wdr40_45,
+            mpps.wdr20_90,
+            mpps.wdr40_90,
+            mpps.wdr20_135,
+            mpps.wdr40_135,
+            mpps.wdr20_180,
+            mpps.wdr40_180,
+            mpps.wdr20_225,
+            mpps.wdr40_225,
+            mpps.wdr20_270,
+            mpps.wdr40_270,
+            mpps.wdr20_315,
+            mpps.wdr40_315
+        FROM iris.median_projections_per_shape mpps
+        JOIN iris.building b ON ST_INTERSECTS(mpps.shape::geometry, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_hot_summer_days_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT hsd_baseline_01_20_median,
+            hsd_15_median,
+            hsd_20_median,
+            hsd_25_median,
+            hsd_30_median,
+            hsd_40_median
+        FROM iris.median_summer_days_per_projection msdpp
+        JOIN iris.building b ON ST_INTERSECTS(msdpp.shape, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_icing_days_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT icingdays
+        FROM iris.annual_count_of_icing_days_1991_2020 icing_days
+        JOIN iris.building b ON ST_INTERSECTS(icing_days.shape, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_sunlight_hours_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT sunlight_hours, (sunlight_hours / 365) AS daily_sunlight_hours
+        FROM iris.average_annual_count_of_sunlight_hours_5km aacosh
+        JOIN iris.building b ON ST_INTERSECTS(aacosh.shape, b.point)
+        WHERE b.uprn = :uprn;
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_weather_summary_data_for_building_query(uprn: str):
+
+    query = """
+        SELECT affected_by_icing_days, affected_by_hsds, affected_by_wdr
+        FROM iris.building_extreme_weather_analytics
+        WHERE uprn = :uprn
+    """
+
+    params = {"uprn": uprn}
+
+    return query, params
+
+
+def get_building_details_for_bulk_download_query(uprns: [str]):
+
+    query = """
+        SELECT b.uprn,
+            b.toid,
+            b.first_line_of_address,
+            b.post_code,
+            ST_X(b.point) AS longitude,
+            ST_Y(b.point) AS lattitude,
+            ea.epc_rating,
+            ea.lodgement_date,
+            ea.sap_rating,
+            ea.expiry_date,
+            su.type,
+            su.built_form,
+            su.fuel_type,
+            su.window_glazing,
+            su.wall_construction,
+            su.wall_insulation,
+            su.roof_construction,
+            su.roof_insulation,
+            su.roof_insulation_thickness,
+            su.floor_construction,
+            su.floor_insulation,
+            COALESCE(su.has_roof_solar_panels, bsu.has_roof_solar_panels) AS has_roof_solar_panels,
+            COALESCE(su.roof_material, bsu.roof_material) AS roof_material,
+            COALESCE(su.roof_shape, bsu.roof_shape) AS roof_shape,
+            COALESCE(su.roof_aspect_area_facing_north_m2, bsu.roof_aspect_area_facing_north_m2) AS roof_aspect_area_facing_north_m2,
+            COALESCE(su.roof_aspect_area_facing_north_east_m2, bsu.roof_aspect_area_facing_north_east_m2) AS roof_aspect_area_facing_north_east_m2,
+            COALESCE(su.roof_aspect_area_facing_east_m2, bsu.roof_aspect_area_facing_east_m2) AS roof_aspect_area_facing_east_m2,
+            COALESCE(su.roof_aspect_area_facing_south_east_m2, bsu.roof_aspect_area_facing_south_east_m2) AS roof_aspect_area_facing_south_east_m2,
+            COALESCE(su.roof_aspect_area_facing_south_m2, bsu.roof_aspect_area_facing_south_m2) AS roof_aspect_area_facing_south_m2,
+            COALESCE(su.roof_aspect_area_facing_south_west_m2, bsu.roof_aspect_area_facing_south_west_m2) AS roof_aspect_area_facing_south_west_m2,
+            COALESCE(su.roof_aspect_area_facing_west_m2, bsu.roof_aspect_area_facing_west_m2) AS roof_aspect_area_facing_west_m2,
+            COALESCE(su.roof_aspect_area_facing_north_west_m2, bsu.roof_aspect_area_facing_north_west_m2) AS roof_aspect_area_facing_north_west_m2,
+            COALESCE(su.roof_aspect_area_indeterminable_m2, bsu.roof_aspect_area_indeterminable_m2) AS roof_aspect_area_indeterminable_m2,
+            mpps.wdr20_0,
+            mpps.wdr40_0,
+            mpps.wdr20_45,
+            mpps.wdr40_45,
+            mpps.wdr20_90,
+            mpps.wdr40_90,
+            mpps.wdr20_135,
+            mpps.wdr40_135,
+            mpps.wdr20_180,
+            mpps.wdr40_180,
+            mpps.wdr20_225,
+            mpps.wdr40_225,
+            mpps.wdr20_270,
+            mpps.wdr40_270,
+            mpps.wdr20_315,
+            mpps.wdr40_315,
+            msdpp.hsd_baseline_01_20_median,
+            msdpp.hsd_15_median,
+            msdpp.hsd_20_median,
+            msdpp.hsd_25_median,
+            msdpp.hsd_30_median,
+            msdpp.hsd_40_median,
+            acoid.icingdays,
+            aacosh.sunlight_hours,
+            (aacosh.sunlight_hours / 365) as daily_sunlight_hours
+        FROM iris.building b
+        LEFT JOIN iris.epc_assessment ea ON ea.uprn = b.uprn
+        LEFT JOIN iris.structure_unit su ON ea.id = su.epc_assessment_id
+        LEFT JOIN iris.structure_unit bsu ON b.uprn = bsu.uprn
+        JOIN iris.median_projections_per_shape mpps ON ST_INTERSECTS(mpps.shape::geometry, b.point)
+        JOIN iris.median_summer_days_per_projection msdpp ON ST_INTERSECTS(msdpp.shape, b.point)
+        JOIN iris.annual_count_of_icing_days_1991_2020 acoid ON ST_INTERSECTS(acoid.shape, b.point)
+        JOIN iris.average_annual_count_of_sunlight_hours_5km aacosh ON ST_INTERSECTS(aacosh.shape, b.point)
+        WHERE b.uprn IN :uprns;
+    """
+
+    params = {"uprns": uprns}
 
     return query, params

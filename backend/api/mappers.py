@@ -8,6 +8,18 @@ import re
 from models.dto_models import (
     BuildingAttributePercentage,
     BuildingAttributePercentagesPerRegion,
+    BuildingDetailsForBulkDownload,
+    BuildingDetailsForBulkDownloadSchema,
+    BuildingExtremeWeatherSummaryData,
+    BuildingExtremeWeatherSummarySchema,
+    BuildingHotSummerDaysData,
+    BuildingHotSummerDaysSchema,
+    BuildingIcingDaysData,
+    BuildingIcingDaysSchema,
+    BuildingSunlightHoursData,
+    BuildingSunlightHoursSchema,
+    BuildingWindDrivenRainData,
+    BuildingWindDrivenRainSchema,
     DetailedBuilding,
     EpcAndOsBuildingSchema,
     EpcStatistics,
@@ -170,12 +182,19 @@ def map_fueltype_results(building: DetailedBuilding, results: dict) -> None:
 
 def map_ngd_roof_material_results(building: DetailedBuilding, results: dict) -> None:
 
-    if results and results.get("results") and results["results"].get("bindings"):       # check if results come from Fuseki or from PostGIS
+    if (
+        results and results.get("results") and results["results"].get("bindings")
+    ):  # check if results come from Fuseki or from PostGIS
         for result in results["results"]["bindings"]:
             building.roof_material = get_value_from_result(result, "roofMaterial")
     else:
-        if 'roof_material' in results.keys():
-            building.roof_material = results['roof_material'].replace(' ', '') if results['roof_material'] else results['roof_material']
+        if "roof_material" in results.keys():
+            building.roof_material = (
+                results["roof_material"].replace(" ", "")
+                if results["roof_material"]
+                else results["roof_material"]
+            )
+
 
 def map_ngd_solar_panel_presence_results(
     building: DetailedBuilding, results: dict
@@ -186,8 +205,13 @@ def map_ngd_solar_panel_presence_results(
                 result, "solarPanelPresence"
             )
     else:
-        if 'solar_panel_presence' in results.keys():
-            building.solar_panel_presence = 'HasSolarPanels' if results['solar_panel_presence']=='True' else 'NoSolarPanels'
+        if "solar_panel_presence" in results.keys():
+            building.solar_panel_presence = (
+                "HasSolarPanels"
+                if results["solar_panel_presence"] == "True"
+                else "NoSolarPanels"
+            )
+
 
 def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> None:
     if results and results.get("results") and results["results"].get("bindings"):
@@ -195,14 +219,14 @@ def map_ngd_roof_shape_results(building: DetailedBuilding, results: dict) -> Non
             building.roof_shape = get_value_from_result(result, "roofShape")
     else:
         sag_alignment = {
-            'Pitched': 'PitchedRoofShape',
-            'Flat' : 'FlatRoofShape',
-            'Mixed' : 'MixedRoofShape',
-            'Unknown': 'UnknownRoofShape',
-            None: None
+            "Pitched": "PitchedRoofShape",
+            "Flat": "FlatRoofShape",
+            "Mixed": "MixedRoofShape",
+            "Unknown": "UnknownRoofShape",
+            None: None,
         }
-        if 'roof_shape' in results.keys():
-            building.roof_shape = sag_alignment[results['roof_shape']]
+        if "roof_shape" in results.keys():
+            building.roof_shape = sag_alignment[results["roof_shape"]]
 
 
 def map_ngd_roof_aspect_area_facings_results(
@@ -235,7 +259,6 @@ def map_ngd_roof_aspect_area_facings_results(
     if "roof_aspect_area_facing_north_m2" in results:
         for field, m2 in results.items():
             assign(field, m2)
-
 
 
 def map_single_building_response(
@@ -275,7 +298,9 @@ def map_single_building_response(
     map_ngd_roof_material_results(building, ngd_roof_material_results)
     map_ngd_solar_panel_presence_results(building, ngd_solar_panel_presence_results)
     map_ngd_roof_shape_results(building, ngd_roof_shape_results)
-    map_ngd_roof_aspect_area_facings_results(building, ngd_roof_aspect_area_facings_results)
+    map_ngd_roof_aspect_area_facings_results(
+        building, ngd_roof_aspect_area_facings_results
+    )
 
     return building
 
@@ -644,7 +669,9 @@ def map_filter_summary_response(results: [FilterableBuildingSchema]) -> FilterSu
     return mapped_result
 
 
-def map_percentage_building_attributes_per_region_response(results) -> list[BuildingAttributePercentagesPerRegion]:
+def map_percentage_building_attributes_per_region_response(
+    results,
+) -> list[BuildingAttributePercentagesPerRegion]:
     attribute_mappings = [
         ("percentage_single_glazing", "Single glazing"),
         ("percentage_double_glazing", "Double glazing"),
@@ -665,13 +692,149 @@ def map_percentage_building_attributes_per_region_response(results) -> list[Buil
         attributes = []
         for column_name, label in attribute_mappings:
             value = getattr(row, column_name, 0.0)
-            attributes.append(BuildingAttributePercentage(label=label, value=float(value)))
+            attributes.append(
+                BuildingAttributePercentage(label=label, value=float(value))
+            )
 
         mapped_results.append(
             BuildingAttributePercentagesPerRegion(
-                region_name=row.region_name,
-                attributes=attributes
+                region_name=row.region_name, attributes=attributes
             )
         )
 
     return mapped_results
+
+
+def map_building_wind_driven_rain_response(
+    row: BuildingWindDrivenRainSchema,
+) -> BuildingWindDrivenRainData:
+    data = BuildingWindDrivenRainData(
+        north_two_degrees_median=row.wdr20_0,
+        north_east_two_degrees_median=row.wdr20_45,
+        east_two_degrees_median=row.wdr20_90,
+        south_east_two_degrees_median=row.wdr20_135,
+        south_two_degrees_median=row.wdr20_180,
+        south_west_two_degrees_median=row.wdr20_225,
+        west_two_degrees_median=row.wdr20_270,
+        north_west_two_degrees_median=row.wdr20_315,
+        north_four_degrees_median=row.wdr40_0,
+        north_east_four_degrees_median=row.wdr40_45,
+        east_four_degrees_median=row.wdr40_90,
+        south_east_four_degrees_median=row.wdr40_135,
+        south_four_degrees_median=row.wdr40_180,
+        south_west_four_degrees_median=row.wdr40_225,
+        west_four_degrees_median=row.wdr40_270,
+        north_west_four_degrees_median=row.wdr40_315,
+    )
+
+    return data
+
+
+def map_building_hot_summer_days_response(
+    row: BuildingHotSummerDaysSchema,
+) -> BuildingHotSummerDaysData:
+    data = BuildingHotSummerDaysData(
+        hsd_baseline=row.hsd_baseline_01_20_median,
+        hsd_1_5_degree_above_baseline=row.hsd_15_median,
+        hsd_2_0_degree_above_baseline=row.hsd_20_median,
+        hsd_2_5_degree_above_baseline=row.hsd_25_median,
+        hsd_3_0_degree_above_baseline=row.hsd_30_median,
+        hsd_4_0_degree_above_baseline=row.hsd_40_median,
+    )
+
+    return data
+
+
+def map_building_icing_days_response(row: BuildingIcingDaysSchema):
+    data = BuildingIcingDaysData(icing_days=row.icingdays)
+
+    return data
+
+
+def map_building_sunlight_hours_response(row: BuildingSunlightHoursSchema):
+    data = BuildingSunlightHoursData(
+        sunlight_hours=row.sunlight_hours, daily_sunlight_hours=row.daily_sunlight_hours
+    )
+
+    return data
+
+
+def map_building_weather_summary_response(row: BuildingExtremeWeatherSummarySchema):
+    data = BuildingExtremeWeatherSummaryData(
+        affected_by_icing_days=(
+            row.affected_by_icing_days
+            if row.affected_by_icing_days is not None
+            else False
+        ),
+        affected_by_hot_summer_days=(
+            row.affected_by_hsds if row.affected_by_hsds is not None else False
+        ),
+        affected_by_wind_driven_rain=(
+            row.affected_by_wdr if row.affected_by_wdr is not None else False
+        ),
+    )
+
+    return data
+
+
+def map_building_details_for_bulk_download(row: BuildingDetailsForBulkDownloadSchema):
+    data = BuildingDetailsForBulkDownload(
+        uprn=row.uprn,
+        longitude=row.longitude,
+        latitude=row.lattitude,
+        first_line_of_address=row.first_line_of_address,
+        post_code=row.post_code,
+        energy_rating=row.epc_rating,
+        sap_rating=row.sap_rating,
+        toid=row.toid,
+        lodgement_date=row.lodgement_date,
+        built_form=row.built_form,
+        floor_construction=row.floor_construction,
+        floor_insulation=row.floor_insulation,
+        roof_construction=row.roof_construction,
+        roof_insulation_location=row.roof_insulation,
+        roof_insulation_thickness=row.roof_insulation_thickness,
+        wall_construction=row.wall_construction,
+        wall_insulation=row.wall_insulation,
+        window_glazing=row.window_glazing,
+        fueltype=row.fuel_type,
+        roof_material=row.roof_material,
+        solar_panel_presence=row.solar_panel_presence,
+        roof_shape=row.roof_shape,
+        roof_aspect_area_facing_north_m2=row.roof_aspect_area_facing_north_m2,
+        roof_aspect_area_facing_north_east_m2=row.roof_aspect_area_facing_north_east_m2,
+        roof_aspect_area_facing_east_m2=row.roof_aspect_area_facing_east_m2,
+        roof_aspect_area_facing_south_east_m2=row.roof_aspect_area_facing_south_east_m2,
+        roof_aspect_area_facing_south_m2=row.roof_aspect_area_facing_south_m2,
+        roof_aspect_area_facing_south_west_m2=row.roof_aspect_area_facing_south_west_m2,
+        roof_aspect_area_facing_west_m2=row.roof_aspect_area_facing_west_m2,
+        roof_aspect_area_facing_north_west_m2=row.roof_aspect_area_facing_north_west_m2,
+        roof_aspect_area_indeterminable_m2=row.roof_aspect_area_indeterminable_m2,
+        north_two_degrees_median=row.wdr20_0,
+        north_east_two_degrees_median=row.wdr20_45,
+        east_two_degrees_median=row.wdr20_90,
+        south_east_two_degrees_median=row.wdr20_135,
+        south_two_degrees_median=row.wdr20_180,
+        south_west_two_degrees_median=row.wdr20_225,
+        west_two_degrees_median=row.wdr20_270,
+        north_west_two_degrees_median=row.wdr20_315,
+        north_four_degrees_median=row.wdr40_0,
+        north_east_four_degrees_median=row.wdr40_45,
+        east_four_degrees_median=row.wdr40_90,
+        south_east_four_degrees_median=row.wdr40_135,
+        south_four_degrees_median=row.wdr40_180,
+        south_west_four_degrees_median=row.wdr40_225,
+        west_four_degrees_median=row.wdr40_270,
+        north_west_four_degrees_median=row.wdr40_315,
+        hsd_baseline=row.hsd_baseline_01_20_median,
+        hsd_1_5_degree_above_baseline=row.hsd_15_median,
+        hsd_2_0_degree_above_baseline=row.hsd_20_median,
+        hsd_2_5_degree_above_baseline=row.hsd_25_median,
+        hsd_3_0_degree_above_baseline=row.hsd_30_median,
+        hsd_4_0_degree_above_baseline=row.hsd_40_median,
+        icing_days=row.icingdays,
+        sunlight_hours=row.sunlight_hours,
+        daily_sunlight_hours=row.daily_sunlight_hours,
+    )
+
+    return data

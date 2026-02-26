@@ -9,16 +9,14 @@ import pytest
 import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-from api.models.ies_models import EDH, ClassificationEmum, IesEntity
-from api.routes import (
-    InvalidateFlag,
-    access_client,
-    create_person_insert,
-    router,
+from query_response_mocks import (
+    empty_query_response,
+    flag_history_response,
+    multiple_flag_history_response,
 )
 
-from query_response_mocks import empty_query_response, flag_history_response, multiple_flag_history_response
+from api.models.ies_models import EDH, ClassificationEmum, IesEntity
+from api.routes import InvalidateFlag, access_client, create_person_insert, router
 
 
 @pytest.fixture(autouse=True)
@@ -94,6 +92,9 @@ def setup_mocks(monkeypatch, mock_user):
     datetime_patch.stop()
 
 
+@pytest.mark.skip(
+    reason="Endpoints for flagging have been disabled as they need to be reworked"
+)
 # Tests for flag-to-investigate endpoint
 class TestFlagToInvestigate:
     def test_successful_flag_to_investigate(self, client, entity_to_flag, setup_mocks):
@@ -112,12 +113,8 @@ class TestFlagToInvestigate:
 
         # Check the query contains the expected data
         assert "ndt:InterestedInInvestigating" in call_args["query"]
-        assert (
-            "http://ndtp.co.uk/data#mocked-uuid" in call_args["query"]
-        )
-        assert (
-            "http://ndtp.co.uk/data#building-123" in call_args["query"]
-        )
+        assert "http://ndtp.co.uk/data#mocked-uuid" in call_args["query"]
+        assert "http://ndtp.co.uk/data#building-123" in call_args["query"]
         assert "test-user-123" in call_args["query"]
 
     def test_missing_uri(self, client, setup_mocks):
@@ -158,6 +155,9 @@ class TestFlagToInvestigate:
         setup_mocks["mock_run_sparql_update"].assert_not_called()
 
 
+@pytest.mark.skip(
+    reason="Endpoints for flagging have been disabled as they need to be reworked"
+)
 # Tests for invalidate-flag endpoint
 class TestInvalidateFlag:
     def test_successful_invalidate_flag(
@@ -191,10 +191,7 @@ class TestInvalidateFlag:
         # Check the query contains the expected data
         assert "http://ndtp.co.uk/data#flag-123" in call_args["query"]
         assert "test-user-123" in call_args["query"]
-        assert (
-            "http://ndtp.co.uk/ontology#AssessToBeFalse"
-            in call_args["query"]
-        )
+        assert "http://ndtp.co.uk/ontology#AssessToBeFalse" in call_args["query"]
 
     def test_invalid_assessment_type(
         self, client, invalid_flag_data, setup_mocks, monkeypatch
@@ -217,12 +214,18 @@ class TestInvalidateFlag:
 
         setup_mocks["mock_run_sparql_update"].assert_not_called()
 
+
+@pytest.mark.skip(
+    reason="Endpoints for flagging have been disabled as they need to be reworked"
+)
 # Tests for retrieving flag history
 class TestFlagHistory:
     def test_retrieve_only_active_flag(self, client, monkeypatch):
         mock_query = MagicMock(return_value=flag_history_response(True))
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
-        response = client.get("/buildings/12345/flag-history", headers={"dummy": "header"})
+        response = client.get(
+            "/buildings/12345/flag-history", headers={"dummy": "header"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
@@ -234,11 +237,13 @@ class TestFlagHistory:
         assert data[0]["AssessmentDate"] == ""
         assert data[0]["AssessorName"] == ""
         assert data[0]["AssessmentReason"] == ""
-    
+
     def test_retrieve_only_historic_flag(self, client, monkeypatch):
         mock_query = MagicMock(return_value=flag_history_response(False))
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
-        response = client.get("/buildings/12345/flag-history", headers={"dummy": "header"})
+        response = client.get(
+            "/buildings/12345/flag-history", headers={"dummy": "header"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
@@ -250,11 +255,13 @@ class TestFlagHistory:
         assert data[0]["AssessmentDate"] == "2020-01-02T00:00:00"
         assert data[0]["AssessorName"] == "Jane Smith"
         assert data[0]["AssessmentReason"] == "Reason1"
-    
+
     def test_retrieve_active_flag_with_historic_flag(self, client, monkeypatch):
         mock_query = MagicMock(return_value=multiple_flag_history_response(False))
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
-        response = client.get("/buildings/12345/flag-history", headers={"dummy": "header"})
+        response = client.get(
+            "/buildings/12345/flag-history", headers={"dummy": "header"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
@@ -275,14 +282,17 @@ class TestFlagHistory:
         assert data[1]["AssessorName"] == "Jane Smith"
         assert data[1]["AssessmentReason"] == "Reason1"
         return
-    
+
     def test_retrieve_no_flags(self, client, monkeypatch):
         mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
-        response = client.get("/buildings/12345/flag-history", headers={"dummy": "header"})
+        response = client.get(
+            "/buildings/12345/flag-history", headers={"dummy": "header"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 0
+
 
 # Test helper functions
 def test_create_person_insert():
@@ -306,4 +316,3 @@ def test_create_person_insert():
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])
-
