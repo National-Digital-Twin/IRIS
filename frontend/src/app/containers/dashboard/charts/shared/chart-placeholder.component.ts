@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'c477-chart-placeholder',
+    selector: 'chart-placeholder',
     imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
     templateUrl: './chart-placeholder.component.html',
     styleUrl: './chart-placeholder.component.scss',

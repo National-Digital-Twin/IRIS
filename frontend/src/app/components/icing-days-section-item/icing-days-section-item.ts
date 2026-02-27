@@ -4,7 +4,7 @@ import { MoreInfoSectionItem } from '@components/more-info-section-item/more-inf
 import { BuildingIcingDaysDataModel } from '@core/models/building.weather.data.model';
 
 @Component({
-    selector: 'c477-icing-days-section-item',
+    selector: 'icing-days-section-item',
     imports: [MoreInfoSectionItem],
     templateUrl: './icing-days-section-item.html',
     styleUrl: './icing-days-section-item.scss',

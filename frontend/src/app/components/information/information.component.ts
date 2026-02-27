@@ -5,7 +5,7 @@ import { MatDialogActions, MatDialogClose, MatDialogContent, MatDialogTitle } fr
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'c477-information',
+    selector: 'information',
     imports: [CommonModule, MatButtonModule, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogTitle, MatIconModule],
     templateUrl: './information.component.html',
     styleUrl: './information.component.scss',

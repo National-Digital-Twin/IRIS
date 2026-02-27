@@ -2,13 +2,13 @@
     <div class="widget-title">
         <span>{{ chartTitle() }}</span>
         @if (!isPolygonView) {
-            <c477-area-selector
+            <area-selector
                 [label]="selectorLabel()"
                 [disabled]="loading() || !!error()"
                 [selectedAreas]="selectedAreas()"
                 [availableAreas]="availableAreas()"
                 (selectedAreasChange)="selectedAreas.set($event)"
-            ></c477-area-selector>
+            ></area-selector>
         }
         @if (titleSuffix()) {
             <span>{{ titleSuffix() }}</span>
@@ -18,13 +18,13 @@
 
 <div class="chart-wrapper">
     @if (loading() || error()) {
-        <c477-chart-placeholder [error]="error()" [onRetry]="retry.bind(this)" />
+        <chart-placeholder [error]="error()" [onRetry]="retry.bind(this)" />
     } @else {
         <div class="chart-with-scrollbar" (wheel)="onChartWheel($event)">
             <plotly-plot [data]="chartData()" [layout]="chartLayout()" [config]="chartConfig"></plotly-plot>
             @if (scrollMetrics.needsScroll) {
                 <div class="chart-scrollbar">
-                    <c477-chart-scrollbar [position]="scrollPosition()" [metrics]="scrollMetrics" (positionChange)="onScrollPositionChange($event)" />
+                    <chart-scrollbar [position]="scrollPosition()" [metrics]="scrollMetrics" (positionChange)="onScrollPositionChange($event)" />
                 </div>
             }
         </div>

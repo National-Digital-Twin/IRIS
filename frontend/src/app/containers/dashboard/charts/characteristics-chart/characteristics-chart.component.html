@@ -14,20 +14,20 @@
             </mat-select>
         </mat-form-field>
         <span>per</span>
-        <c477-area-selector
+        <area-selector
             [label]="'region'"
             [singularLabel]="true"
             [selectedAreas]="selectedRegions()"
             [availableAreas]="availableRegions()"
             [disabled]="loading() || !!error()"
             (selectedAreasChange)="selectedRegions.set($event)"
-        ></c477-area-selector>
+        ></area-selector>
     </div>
 </div>
 
 <div class="chart-wrapper">
     @if (loading() || error()) {
-        <c477-chart-placeholder [error]="error()" [onRetry]="retry.bind(this)" />
+        <chart-placeholder [error]="error()" [onRetry]="retry.bind(this)" />
     } @else {
         <plotly-plot [data]="chartData()" [layout]="chartLayout()" [config]="chartConfig"></plotly-plot>
     }

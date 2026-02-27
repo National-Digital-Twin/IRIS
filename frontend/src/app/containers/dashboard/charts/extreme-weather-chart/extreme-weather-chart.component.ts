@@ -8,7 +8,7 @@ import { BaseChartComponent } from '../base-chart.component';
 import { ChartPlaceholderComponent } from '../shared/chart-placeholder.component';
 
 @Component({
-    selector: 'c477-extreme-weather-chart',
+    selector: 'extreme-weather-chart',
     imports: [CommonModule, PlotlyModule, ChartPlaceholderComponent],
     templateUrl: './extreme-weather-chart.component.html',
     styleUrl: './extreme-weather-chart.component.scss',

@@ -15,7 +15,7 @@ import { AreaLevel, AreaSelectionDialogResult } from '../../core/models/area-fil
 import { AreaSelectionService } from '../../core/services/area-selection.service';
 
 @Component({
-    selector: 'c477-area-filter-panel',
+    selector: 'area-filter-panel',
     imports: [
         CommonModule,
         FormsModule,

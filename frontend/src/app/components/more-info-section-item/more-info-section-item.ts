@@ -7,7 +7,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { DownloadableContentModal } from '@components/downloadable-content-modal/downloadable-content-modal';
 
 @Component({
-    selector: 'c477-more-info-section-item',
+    selector: 'more-info-section-item',
     imports: [CdkAccordionModule, MatIconModule, MatDividerModule],
     templateUrl: './more-info-section-item.html',
     styleUrl: './more-info-section-item.scss',

@@ -4,7 +4,7 @@ import { MatDialogActions, MatDialogClose, MatDialogContent, MatDialogTitle } fr
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'c477-dashboard-area-selection-dialog',
+    selector: 'dashboard-area-selection-dialog',
     imports: [MatButtonModule, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogTitle, MatIconModule],
     templateUrl: './dashboard-area-selection-dialog.component.html',
 })

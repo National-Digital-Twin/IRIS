@@ -9,7 +9,7 @@ import { WindDrivenRainSectionItem } from '@components/wind-driven-rain-section-
 import { BuildingWeatherDataModel } from '@core/models/building.weather.data.model';
 
 @Component({
-    selector: 'c477-more-info-section',
+    selector: 'more-info-section',
     imports: [
         MatDividerModule,
         CdkAccordionModule,

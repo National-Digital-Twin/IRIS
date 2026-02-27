@@ -1,7 +1,7 @@
 @let selected = containsBuilding();
 <mat-expansion-panel class="mat-elevation-z" [hideToggle]="false" (expandedChange)="cardSelected.emit(parentDataset)">
     <mat-expansion-panel-header collapsedHeight="auto" expandedHeight="auto" [ngClass]="{ selected: selected }">
-        <c477-results-card
+        <results-card
             [card]="parentDataset"
             [select]="select()"
             [parent]="true"
@@ -13,7 +13,7 @@
 
     <ng-template matExpansionPanelContent>
         @for (dwelling of sortedDwellings(); track dwelling.UPRN) {
-            <c477-results-card
+            <results-card
                 [card]="dwelling"
                 [select]="select()"
                 [checked]="isChecked(dwelling)"

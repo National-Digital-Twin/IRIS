@@ -5,7 +5,7 @@
         <h3>{{ legend.title }}</h3>
 
         @for (item of legend.items; track item.rating) {
-            <c477-label [epcRating]="item.rating" [sapPoints]="item.sapPoints" />
+            <custom-label [epcRating]="item.rating" [sapPoints]="item.sapPoints" />
         }
     </div>
 }

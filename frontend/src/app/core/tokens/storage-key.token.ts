@@ -2,7 +2,7 @@ import { InjectionToken } from '@angular/core';
 
 export const STORAGE_KEY = new InjectionToken('STORAGE_KEY', {
     providedIn: 'root',
-    factory: (): string => 'c477-settings',
+    factory: (): string => 'settings',
 });
 
 // SPDX-License-Identifier: Apache-2.0

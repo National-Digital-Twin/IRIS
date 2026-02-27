@@ -6,7 +6,7 @@ import { BaseChartComponent } from '../base-chart.component';
 import { ChartPlaceholderComponent } from '../shared/chart-placeholder.component';
 
 @Component({
-    selector: 'c477-deprivation-dimension-chart',
+    selector: 'deprivation-dimension-chart',
     imports: [CommonModule, ChartPlaceholderComponent],
     templateUrl: './deprivation-dimension-chart.component.html',
     styleUrl: './deprivation-dimension-chart.component.scss',

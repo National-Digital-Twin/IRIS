@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
-    selector: 'c477-results-panel-button',
+    selector: 'results-panel-button',
     imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
     templateUrl: './results-panel-button.component.html',
     styleUrl: './results-panel-button.component.scss',

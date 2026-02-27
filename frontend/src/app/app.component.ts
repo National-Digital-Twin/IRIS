@@ -4,7 +4,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
-    selector: 'c477-root',
+    selector: 'app-root',
     imports: [RouterOutlet],
     templateUrl: './app.component.html',
 })

@@ -4,7 +4,7 @@ import { MoreInfoSectionItem } from '@components/more-info-section-item/more-inf
 import { BuildingWindDrivenRainDataModel } from '@core/models/building.weather.data.model';
 
 @Component({
-    selector: 'c477-wind-driven-rain-section-item',
+    selector: 'wind-driven-rain-section-item',
     imports: [MoreInfoSectionItem],
     templateUrl: './wind-driven-rain-section-item.html',
     styleUrl: './wind-driven-rain-section-item.scss',

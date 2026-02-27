@@ -66,7 +66,7 @@
     </mat-sidenav>
 
     <mat-sidenav #areaFilterSidenav mode="over" position="end" class="area-filter-sidenav">
-        <c477-area-filter-panel (canceled)="areaFilterSidenav.close()" (confirm)="handleAreaFilterConfirm($event); areaFilterSidenav.close()" />
+        <area-filter-panel (canceled)="areaFilterSidenav.close()" (confirm)="handleAreaFilterConfirm($event); areaFilterSidenav.close()" />
     </mat-sidenav>
 
     <mat-sidenav-content>
@@ -114,13 +114,13 @@
         <div class="content" [class.privacy-mode]="showPrivacy">
             @if (showPrivacy) {
                 <div class="content-scroll">
-                    <c477-privacy-notice (back)="showPrivacy = false" />
+                    <privacy-notice (back)="showPrivacy = false" />
                 </div>
             } @else {
                 @if (loading()) {
-                    <c477-loading-screen />
+                    <loading-screen />
                 } @else {
-                    <c477-main-filters
+                    <main-filters
                         [filterProps]="filterProps"
                         (clearAllFilters)="clearAllFilters()"
                         (setRouteParams)="setFilterParams($event)"
@@ -128,12 +128,12 @@
                         (addressSelected)="setSelectedBuildingTOID($event)"
                     />
 
-                    <c477-results-panel (resultsPanelCollapsed)="resultsPanelCollapsed = $event" />
+                    <results-panel (resultsPanelCollapsed)="resultsPanelCollapsed = $event" />
 
-                    <c477-details-panel (closePanel)="closeDetails()" (downloadData)="downloadData($event)" [resultsPanelCollapsed]="resultsPanelCollapsed" />
+                    <details-panel (closePanel)="closeDetails()" (downloadData)="downloadData($event)" [resultsPanelCollapsed]="resultsPanelCollapsed" />
                 }
                 <div class="map-container">
-                    <c477-map
+                    <custom-map
                         [spatialFilterEnabled]="spatialFilterEnabled()"
                         [mapConfig]="mapConfig"
                         (setRouteParams)="setRouteMapParams($event)"
@@ -154,7 +154,7 @@
                     />
                 </div>
                 @if (showMinimap) {
-                    <c477-minimap [minimapData]="minimapData" />
+                    <minimap [minimapData]="minimapData" />
                 }
             }
         </div>

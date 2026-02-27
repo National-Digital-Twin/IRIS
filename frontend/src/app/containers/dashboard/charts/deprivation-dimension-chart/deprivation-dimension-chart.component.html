@@ -5,7 +5,7 @@
 </div>
 <div class="chart-wrapper">
     @if (loading() || error()) {
-        <c477-chart-placeholder [error]="error()" [onRetry]="retry.bind(this)" />
+        <chart-placeholder [error]="error()" [onRetry]="retry.bind(this)" />
     } @else {
         <div class="national-histograms">
             @for (row of histogramRows(); track row.key) {

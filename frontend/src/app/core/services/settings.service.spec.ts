@@ -4,7 +4,7 @@ import { STORAGE } from '@core/tokens/storage.token';
 import { SETTINGS, SettingsService } from './settings.service';
 
 describe('SettingsService', () => {
-    const STORAGE_KEY_VALUE = 'c477-settings';
+    const STORAGE_KEY_VALUE = 'settings';
     let service: SettingsService;
     let mockLocalStorage: {
         getItem: jest.Mock;

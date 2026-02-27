@@ -5,7 +5,7 @@ import { MatButtonToggleChange, MatButtonToggleModule } from '@angular/material/
 import { CamelCaseSpacePipe } from '@core/pipes/camel-case-space.pipe';
 
 @Component({
-    selector: 'c477-multi-button-filter[title][options]',
+    selector: 'multi-button-filter[title][options]',
     imports: [NgClass, MatButtonToggleModule, CamelCaseSpacePipe],
     templateUrl: './multi-button-filter.component.html',
     styleUrl: './multi-button-filter.component.scss',

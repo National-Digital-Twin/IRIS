@@ -26,7 +26,7 @@ const FEATURE_CONFIG: Record<string, string> = {
 const DISPLAY_NAME_TO_KEY = Object.fromEntries(Object.entries(FEATURE_CONFIG).map(([key, displayName]) => [displayName, key]));
 
 @Component({
-    selector: 'c477-epc-by-feature-chart',
+    selector: 'epc-by-feature-chart',
     imports: [CommonModule, PlotlyModule, MatFormFieldModule, MatSelectModule, ChartPlaceholderComponent],
     templateUrl: './epc-by-feature-chart.component.html',
     styleUrl: './epc-by-feature-chart.component.scss',

@@ -91,7 +91,7 @@ describe('SunlightHoursByAreaChartComponent', () => {
             expect(spy).toHaveBeenCalledWith('region', polygonFilter);
             expect(component.chartTitle()).toBe('Average daily hours of sunlight');
             expect(component.isPolygonView).toBe(true);
-            expect(fixture.nativeElement.querySelector('c477-area-selector')).toBeNull();
+            expect(fixture.nativeElement.querySelector('area-selector')).toBeNull();
         });
     });
 

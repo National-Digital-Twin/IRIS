@@ -19,7 +19,7 @@ interface FuelTypeData {
 }
 
 @Component({
-    selector: 'c477-building-fuel-chart',
+    selector: 'building-fuel-chart',
     imports: [CommonModule, PlotlyModule, MatFormFieldModule, MatSelectModule, ChartPlaceholderComponent],
     templateUrl: './building-fuel-chart.component.html',
     styleUrl: './building-fuel-chart.component.scss',

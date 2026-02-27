@@ -23,7 +23,7 @@ import { SunlightHoursByAreaChartComponent } from './charts/sunlight-hours-by-ar
 const AREA_FILTER_STORAGE_KEY = 'dashboard.areaFilter';
 
 @Component({
-    selector: 'c477-dashboard-page',
+    selector: 'dashboard-page',
     imports: [
         CommonModule,
         RouterModule,

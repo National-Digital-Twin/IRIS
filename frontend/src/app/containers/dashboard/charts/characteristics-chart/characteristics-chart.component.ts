@@ -10,7 +10,7 @@ import { AreaSelectorComponent } from '../shared/area-selector.component';
 import { ChartPlaceholderComponent } from '../shared/chart-placeholder.component';
 
 @Component({
-    selector: 'c477-characteristics-chart',
+    selector: 'characteristics-chart',
     imports: [CommonModule, PlotlyModule, MatFormFieldModule, MatSelectModule, AreaSelectorComponent, ChartPlaceholderComponent],
     templateUrl: './characteristics-chart.component.html',
     styleUrl: './characteristics-chart.component.scss',

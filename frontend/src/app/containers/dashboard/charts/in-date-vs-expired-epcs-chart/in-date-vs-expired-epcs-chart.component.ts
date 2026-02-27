@@ -7,7 +7,7 @@ import { BaseChartComponent } from '../base-chart.component';
 import { ChartPlaceholderComponent } from '../shared/chart-placeholder.component';
 
 @Component({
-    selector: 'c477-in-date-vs-expired-epcs-chart',
+    selector: 'in-date-vs-expired-epcs-chart',
     imports: [CommonModule, PlotlyModule, ChartPlaceholderComponent],
     templateUrl: './in-date-vs-expired-epcs-chart.component.html',
     styleUrl: './in-date-vs-expired-epcs-chart.component.scss',

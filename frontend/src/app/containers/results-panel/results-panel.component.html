@@ -1,12 +1,12 @@
 @let expanded = panelOpen();
 
 @if (buildingSelection() && mapInstance && mapInstance.getZoom() > 15) {
-    <c477-info-panel [expanded]="expanded" [indent]="1">
+    <info-panel [expanded]="expanded" [indent]="1">
         <div class="results-panel">
             <div class="header">
                 @let checkedResults = checkedCards().length;
                 @let totalResults = buildingSelection()?.flat()?.length ?? 0;
-                <c477-results-panel-button [numberResults]="totalResults" (updatePanelStatus)="updatePanelOpen($event)" />
+                <results-panel-button [numberResults]="totalResults" (updatePanelStatus)="updatePanelOpen($event)" />
                 @if (expanded) {
                     <mat-slide-toggle [color]="'primary'" [(ngModel)]="selectMultiple">Select multiple</mat-slide-toggle>
                     @if (selectMultiple) {
@@ -24,7 +24,7 @@
                 <cdk-virtual-scroll-viewport minBufferPx="500" maxBufferPx="1000" itemSize="143">
                     <div *cdkVirtualFor="let dwellingSet of buildingSelection(); templateCacheSize: 0; trackBy: trackByUPRN; let isLast = last">
                         @if (dwellingSet.length === 1) {
-                            <c477-results-card
+                            <results-card
                                 [ngClass]="{ 'result-card': !isLast }"
                                 (downloadData)="downloadBuilding($event)"
                                 [buildingUPRN]="selectedCardUPRN()"
@@ -36,7 +36,7 @@
                                 [select]="selectMultiple"
                             />
                         } @else {
-                            <c477-results-card-expandable
+                            <results-card-expandable
                                 [ngClass]="{ 'result-card': !isLast }"
                                 [buildingUPRN]="selectedCardUPRN()"
                                 [dwellings]="dwellingSet"
@@ -51,7 +51,7 @@
                 </cdk-virtual-scroll-viewport>
             }
         </div>
-    </c477-info-panel>
+    </info-panel>
 }
 
 <!-- SPDX-License-Identifier: Apache-2.0

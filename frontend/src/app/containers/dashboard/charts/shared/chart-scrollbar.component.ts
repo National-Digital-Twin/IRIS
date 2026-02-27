@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, i
 import { ScrollMetrics } from './scrollable-chart.component';
 
 @Component({
-    selector: 'c477-chart-scrollbar',
+    selector: 'chart-scrollbar',
     standalone: true,
     imports: [CommonModule],
     template: `

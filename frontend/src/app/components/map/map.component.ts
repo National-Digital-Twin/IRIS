@@ -41,7 +41,7 @@ import { MapMouseEvent } from 'mapbox-gl';
 import { map, skip, take } from 'rxjs';
 
 @Component({
-    selector: 'c477-map',
+    selector: 'custom-map',
     imports: [CommonModule, LegendComponent, MatButtonModule, MatDividerModule, MatIconModule, MatMenuModule, MatTooltipModule, RouterModule],
     templateUrl: './map.component.html',
     styleUrl: './map.component.scss',
@@ -639,7 +639,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     public onDocumentClick(event: Event): void {
         if (this.#uiStateService.showLegend()) {
             const target = event.target as HTMLElement;
-            const legendElement = this.#elementRef.nativeElement.querySelector('c477-legend');
+            const legendElement = this.#elementRef.nativeElement.querySelector('legend');
             const legendButton = this.#elementRef.nativeElement.querySelector('button[matTooltip="Legend"]');
 
             if (legendElement && !legendElement.contains(target) && !legendButton?.contains(target)) {

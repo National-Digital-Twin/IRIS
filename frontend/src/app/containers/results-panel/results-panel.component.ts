@@ -22,7 +22,7 @@ import { LngLat } from 'mapbox-gl';
 import { filter, map } from 'rxjs';
 
 @Component({
-    selector: 'c477-results-panel',
+    selector: 'results-panel',
     imports: [
         CommonModule,
         FormsModule,

@@ -4,7 +4,7 @@ import { MoreInfoSectionItem } from '@components/more-info-section-item/more-inf
 import { BuildingHotSummerDaysDataModel } from '@core/models/building.weather.data.model';
 
 @Component({
-    selector: 'c477-hot-summer-days-section-item',
+    selector: 'hot-summer-days-section-item',
     imports: [MoreInfoSectionItem],
     templateUrl: './hot-summer-days-section-item.html',
     styleUrl: './hot-summer-days-section-item.scss',
