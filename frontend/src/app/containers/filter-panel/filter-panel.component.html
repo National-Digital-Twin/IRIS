@@ -17,7 +17,7 @@
                             @for (filter of panel.filters; track filter.name) {
                                 @if (filter.values) {
                                     <h4>{{ filter.label }}</h4>
-                                    <c477-multi-button-filter [formControlName]="filter.name" [title]="filter.label" [options]="filter.values" />
+                                    <multi-button-filter [formControlName]="filter.name" [title]="filter.label" [options]="filter.values" />
                                 }
                             }
                         </div>

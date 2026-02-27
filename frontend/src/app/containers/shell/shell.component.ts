@@ -40,7 +40,7 @@ import { Polygon } from 'geojson';
 import { filter, map, take } from 'rxjs';
 
 @Component({
-    selector: 'c477-shell',
+    selector: 'shell',
     imports: [
         CommonModule,
         DetailsPanelComponent,

@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DownloadDataWarningData } from '@core/models/download-data-warning.model';
 
 @Component({
-    selector: 'c477-download-warning',
+    selector: 'download-warning',
     imports: [MatButtonModule, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogTitle, MatIconModule],
     templateUrl: './download-warning.component.html',
     styleUrl: './download-warning.component.scss',

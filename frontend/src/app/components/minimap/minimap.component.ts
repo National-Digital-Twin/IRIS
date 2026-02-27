@@ -10,7 +10,7 @@ import mapboxgl, { GeoJSONSource, Map } from 'mapbox-gl';
 import { skip } from 'rxjs';
 
 @Component({
-    selector: 'c477-minimap',
+    selector: 'minimap',
     imports: [CommonModule],
     templateUrl: './minimap.component.html',
     styleUrl: './minimap.component.scss',

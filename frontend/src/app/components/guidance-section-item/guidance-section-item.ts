@@ -3,7 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MoreInfoSectionItem } from '@components/more-info-section-item/more-info-section-item';
 
 @Component({
-    selector: 'c477-guidance-section-item',
+    selector: 'guidance-section-item',
     imports: [MoreInfoSectionItem, MatIconModule],
     templateUrl: './guidance-section-item.html',
     styleUrl: './guidance-section-item.scss',

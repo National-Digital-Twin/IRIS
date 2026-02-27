@@ -118,7 +118,7 @@ export default class SearchViewPage {
     }
 
     async verifyFilteredPropertiesPanelVisible() {
-        const panel = this.page.locator('c477-info-panel.primary.expand');
+        const panel = this.page.locator('info-panel.primary.expand');
         await expect(panel).toBeVisible();
         await expect(panel).toContainText('results in view');
     }

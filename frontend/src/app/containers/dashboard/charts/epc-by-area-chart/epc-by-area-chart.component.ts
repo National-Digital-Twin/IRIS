@@ -12,7 +12,7 @@ import { ChartScrollbarComponent } from '../shared/chart-scrollbar.component';
 import { ScrollableChartComponent } from '../shared/scrollable-chart.component';
 
 @Component({
-    selector: 'c477-epc-by-area-chart',
+    selector: 'epc-by-area-chart',
     imports: [CommonModule, PlotlyModule, MatFormFieldModule, MatSelectModule, AreaSelectorComponent, ChartPlaceholderComponent, ChartScrollbarComponent],
     templateUrl: './epc-by-area-chart.component.html',
     styleUrl: './epc-by-area-chart.component.scss',

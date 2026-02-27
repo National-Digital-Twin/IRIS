@@ -35,7 +35,7 @@ import { UtilService } from '@core/services/utils.service';
 import { EMPTY, switchMap } from 'rxjs';
 
 @Component({
-    selector: 'c477-details-panel',
+    selector: 'details-panel',
     imports: [
         DatePipe,
         NgClass,

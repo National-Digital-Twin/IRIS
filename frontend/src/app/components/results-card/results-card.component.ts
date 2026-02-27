@@ -13,7 +13,7 @@ import { UtilService } from '@core/services/utils.service';
 import { Theme } from '@core/types/theme';
 
 @Component({
-    selector: 'c477-results-card[card]',
+    selector: 'results-card[card]',
     imports: [NgClass, LabelComponent, MatButtonModule, MatCheckboxModule, MatIconModule],
     templateUrl: './results-card.component.html',
     styleUrl: './results-card.component.scss',

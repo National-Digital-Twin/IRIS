@@ -12,7 +12,7 @@ import { ChartScrollbarComponent } from '../shared/chart-scrollbar.component';
 import { ScrollableChartComponent } from '../shared/scrollable-chart.component';
 
 @Component({
-    selector: 'c477-sunlight-hours-by-area-chart',
+    selector: 'sunlight-hours-by-area-chart',
     imports: [CommonModule, PlotlyModule, MatFormFieldModule, MatSelectModule, AreaSelectorComponent, ChartPlaceholderComponent, ChartScrollbarComponent],
     templateUrl: './sunlight-hours-by-area-chart.component.html',
     styleUrl: './sunlight-hours-by-area-chart.component.scss',

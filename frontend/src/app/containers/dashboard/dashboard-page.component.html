@@ -25,69 +25,69 @@
 
     <div class="dashboard-grid">
         <section class="widget-card double-height">
-            <c477-overall-epc-chart [areaFilter]="areaFilter()"></c477-overall-epc-chart>
+            <overall-epc-chart [areaFilter]="areaFilter()"></overall-epc-chart>
         </section>
 
         @if (dashboardType() === 'national') {
             <section class="widget-card">
-                <c477-epc-by-area-chart></c477-epc-by-area-chart>
+                <epc-by-area-chart></epc-by-area-chart>
             </section>
         }
 
         @if (dashboardType() === 'national') {
             <section class="widget-card">
-                <c477-characteristics-chart [areaFilter]="areaFilter()"></c477-characteristics-chart>
+                <characteristics-chart [areaFilter]="areaFilter()"></characteristics-chart>
             </section>
         }
 
         <section class="widget-card">
-            <c477-sap-timeline-chart [areaFilter]="areaFilter()"></c477-sap-timeline-chart>
+            <sap-timeline-chart [areaFilter]="areaFilter()"></sap-timeline-chart>
         </section>
 
         @if (dashboardType() === 'area' && areaFilter()?.mode === 'polygon') {
             <section class="widget-card">
-                <c477-sap-timeline-by-property-type-chart [areaFilter]="areaFilter()"></c477-sap-timeline-by-property-type-chart>
+                <sap-timeline-by-property-type-chart [areaFilter]="areaFilter()"></sap-timeline-by-property-type-chart>
             </section>
         }
 
         @if (dashboardType() === 'area' && areaFilter()?.mode === 'named-areas' && areaFilter()?.names?.length !== 1) {
             <section class="widget-card">
-                <c477-sap-timeline-by-area-chart [areaFilter]="areaFilter()"></c477-sap-timeline-by-area-chart>
+                <sap-timeline-by-area-chart [areaFilter]="areaFilter()"></sap-timeline-by-area-chart>
             </section>
         }
 
         <section class="widget-card">
-            <c477-epc-ratings-overtime-chart [areaFilter]="areaFilter()"></c477-epc-ratings-overtime-chart>
+            <epc-ratings-overtime-chart [areaFilter]="areaFilter()"></epc-ratings-overtime-chart>
         </section>
 
         <section class="widget-card">
-            <c477-building-fuel-chart [areaFilter]="areaFilter()"></c477-building-fuel-chart>
+            <building-fuel-chart [areaFilter]="areaFilter()"></building-fuel-chart>
         </section>
 
         <section class="widget-card">
-            <c477-epc-by-feature-chart [areaFilter]="areaFilter()"></c477-epc-by-feature-chart>
+            <epc-by-feature-chart [areaFilter]="areaFilter()"></epc-by-feature-chart>
         </section>
 
         <section class="widget-card">
-            <c477-extreme-weather-chart [areaFilter]="areaFilter()"></c477-extreme-weather-chart>
+            <extreme-weather-chart [areaFilter]="areaFilter()"></extreme-weather-chart>
         </section>
 
         <section class="widget-card">
-            <c477-in-date-vs-expired-epcs-chart [areaFilter]="areaFilter()"></c477-in-date-vs-expired-epcs-chart>
+            <in-date-vs-expired-epcs-chart [areaFilter]="areaFilter()"></in-date-vs-expired-epcs-chart>
         </section>
 
         @if (dashboardType() === 'area' && areaFilter()?.mode === 'named-areas' && !(areaFilter()?.level === 'ward' && areaFilter()?.names?.length === 1)) {
             <section class="widget-card">
-                <c477-epc-by-area-chart [areaFilter]="areaFilter()"></c477-epc-by-area-chart>
+                <epc-by-area-chart [areaFilter]="areaFilter()"></epc-by-area-chart>
             </section>
         }
 
         <section class="widget-card">
-            <c477-deprivation-dimension-chart [areaFilter]="areaFilter()"></c477-deprivation-dimension-chart>
+            <deprivation-dimension-chart [areaFilter]="areaFilter()"></deprivation-dimension-chart>
         </section>
 
         <section class="widget-card">
-            <c477-sunlight-hours-by-area-chart [areaFilter]="areaFilter()"></c477-sunlight-hours-by-area-chart>
+            <sunlight-hours-by-area-chart [areaFilter]="areaFilter()"></sunlight-hours-by-area-chart>
         </section>
     </div>
 </div>

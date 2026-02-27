@@ -6,7 +6,7 @@ import { MoreInfoSectionItem } from '@components/more-info-section-item/more-inf
 import { BuildingSunlightHoursDataModel } from '@core/models/building.weather.data.model';
 
 @Component({
-    selector: 'c477-hours-of-sunlight-section-item',
+    selector: 'hours-of-sunlight-section-item',
     imports: [MoreInfoSectionItem],
     templateUrl: './hours-of-sunlight-section-item.html',
     styleUrl: './hours-of-sunlight-section-item.scss',

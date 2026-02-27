@@ -7,7 +7,7 @@ import { BaseChartComponent } from '../base-chart.component';
 import { ChartPlaceholderComponent } from '../shared/chart-placeholder.component';
 
 @Component({
-    selector: 'c477-sap-timeline-chart',
+    selector: 'sap-timeline-chart',
     imports: [CommonModule, PlotlyModule, ChartPlaceholderComponent],
     templateUrl: './sap-timeline-chart.component.html',
     styleUrl: './sap-timeline-chart.component.scss',

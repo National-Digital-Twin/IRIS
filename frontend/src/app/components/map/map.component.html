@@ -50,7 +50,7 @@
                 <img class="icon" src="assets/icons/legend-toggle.svg" alt="Legend" />
             </button>
             @if (showLegend()) {
-                <c477-legend [layerState]="legendLayerState()" />
+                <custom-legend [layerState]="legendLayerState()" />
             }
         </div>
         @if (showLayersAndControls()) {

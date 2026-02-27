@@ -20,9 +20,9 @@
         <address>{{ building.FullAddress }}</address>
 
         <div class="labels">
-            <c477-label [epcRating]="building.EPC" [expired]="epcExpired()" />
+            <custom-label [epcRating]="building.EPC" [expired]="epcExpired()" />
             @if (building.StructureUnitType) {
-                <c477-label>{{ building.StructureUnitType }}</c477-label>
+                <custom-label>{{ building.StructureUnitType }}</custom-label>
             }
         </div>
     </div>

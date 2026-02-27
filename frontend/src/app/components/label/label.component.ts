@@ -2,7 +2,7 @@ import { Component, computed, input, InputSignal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 
 @Component({
-    selector: 'c477-label',
+    selector: 'custom-label',
     imports: [MatIcon],
     templateUrl: './label.component.html',
     styleUrl: './label.component.scss',

@@ -5,7 +5,7 @@
 @let extremeWeatherWarningData = buildingExtremeWeatherSummaryData$ | async;
 
 @if (building) {
-    <c477-info-panel [expanded]="indent === 1 || expanded" [indent]="indent">
+    <info-panel [expanded]="indent === 1 || expanded" [indent]="indent">
         <div class="details-panel">
             <div class="header">
                 <div class="panel-button">
@@ -18,9 +18,9 @@
                 <address>{{ building.FullAddress }}</address>
 
                 <div class="labels">
-                    <c477-label [epcRating]="building.EPC" [sapPoints]="building.SAPPoints" [expired]="epcExpired()" />
+                    <custom-label [epcRating]="building.EPC" [sapPoints]="building.SAPPoints" [expired]="epcExpired()" />
                     @if (building.StructureUnitType) {
-                        <c477-label>{{ building.StructureUnitType }}</c477-label>
+                        <custom-label>{{ building.StructureUnitType }}</custom-label>
                     }
                 </div>
             </div>
@@ -70,7 +70,7 @@
                 <button mat-flat-button (click)="openDownloadWarning()"><mat-icon>download</mat-icon> Download</button>
             </div>
         </div>
-    </c477-info-panel>
+    </info-panel>
 }
 
 <ng-template let-building="building" let-expired="expired" #property>
@@ -230,12 +230,12 @@
     <p class="more-info-subtext"><em>Based on historic and forecasted data, use at your own discretion.</em></p>
     <mat-divider class="more-info-divider"></mat-divider>
 
-    <c477-more-info-section
+    <more-info-section
         [buildingWeatherDataModel]="buildingWeather"
         [warnForWindDrivenRain]="extremeWeatherWarningData?.affected_by_wind_driven_rain || false"
         [warnForIcingDays]="extremeWeatherWarningData?.affected_by_icing_days || false"
         [warnForHotSummerDays]="extremeWeatherWarningData?.affected_by_hot_summer_days || false"
-    ></c477-more-info-section>
+    ></more-info-section>
 </ng-template>
 
 <!-- SPDX-License-Identifier: Apache-2.0

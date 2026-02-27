@@ -8,7 +8,7 @@ import { DownloadDataWarningResponse } from '@core/models/download-data-warning.
 import { UtilService } from '@core/services/utils.service';
 
 @Component({
-    selector: 'c477-results-card-expandable',
+    selector: 'results-card-expandable',
     imports: [NgClass, MatExpansionModule, ResultsCardComponent],
     templateUrl: './results-card-expandable.component.html',
     styleUrl: './results-card-expandable.component.scss',

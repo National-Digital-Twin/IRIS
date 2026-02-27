@@ -17,7 +17,7 @@ export type FilterDialogData = {
 };
 
 @Component({
-    selector: 'c477-filter-panel',
+    selector: 'filter-panel',
     imports: [
         CommonModule,
         MatButtonModule,

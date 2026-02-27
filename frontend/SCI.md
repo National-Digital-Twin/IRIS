@@ -180,7 +180,7 @@ The following methodology has been choosen and followed to calulate the energy c
 3. Take a idea power reading of the device
 4. Run the **Browser - Frontend** node within the chromium browser while taking another power reading
 
-This methodology can be replicated using `nix run github:arup-group/C477-DBT_Vis#sci`.
+This methodology can be replicated using `nix run github:arup-group/NDTP_Vis#sci`.
 
 We can then calucate the energy consumption with the following calulation:
 
@@ -219,7 +219,7 @@ M  = 0.00651714419 kgC02e
 
 **Brower - Frontend**
 
-Results from running the `nix run github:arup-group/C477-DBT_Vis#sci` command:
+Results from running the `nix run github:arup-group/NDTP_Vis#sci` command:
 
 ```
 powerstat-inactive.log

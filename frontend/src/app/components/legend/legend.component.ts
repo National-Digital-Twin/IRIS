@@ -31,7 +31,7 @@ export interface LegendConfig {
 }
 
 @Component({
-    selector: 'c477-legend',
+    selector: 'custom-legend',
     imports: [CommonModule, LabelComponent],
     templateUrl: './legend.component.html',
     styleUrl: './legend.component.scss',

@@ -1,7 +1,7 @@
 import { Component, input, InputSignal } from '@angular/core';
 
 @Component({
-    selector: 'c477-info-panel',
+    selector: 'info-panel',
     templateUrl: './info-panel.component.html',
     styleUrl: 'info-panel.component.scss',
     host: {

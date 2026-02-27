@@ -21,7 +21,7 @@
         <mat-select multiple [value]="filters.EPC" (selectionChange)="ratingChange($event)">
             @for (rating of getKeys(epcRatings); track rating) {
                 <mat-option [value]="rating">
-                    <c477-label [epcRating]="epcRatings[rating]" />
+                    <custom-label [epcRating]="epcRatings[rating]" />
                 </mat-option>
             }
         </mat-select>

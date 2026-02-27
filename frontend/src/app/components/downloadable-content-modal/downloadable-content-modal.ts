@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogActions, MatDialogClose, MatDialogContent, Ma
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    selector: 'c477-downloadable-content-modal',
+    selector: 'downloadable-content-modal',
     imports: [MatButtonModule, MatDialogContent, MatDialogActions, MatDialogClose, MatIconModule],
     templateUrl: './downloadable-content-modal.html',
     styleUrl: './downloadable-content-modal.scss',

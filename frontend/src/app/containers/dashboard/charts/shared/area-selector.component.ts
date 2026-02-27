@@ -4,7 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 
 @Component({
-    selector: 'c477-area-selector',
+    selector: 'area-selector',
     imports: [CommonModule, MatFormFieldModule, MatSelectModule],
     template: `
         <mat-form-field appearance="outline" class="inline-select">

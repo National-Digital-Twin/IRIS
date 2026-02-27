@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 @Component({
-    selector: 'c477-privacy-notice',
+    selector: 'privacy-notice',
     standalone: true,
     imports: [CommonModule, MatButtonModule, MatIconModule],
     template: `

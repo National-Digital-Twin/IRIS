@@ -8,7 +8,7 @@ import { BaseChartComponent } from '../base-chart.component';
 import { ChartPlaceholderComponent } from '../shared/chart-placeholder.component';
 
 @Component({
-    selector: 'c477-overall-epc-chart',
+    selector: 'overall-epc-chart',
     imports: [CommonModule, PlotlyModule, ChartPlaceholderComponent],
     templateUrl: './overall-epc-chart.component.html',
     styleUrl: './overall-epc-chart.component.scss',

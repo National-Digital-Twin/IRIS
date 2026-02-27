@@ -23,7 +23,7 @@ import { LngLat } from 'mapbox-gl';
 import { catchError, debounceTime, filter, map, of, switchMap } from 'rxjs';
 
 @Component({
-    selector: 'c477-main-filters',
+    selector: 'main-filters',
     imports: [
         CommonModule,
         LabelComponent,
