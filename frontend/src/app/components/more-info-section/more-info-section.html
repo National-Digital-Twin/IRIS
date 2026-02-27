@@ -8,10 +8,7 @@
             ></wind-driven-rain-section-item>
         }
         @if (buildingWeatherData.buildingIcingDaysDataModel) {
-            <icing-days-section-item
-                [dataInput]="buildingWeatherData.buildingIcingDaysDataModel"
-                [warnInput]="warnForIcingDays()"
-            ></icing-days-section-item>
+            <icing-days-section-item [dataInput]="buildingWeatherData.buildingIcingDaysDataModel" [warnInput]="warnForIcingDays()"></icing-days-section-item>
         }
         @if (buildingWeatherData.buildingHotSummerDaysDataModel) {
             <hot-summer-days-section-item
