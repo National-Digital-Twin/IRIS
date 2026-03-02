@@ -45,31 +45,21 @@ class OneOffMapper:
                     total_records_sent_to_dlq = 0
                     for index, record in enumerate(source.data()):
                         try:
-                            if total_records_to_map is None:
-                                total_records_to_map = source.remaining()
-
+                            total_records_to_map = self.__resolve_total_records_to_map(
+                                total_records_to_map, source
+                            )
                             total_records_processed += 1
-                            mapped_data = self.mapping_function(record)
 
-                            if mapped_data:
-                                target.send(mapped_data)
-                            else:
-                                logger.info(
-                                    f"None returned by mapping function for offset {index}"
-                                )
-
-                            if index > 0 and index % 25000 == 0:
-                                logger.info(
-                                    f"Processed {index} records, {total_records_sent_to_dlq} records sent to DLQ, {source.remaining()} records remaining"
-                                )
-
-                            if (
-                                total_records_processed >= total_records_to_map
-                                and source.remaining() == 0
+                            self.__process_record(index, record, target, logger)
+                            self.__log_progress(
+                                index, total_records_sent_to_dlq, source, logger
+                            )
+                            if self.__is_finished(
+                                total_records_processed,
+                                total_records_to_map,
+                                source,
                             ):
-                                logger.info(
-                                    f"Finished processing all records in {self.source_topic}!"
-                                )
+                                self.__log_finished(logger)
                                 break
 
                         except Exception as err:
@@ -78,14 +68,41 @@ class OneOffMapper:
                             target_dlq.send(record)
                             total_records_sent_to_dlq += 1
 
-                            if (
-                                total_records_processed >= total_records_to_map
-                                and source.remaining() == 0
+                            if self.__is_finished(
+                                total_records_processed,
+                                total_records_to_map,
+                                source,
                             ):
-                                logger.info(
-                                    f"Finished processing all records in {self.source_topic}!"
-                                )
+                                self.__log_finished(logger)
                                 break
+
+    def __resolve_total_records_to_map(self, total_records_to_map, source):
+        if total_records_to_map is None:
+            return source.remaining()
+        return total_records_to_map
+
+    def __process_record(self, index, record, target, logger):
+        mapped_data = self.mapping_function(record)
+        if mapped_data:
+            target.send(mapped_data)
+            return
+        logger.info(f"None returned by mapping function for offset {index}")
+
+    def __log_progress(self, index, total_records_sent_to_dlq, source, logger):
+        if index > 0 and index % 25000 == 0:
+            logger.info(
+                f"Processed {index} records, {total_records_sent_to_dlq} records sent to DLQ, {source.remaining()} records remaining"
+            )
+
+    def __is_finished(self, total_records_processed, total_records_to_map, source):
+        return (
+            total_records_to_map is not None
+            and total_records_processed >= total_records_to_map
+            and source.remaining() == 0
+        )
+
+    def __log_finished(self, logger):
+        logger.info(f"Finished processing all records in {self.source_topic}!")
 
     def __create_logger(self) -> CoreLoggerAdapter:
         return CoreLoggerFactory.get_logger(

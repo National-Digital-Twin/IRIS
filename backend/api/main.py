@@ -52,4 +52,4 @@ async def query_timeout_handler(request: Request, exc: sqlalchemy.exc.DBAPIError
 app.include_router(router)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(config_settings.PORT))
+    uvicorn.run(app, host=config_settings.API_HOST, port=int(config_settings.PORT))

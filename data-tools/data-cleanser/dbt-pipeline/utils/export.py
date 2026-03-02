@@ -19,6 +19,7 @@ def export_to_s3(
     endpoint_url=None,
     aws_access_key_id=None,
     aws_secret_access_key=None,
+    expected_bucket_owner=None,
 ):
     """Export final mart to s3."""
 
@@ -56,10 +57,16 @@ def export_to_s3(
     # upload file
     logger.info("Uploading file to S3: bucket=%s key=%s", s3_bucket_name, s3_filename)
     try:
+        put_kwargs = {
+            "Bucket": s3_bucket_name,
+            "Key": s3_filename,
+            "Body": csv_buffer.getvalue(),
+        }
+        if expected_bucket_owner:
+            put_kwargs["ExpectedBucketOwner"] = expected_bucket_owner
+
         response = s3_client.put_object(
-            Bucket=s3_bucket_name,
-            Key=s3_filename,
-            Body=csv_buffer.getvalue(),
+            **put_kwargs,
         )
         # Log the successful upload
         logger.info(

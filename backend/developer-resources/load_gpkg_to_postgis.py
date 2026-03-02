@@ -25,6 +25,7 @@ MATERIALIZED_VIEW = os.getenv("MATERIALIZED_VIEW")
 JOIN_VIEW = os.getenv("JOIN_VIEW")
 DATA_VIEW = os.getenv("DATA_VIEW")
 GPKG_EXTENSION = ".gpkg"
+MATERIALIZED_VIEW_REFRESH_COMPLETE = "Materialized view refresh complete."
 
 
 def download_file(url: str, dest: Path):
@@ -148,7 +149,7 @@ def refresh_materialized_view():
     if MATERIALIZED_VIEW is not None and MATERIALIZED_VIEW != "":
         print(f"Refreshing materialized view {MATERIALIZED_VIEW}")
         run_db_command(f"REFRESH MATERIALIZED VIEW {MATERIALIZED_VIEW};")
-        print("Materialized view refresh complete.")
+        print(MATERIALIZED_VIEW_REFRESH_COMPLETE)
     else:
         print("No materialized view given to refresh.")
 
@@ -157,7 +158,7 @@ def refresh_join_view():
     if JOIN_VIEW is not None and JOIN_VIEW != "":
         print(f"Refreshing materialized view {JOIN_VIEW}")
         run_db_command(f"REFRESH MATERIALIZED VIEW {JOIN_VIEW};")
-        print("Materialized view refresh complete.")
+        print(MATERIALIZED_VIEW_REFRESH_COMPLETE)
     else:
         print("No join view given to refresh.")
 
@@ -166,7 +167,7 @@ def refresh_data_view():
     if DATA_VIEW is not None and DATA_VIEW != "":
         print(f"Refreshing materialized view {DATA_VIEW}")
         run_db_command(f"REFRESH MATERIALIZED VIEW {DATA_VIEW};")
-        print("Materialized view refresh complete.")
+        print(MATERIALIZED_VIEW_REFRESH_COMPLETE)
     else:
         print("No data view given to refresh.")
 
