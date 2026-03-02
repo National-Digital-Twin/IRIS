@@ -4,6 +4,7 @@ Welcome to the dbt pipelines for IRIS data cleansing.
 - Python version >= 3.11 and < 3.12
 - Install dependencies with `pip install -r requirements.txt`
 - Create `.env` from `.env.local` and set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SCHEMA`, `DB_PORT`
+- For S3 export, set `S3_BUCKET_NAME`, `S3_FILENAME`, `AWS_REGION`, and optionally `EXPECTED_BUCKET_OWNER` to enforce bucket ownership checks
 - Ensure source tables exist for the staging models you run
 
 ### Projects

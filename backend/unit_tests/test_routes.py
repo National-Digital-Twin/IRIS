@@ -130,7 +130,8 @@ def test_run_sparql_query_success(monkeypatch):
             return self._json
 
         def raise_for_status(self):
-            pass
+            # Success-path mock: this response intentionally never raises.
+            return None
 
     def dummy_get(url, params, headers):
         return DummyResponse({"results": {"bindings": []}})
@@ -167,7 +168,8 @@ def test_run_sparql_update_scg(monkeypatch):
     def dummy_post(url, headers, data):
         class DummyResponse:
             def raise_for_status(self):
-                pass
+                # Success-path mock: this response intentionally never raises.
+                return None
 
         return DummyResponse()
 

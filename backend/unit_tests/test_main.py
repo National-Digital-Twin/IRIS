@@ -4,6 +4,7 @@
 
 import asyncio
 import json
+from typing import Annotated
 
 import asyncpg.exceptions
 import pytest
@@ -12,14 +13,15 @@ from fastapi import APIRouter, Depends, FastAPI, status
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 from unittest.mock import AsyncMock, MagicMock
 
 import db as db_module
 from main import app, query_timeout_handler
 
 
-class MockRequest:
-    pass
+def make_request() -> Request:
+    return Request({"type": "http", "method": "GET", "path": "/", "headers": []})
 
 
 def test_query_timeout_handler_returns_504_for_query_canceled():
@@ -27,7 +29,7 @@ def test_query_timeout_handler_returns_504_for_query_canceled():
     original_db_error.sqlstate = asyncpg.exceptions.QueryCanceledError.sqlstate
 
     ex = sqlalchemy.exc.DBAPIError("statement", {}, original_db_error, None)
-    request = MockRequest()
+    request = make_request()
 
     response = asyncio.run(query_timeout_handler(request, ex))
 
@@ -40,7 +42,7 @@ def test_query_timeout_handler_returns_json_error_response():
     original_db_error.sqlstate = asyncpg.exceptions.QueryCanceledError.sqlstate
 
     ex = sqlalchemy.exc.DBAPIError("statement", {}, original_db_error, None)
-    request = MockRequest()
+    request = make_request()
 
     response = asyncio.run(query_timeout_handler(request, ex))
 
@@ -57,7 +59,7 @@ def test_query_timeout_handler_reraises_other_dbapi_errors():
     original_db_error.sqlstate = "23505"
 
     ex = sqlalchemy.exc.DBAPIError("statement", {}, original_db_error, None)
-    request = MockRequest()
+    request = make_request()
 
     with pytest.raises(sqlalchemy.exc.DBAPIError):
         asyncio.run(query_timeout_handler(request, ex))
@@ -68,7 +70,7 @@ def test_query_timeout_handler_reraises_when_no_sqlstate():
     delattr(original_db_error, "sqlstate") if hasattr(original_db_error, "sqlstate") else None
 
     ex = sqlalchemy.exc.DBAPIError("statement", {}, original_db_error, None)
-    request = MockRequest()
+    request = make_request()
 
     with pytest.raises(sqlalchemy.exc.DBAPIError):
         asyncio.run(query_timeout_handler(request, ex))
@@ -79,7 +81,7 @@ def test_query_timeout_handler_reraises_when_sqlstate_is_none():
     original_db_error.sqlstate = None
 
     ex = sqlalchemy.exc.DBAPIError("statement", {}, original_db_error, None)
-    request = MockRequest()
+    request = make_request()
 
     with pytest.raises(sqlalchemy.exc.DBAPIError):
         asyncio.run(query_timeout_handler(request, ex))
@@ -104,7 +106,9 @@ def test_query_timeout_integration():
     test_router = APIRouter()
 
     @test_router.get("/test-timeout")
-    async def test_timeout_endpoint(db: AsyncSession = Depends(db_module.get_db)):
+    async def test_timeout_endpoint(
+        db: Annotated[AsyncSession, Depends(db_module.get_db)],
+    ):
         await db.execute(text("SELECT * FROM buildings"))
         return {"status": "ok"}
 

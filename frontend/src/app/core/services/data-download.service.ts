@@ -204,12 +204,10 @@ export class DataDownloadService {
      */
     private formatDataForCSV(buildings: BuildingDetailsOutputModel[]): Blob {
         const csvRows = [];
-        const headers = Object.keys(buildings[0]);
+        const headers = Object.keys(buildings[0]) as (keyof BuildingDetailsOutputModel)[];
         csvRows.push(headers.join(','));
         for (const building of buildings) {
             const values = headers.map((header) => {
-                // eslint-disable-next-line
-                //@ts-ignore
                 const val = building[header];
                 return `"${val?.toString() || ''}"`;
             });

@@ -372,14 +372,8 @@ export class UtilService {
                         }
                     } else if (key === 'StructureUnitType' || key === 'EPC') {
                         const matchedBuildingModel = buildingsArray.find((building) => building.UPRN === filterableBuildingModel.UPRN);
-                        return (
-                            matchedBuildingModel &&
-                            removeQuotes?.includes(
-                                // eslint-disable-next-line
-                                // @ts-ignore
-                                matchedBuildingModel[key as keyof BuildingModel],
-                            )
-                        );
+                        const matchedValue = matchedBuildingModel ? (matchedBuildingModel as Record<string, unknown>)[key] : undefined;
+                        return matchedBuildingModel && removeQuotes?.includes((matchedValue ?? '').toString());
                     } else {
                         let mappedKeys: string[] | undefined = removeQuotes;
 
@@ -397,11 +391,7 @@ export class UtilService {
                             });
                         }
 
-                        return mappedKeys?.includes(
-                            // eslint-disable-next-line
-                            // @ts-ignore
-                            filterableBuildingModel[key as keyof FilterableBuildingModel]?.toString(),
-                        );
+                        return mappedKeys?.includes(((filterableBuildingModel as Record<string, unknown>)[key] ?? '').toString());
                     }
                 }),
             )

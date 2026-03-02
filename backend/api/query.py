@@ -7,6 +7,10 @@ from utils import WELSH_REGIONS, expand_wales_region
 EPC_ACTIVE_TRUE = "epc_active = true"
 REGION_NAME_PRESENT = "region_name IS NOT NULL AND region_name != ''"
 WELSH_REGIONS_SQL = ", ".join(f"'{region}'" for region in sorted(WELSH_REGIONS))
+ST_WITHIN_POLYGON_SQL = "ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
+GROUP_BY_SQL = "GROUP BY "
+AND_SQL = " AND "
+WHERE_SQL = "WHERE "
 
 
 def get_building(uprn: str) -> str:
@@ -636,7 +640,7 @@ def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
     params = {"polygon": polygon}
     where_conditions = [
         EPC_ACTIVE_TRUE,
-        "ST_Within(point, ST_GeomFromGeoJSON(:polygon))",
+        ST_WITHIN_POLYGON_SQL,
     ]
     if per_region:
         where_conditions.append(REGION_NAME_PRESENT)
@@ -644,7 +648,7 @@ def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
     )
-    group_by = "GROUP BY " + _wales_grouped_column("region_name") if per_region else ""
+    group_by = GROUP_BY_SQL + _wales_grouped_column("region_name") if per_region else ""
 
     query = f"""
         SELECT {region_select}
@@ -656,7 +660,7 @@ def _get_epc_rating_query_with_polygon(per_region: bool, polygon: str):
                 COUNT(*) FILTER (WHERE epc_rating = 'F') AS epc_f,
                 COUNT(*) FILTER (WHERE epc_rating = 'G') AS epc_g
         FROM iris.building_epc_analytics
-        WHERE {" AND ".join(where_conditions)}
+        WHERE {AND_SQL.join(where_conditions)}
         {group_by};
     """
     return query, params
@@ -684,7 +688,7 @@ def _get_epc_rating_query_from_aggregates(
     region_select = (
         _wales_grouped_column("region_name") + " AS region_name," if per_region else ""
     )
-    group_by = "GROUP BY " + _wales_grouped_column("region_name") if per_region else ""
+    group_by = GROUP_BY_SQL + _wales_grouped_column("region_name") if per_region else ""
 
     query = f"""
         SELECT {region_select}
@@ -696,7 +700,7 @@ def _get_epc_rating_query_from_aggregates(
                 SUM(count_rating_f) AS epc_f,
                 SUM(count_rating_g) AS epc_g
         FROM iris.building_epc_analytics_aggregates
-        WHERE {" AND ".join(where_conditions)}
+        WHERE {AND_SQL.join(where_conditions)}
         {group_by};
     """
     return query, params
@@ -740,17 +744,17 @@ def _get_average_daily_sunlight_hours_per_area_query(
 
         area_level_select = _wales_grouped_column("region_name") + " AS area_name,"
 
-        group_by = "GROUP BY " + _wales_grouped_column("region_name")
+        group_by = GROUP_BY_SQL + _wales_grouped_column("region_name")
     else:
         area_level_select = area_level_column + " AS area_name,"
 
-        group_by = "GROUP BY " + area_level_column + other_area_level_group_by
+        group_by = GROUP_BY_SQL + area_level_column + other_area_level_group_by
 
     query = f"""
         SELECT {area_level_select}
             AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
         FROM iris.building_weather_analytics_aggregates
-        {"WHERE " + " AND ".join(where_conditions) if any(where_conditions) else ""}
+        {WHERE_SQL + AND_SQL.join(where_conditions) if any(where_conditions) else ""}
         {group_by};
     """
     return query, params
@@ -760,14 +764,14 @@ def _get_average_daily_sunlight_hours_query_with_polygon(
     ):
 
     params = {"polygon": polygon}
-    where_conditions = ["ST_Within(point, ST_GeomFromGeoJSON(:polygon))"]
+    where_conditions = [ST_WITHIN_POLYGON_SQL]
 
     query = f"""
         SELECT
             'Area average' AS area_name,
             AVG(average_daily_sunlight_hours) AS average_daily_sunlight_hours
         FROM iris.building_weather_analytics
-        WHERE {" AND ".join(where_conditions)}
+        WHERE {AND_SQL.join(where_conditions)}
 
         UNION ALL
 
@@ -806,7 +810,7 @@ def get_percentage_of_buildings_attributes_per_region_query(
     where_conditions.append(EPC_ACTIVE_TRUE)
 
     if polygon:
-        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        where_conditions.append(ST_WITHIN_POLYGON_SQL)
         params["polygon"] = polygon
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
@@ -815,7 +819,7 @@ def get_percentage_of_buildings_attributes_per_region_query(
         )
         params["area_names"] = area_names
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+    where_clause = WHERE_SQL + AND_SQL.join(where_conditions)
 
     query = f"""
         SELECT {_wales_grouped_column("region_name")} AS region_name,
@@ -848,7 +852,7 @@ def get_fuel_types_by_building_type_query(
     where_conditions.append(EPC_ACTIVE_TRUE)
 
     if polygon:
-        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        where_conditions.append(ST_WITHIN_POLYGON_SQL)
         params["polygon"] = polygon
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
@@ -860,7 +864,7 @@ def get_fuel_types_by_building_type_query(
     where_conditions.append("type IS NOT NULL")
     where_conditions.append("fuel_type IS NOT NULL")
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+    where_clause = WHERE_SQL + AND_SQL.join(where_conditions)
 
     query = f"""
         SELECT type AS building_type,
@@ -932,7 +936,7 @@ def get_buildings_affected_by_extreme_weather_data_query(
 
     if polygon:
         params["polygon"] = polygon
-        filter_condition = "ST_Within(point, ST_GeomFromGeoJSON(:polygon))"
+        filter_condition = ST_WITHIN_POLYGON_SQL
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
         params["area_names"] = area_names
@@ -1012,7 +1016,7 @@ def get_number_of_in_date_and_expired_epcs_query(
         )
         params["area_names"] = area_names
 
-    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+    where_clause = WHERE_SQL + AND_SQL.join(where_conditions) if where_conditions else ""
 
     query = f"""
         SELECT
@@ -1059,7 +1063,7 @@ def get_buildings_by_deprivation_dimension_query(
 
     where_clause = ""
     if where_conditions:
-        where_clause = "WHERE " + " AND ".join(where_conditions)
+        where_clause = WHERE_SQL + AND_SQL.join(where_conditions)
 
     query = f"""
         WITH filtered_metrics AS (
@@ -1185,11 +1189,11 @@ def get_count_of_epc_rating_by_area_level_query(
         "snapshot_date = (SELECT MAX(snapshot_date) FROM iris.building_epc_analytics_aggregates)"
     )
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+    where_clause = WHERE_SQL + AND_SQL.join(where_conditions)
 
     if group_by_level == "region":
         area_select = _wales_grouped_column(group_column) + " AS area_name"
-        group_by = "GROUP BY " + _wales_grouped_column(group_column)
+        group_by = GROUP_BY_SQL + _wales_grouped_column(group_column)
     else:
         area_select = f"{group_column} AS area_name"
         group_by = f"GROUP BY {group_column}"
@@ -1293,7 +1297,7 @@ def get_count_of_epc_rating_by_features_query(
     where_conditions = [EPC_ACTIVE_TRUE, "epc_rating IS NOT NULL", config["where"]]
 
     if polygon:
-        where_conditions.append("ST_Within(point, ST_GeomFromGeoJSON(:polygon))")
+        where_conditions.append(ST_WITHIN_POLYGON_SQL)
         params["polygon"] = polygon
     elif area_level and area_names:
         area_names = expand_wales_region(area_names)
@@ -1301,7 +1305,7 @@ def get_count_of_epc_rating_by_features_query(
         where_conditions.append(f"{filter_column} = ANY(:area_names)")
         params["area_names"] = area_names
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+    where_clause = WHERE_SQL + AND_SQL.join(where_conditions)
     from_clause = config.get("from_clause", "iris.building_epc_analytics")
 
     query = f"""
@@ -1410,7 +1414,7 @@ def get_sap_rating_overtime_by_area_query(
 
     where_conditions.append(f"{group_column} IS NOT NULL AND {group_column} != ''")
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+    where_clause = WHERE_SQL + AND_SQL.join(where_conditions)
 
     if group_by_level == "region":
         area_select = _wales_grouped_column(group_column) + " AS name"
