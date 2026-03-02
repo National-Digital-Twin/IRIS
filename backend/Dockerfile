@@ -32,9 +32,7 @@ COPY pytest.ini .
 COPY setup.cfg .
 COPY version.txt .
 
-RUN adduser --system --no-create-home appuser
-
-RUN chmod +x ./entrypoint.sh
+RUN adduser --system --no-create-home appuser && chmod +x ./entrypoint.sh
 
 USER appuser
 ENTRYPOINT ["./entrypoint.sh"]
