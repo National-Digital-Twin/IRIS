@@ -167,10 +167,10 @@ This repository has been developed with public funding as part of the National D
 ## License
 
 This repository contains both source code and documentation, which are covered by different licenses:
-- **Code:** Originally developed by Coefficient Systems, Ove Arup & Partners, and Informed Solutions, now maintained by National Digital Twin Programme. Licensed under the Apache License 2.0.
+- **Code:** Originally developed by Coefficient Systems, Ove Arup & Partners, Telicent, and Informed Solutions, now maintained by National Digital Twin Programme. Licensed under the Apache License 2.0.
 - **Documentation:** Licensed under the Open Government Licence v3.0.
 
-See `LICENSE.md` for details. Service-specific notes remain in `frontend/README.md` and `backend/README.md`.
+See `LICENSE.md`, `OGL_LICENSE.md`, and `NOTICE.md` for details. Service-specific notes remain in `frontend/README.md` and `backend/README.md`.
 
 ## Security and Responsible Disclosure
 
@@ -196,4 +196,5 @@ For questions or support, check Issues or contact the NDTP team on ndtp@business
 
 © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-Licensed under the NDTP InnerSource Licence – Version 1.0.
+Licensed under the Open Government Licence v3.0.
+For full licensing terms, see [OGL_LICENSE.md](OGL_LICENSE.md).
