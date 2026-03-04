@@ -347,19 +347,21 @@ export class UtilService {
         const buildingsArray = Array.from(Object.values(buildings).flat());
         const filterKeys = Object.keys(filterProps);
         // filter buildings
-        const filteredUprns = filterableBuildingModels
-            .filter((filterableBuildingModel: FilterableBuildingModel) =>
-                filterKeys.every((key) => {
-                    const filterValues = filterProps[key as keyof FilterProps];
-                    if (!filterValues?.length) {
-                        return true;
-                    }
-                    const normalizedValues = filterValues.map((v) => v.replace(/['"]+/g, ''));
-                    return this.matchesBuildingFilter(key, filterValues, normalizedValues, filterableBuildingModel, buildingsArray);
-                }),
-            )
-            .map((filteredDetailedBuildingModel) => filteredDetailedBuildingModel.UPRN);
-        const filtered = buildingsArray.filter((building) => filteredUprns.includes(building.UPRN));
+        const filteredUprns = new Set(
+            filterableBuildingModels
+                .filter((filterableBuildingModel: FilterableBuildingModel) =>
+                    filterKeys.every((key) => {
+                        const filterValues = filterProps[key as keyof FilterProps];
+                        if (!filterValues?.length) {
+                            return true;
+                        }
+                        const normalizedValues = filterValues.map((v) => v.replace(/['"]+/g, ''));
+                        return this.matchesBuildingFilter(key, filterValues, normalizedValues, filterableBuildingModel, buildingsArray);
+                    }),
+                )
+                .map((filteredDetailedBuildingModel) => filteredDetailedBuildingModel.UPRN),
+        );
+        const filtered = buildingsArray.filter((building) => filteredUprns.has(building.UPRN));
 
         const filteredBuildings: BuildingMap = this.#dataService.mapBuildings(filtered);
         return filteredBuildings;
