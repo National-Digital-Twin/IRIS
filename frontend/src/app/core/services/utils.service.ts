@@ -360,6 +360,7 @@ export class UtilService {
             )
             .map((filteredDetailedBuildingModel) => filteredDetailedBuildingModel.UPRN);
         const filtered = buildingsArray.filter((building) => filteredUprns.includes(building.UPRN));
+
         const filteredBuildings: BuildingMap = this.#dataService.mapBuildings(filtered);
         return filteredBuildings;
     }

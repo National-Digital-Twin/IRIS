@@ -383,6 +383,15 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
         return forkJoin(mapImages);
     }
 
+    /** Contrast colour of Epc colour */
+    private contrastColor(epcColor: string, lightColor: string, darkColor: string): string {
+        const color = epcColor.startsWith('#') ? epcColor.substring(1, 7) : epcColor;
+        const r = Number.parseInt(color.substring(0, 2), 16);
+        const g = Number.parseInt(color.substring(2, 4), 16);
+        const b = Number.parseInt(color.substring(4, 6), 16);
+        return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? darkColor : lightColor;
+    }
+
     /**
      * Rasterize Pattern.
      *
@@ -394,16 +403,7 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
         const height = width;
 
         /** Generate SVG */
-        function genSVG(epcColor: string): HTMLElement {
-            /** Contrast colour of Epc colour */
-            function contrastColor(epcColor: string, lightColor: string, darkColor: string): string {
-                const color = epcColor.startsWith('#') ? epcColor.substring(1, 7) : epcColor;
-                const r = parseInt(color.substring(0, 2), 16);
-                const g = parseInt(color.substring(2, 4), 16);
-                const b = parseInt(color.substring(4, 6), 16);
-                return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? darkColor : lightColor;
-            }
-
+        function genSVG(epcColor: string, contrastColor: (epcColor: string, lightColor: string, darkColor: string) => string): HTMLElement {
             /** SVG element */
             const svg = document.createElement('svg');
             svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -457,7 +457,7 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
         };
 
         /** Generate SVG, convert to base64 string, then rasterize to image data */
-        const svg = genSVG(epcColor);
+        const svg = genSVG(epcColor, this.contrastColor);
         const svgBase64 = document.defaultView?.btoa(svg.outerHTML);
         const imageData = rasterizeSvgBase64String(svgBase64 ?? '');
 

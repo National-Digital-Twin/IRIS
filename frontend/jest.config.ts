@@ -28,6 +28,7 @@ const jestConfig: Config = {
         '!<rootDir>/src/environments/*.ts',
     ],
     testPathIgnorePatterns: ['environment.test.ts'],
+    transformIgnorePatterns: ['node_modules/@mapbox-gl'],
 };
 
 export default jestConfig;

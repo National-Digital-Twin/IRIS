@@ -219,8 +219,8 @@ export class DataService {
                 UPRN: row.uprn,
                 EPC: parseEPCRating(row.energy_rating),
                 fullAddress: row.first_line_of_address ?? undefined,
-                latitude: row.latitude ? parseFloat(row.latitude) : undefined,
-                longitude: row.longitude ? parseFloat(row.longitude) : undefined,
+                latitude: row.latitude ? Number.parseFloat(row.latitude) : undefined,
+                longitude: row.longitude ? Number.parseFloat(row.longitude) : undefined,
                 TOID: row.toid ?? undefined,
                 StructureUnitType: row.structure_unit_type ?? undefined,
             };

@@ -38,7 +38,7 @@ def build_s3_config(
     if mode == "role":
         if region_name is None:
             raise ValueError(
-                f"If role mode is choosen then region_name should be provided"
+                "If role mode is choosen then region_name should be provided"
             )
         base.update(role_arn=role_arn, region_name=region_name)
     else:

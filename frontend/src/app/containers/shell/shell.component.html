@@ -64,11 +64,9 @@
             </div>
         </div>
     </mat-sidenav>
-
     <mat-sidenav #areaFilterSidenav mode="over" position="end" class="area-filter-sidenav">
         <area-filter-panel (canceled)="areaFilterSidenav.close()" (confirm)="handleAreaFilterConfirm($event); areaFilterSidenav.close()" />
     </mat-sidenav>
-
     <mat-sidenav-content>
         <mat-toolbar class="toolbar-container">
             <h1 class="logo">
@@ -110,7 +108,6 @@
                 </button>
             </mat-menu>
         </mat-toolbar>
-
         <div class="content" [class.privacy-mode]="showPrivacy">
             @if (showPrivacy) {
                 <div class="content-scroll">
@@ -127,9 +124,7 @@
                         (setAdvancedFilters)="setAdvancedFilters($event)"
                         (addressSelected)="setSelectedBuildingTOID($event)"
                     />
-
                     <results-panel (resultsPanelCollapsed)="resultsPanelCollapsed = $event" />
-
                     <details-panel (closePanel)="closeDetails()" (downloadData)="downloadData($event)" [resultsPanelCollapsed]="resultsPanelCollapsed" />
                 }
                 <div class="map-container">
@@ -160,7 +155,6 @@
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
-
 <!-- SPDX-License-Identifier: Apache-2.0
 © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 and is legally attributed to the Department for Business and Trade (UK) as the governing entity. -->

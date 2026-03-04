@@ -14,21 +14,34 @@
         "declaration": false,
         "downlevelIteration": true,
         "experimentalDecorators": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "importHelpers": true,
         "target": "ES2022",
         "module": "ES2022",
         "useDefineForClassFields": false,
-        "lib": ["ES2023", "dom"],
+        "lib": [
+            "ES2023",
+            "dom"
+        ],
         "skipLibCheck": true,
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "paths": {
-            "@components/*": ["src/app/components/*"],
-            "@containers/*": ["src/app/containers/*"],
-            "@core/*": ["src/app/core/*"],
-            "@environment": ["src/environments/environment"],
-            "@models/*": ["src/app/models/*"]
+            "@components/*": [
+                "src/app/components/*"
+            ],
+            "@containers/*": [
+                "src/app/containers/*"
+            ],
+            "@core/*": [
+                "src/app/core/*"
+            ],
+            "@environment": [
+                "src/environments/environment"
+            ],
+            "@models/*": [
+                "src/app/models/*"
+            ]
         }
     },
     "angularCompilerOptions": {

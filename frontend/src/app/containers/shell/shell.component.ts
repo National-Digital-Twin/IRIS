@@ -145,8 +145,8 @@ export class ShellComponent {
                 this.userEmail = userDetails.email;
             },
             (error) => {
-                console.error(`An error has occured: ${error}`);
-                this.userEmail = 'Loading...';
+                console.error(`An error has occured: ${JSON.stringify(error)}`);
+                this.userEmail = 'loading...';
             },
         );
     }

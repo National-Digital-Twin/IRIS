@@ -40,7 +40,6 @@ class HeatingSystem:
 
         self.fuel_type_map: dict = {
             "Anthracite": "Anthracite",
-            "Fuel": "Fuel",
             "Biomass": "Biomass",
             "Coal": "Coal",
             "Fuel": "Fuel",
