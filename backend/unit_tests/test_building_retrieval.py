@@ -2,6 +2,7 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
+import math
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock
 
 import db as db_module
@@ -242,12 +243,19 @@ class TestGetFilterableBuildingsInBoundingBox:
         assert building["roof_material"] == "TileOrStoneOrSlate"
         assert building["roof_aspect_area_facing_north"] == 0
         assert building["roof_aspect_area_facing_north_east"] == 0
-        assert building["roof_aspect_area_facing_east"] == 17.6
+        assert math.isclose(
+            building["roof_aspect_area_facing_east"], 17.6, rel_tol=1e-09, abs_tol=1e-09
+        )
         assert building["roof_aspect_area_facing_south_east"] == 0
         assert building["roof_aspect_area_facing_south"] == 0
         assert building["roof_aspect_area_facing_south_west"] == 0
         assert building["roof_aspect_area_facing_west"] == 0
-        assert building["roof_aspect_area_facing_north_west"] == 21.7
+        assert math.isclose(
+            building["roof_aspect_area_facing_north_west"],
+            21.7,
+            rel_tol=1e-09,
+            abs_tol=1e-09,
+        )
 
     def test_empty_results(self, test_app):
         """Test when no buildings are found"""
