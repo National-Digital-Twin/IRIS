@@ -257,7 +257,7 @@ class TestFlagHistory:
         assert data[0]["AssessmentReason"] == "Reason1"
 
     def test_retrieve_active_flag_with_historic_flag(self, client, monkeypatch):
-        mock_query = MagicMock(return_value=multiple_flag_history_response(False))
+        mock_query = MagicMock(return_value=multiple_flag_history_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         response = client.get(
             "/buildings/12345/flag-history", headers={"dummy": "header"}
