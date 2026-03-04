@@ -58,7 +58,14 @@
                         },
                         "allowedCommonJsDependencies": [
                             "mapbox-gl",
-                            "papaparse"
+                            "papaparse",
+                            "plotly.js-dist-min",
+                            "fast-deep-equal",
+                            "@mapbox/geojson-normalize",
+                            "file-saver",
+                            "jszip",
+                            "@mapbox/geojson-area",
+                            "rbush"
                         ],
                         "browser": "src/main.ts"
                     },
@@ -76,12 +83,12 @@
                             "budgets": [
                                 {
                                     "type": "initial",
-                                    "maximumWarning": "3mb",
+                                    "maximumWarning": "4mb",
                                     "maximumError": "4.5mb"
                                 },
                                 {
                                     "type": "anyComponentStyle",
-                                    "maximumWarning": "2kb",
+                                    "maximumWarning": "3.5kb",
                                     "maximumError": "4kb"
                                 }
                             ],
