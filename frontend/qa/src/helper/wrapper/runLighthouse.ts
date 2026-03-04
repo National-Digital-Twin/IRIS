@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import lighthouse from 'lighthouse';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { launch } from 'chrome-launcher';
 
 import LoginPage from '../../pages/loginPage';

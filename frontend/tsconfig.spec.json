@@ -4,7 +4,15 @@
     "compilerOptions": {
         "outDir": "./out-tsc/spec",
         "module": "CommonJS",
-        "types": ["jest"]
+        "types": [
+            "jest"
+        ],
+        "isolatedModules": true,
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true
     },
-    "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+    "include": [
+        "src/**/*.spec.ts",
+        "src/**/*.d.ts"
+    ]
 }

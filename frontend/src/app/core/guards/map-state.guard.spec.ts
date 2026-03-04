@@ -13,6 +13,10 @@ const runtimeConfig = {
     },
 };
 
+function createRoute(queryParams: Record<string, string>): ActivatedRouteSnapshot {
+    return { queryParams } as ActivatedRouteSnapshot;
+}
+
 describe('mapStateGuard', () => {
     const router = { navigate: jest.fn().mockReturnValue(Promise.resolve(true)) };
     let injector: Injector;
@@ -29,10 +33,6 @@ describe('mapStateGuard', () => {
     });
 
     afterEach(() => router.navigate.mockClear());
-
-    function createRoute(queryParams: Record<string, string>): ActivatedRouteSnapshot {
-        return { queryParams } as ActivatedRouteSnapshot;
-    }
 
     function getGuardResult(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
         const guard = mapStateGuard as unknown as (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => boolean;

@@ -23,8 +23,8 @@
                         "polyfills": [
                             "zone.js"
                         ],
-                        "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
+                        "tsConfig": "tsconfig.app.json",
                         "assets": [
                             "src/assets"
                         ],
@@ -49,7 +49,6 @@
                         "stylePreprocessorOptions": {
                             "sass": {
                                 "silenceDeprecations": [
-                                    "mixed-decls",
                                     "import"
                                 ]
                             },

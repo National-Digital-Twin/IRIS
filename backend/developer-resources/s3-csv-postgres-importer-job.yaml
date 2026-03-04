@@ -7,35 +7,47 @@ spec:
   template:
     spec:
       serviceAccountName: s3-csv-postgres-importer-sa
+      automountServiceAccountToken: false
       containers:
         - name: csv-postgres-importer
-          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0
-          resources:
-            limits:
-              memory: "2GiB"
-            requests:
-              ephemeral-storage: "2GiB"
-              memory: "2GiB"
-              cpu: 2
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/s3-csv-postgres-importer:1.0.0
           env:
             - name: AWS_ROLE_ARN
               value: arn:aws:iam::537124944113:role/s3-csv-postgres-importer-role
             - name: AWS_WEB_IDENTITY_TOKEN_FILE
               value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
             - name: DB_HOST
-              value: REPLACE_ME
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-csv-postgres-importer-config-map
+                  key: DB_HOST
             - name: DB_PORT
-              value: "5432"
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-csv-postgres-importer-config-map
+                  key: DB_PORT
             - name: DB_NAME
-              value: "iris"
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-csv-postgres-importer-config-map
+                  key: DB_NAME
             - name: DB_USERNAME
-              value: REPLACE_ME
+              valueFrom:
+                secretKeyRef:
+                  name: s3-csv-postgres-importer-secrets
+                  key: DB_USERNAME
             - name: DB_PASSWORD
-              value: REPLACE_ME
+              valueFrom:
+                secretKeyRef:
+                  name: s3-csv-postgres-importer-secrets
+                  key: DB_PASSWORD
             - name: S3_FILE_URI
               value: REPLACE_ME
             - name: AWS_REGION
-              value: REPLACE_ME
+              valueFrom:
+                configMapKeyRef:
+                  name: s3-csv-postgres-importer-config-map
+                  key: AWS_REGION
             - name: TARGET_TABLE
               value: REPLACE_ME
           command: ["sh", "-c"]

@@ -45,11 +45,11 @@ describe('ChartScrollbarComponent', () => {
             fixture.componentRef.setInput('position', 0);
             fixture.componentRef.setInput('metrics', fewItems);
             fixture.detectChanges();
-            const fewItemsHeight = parseFloat((component.thumbStyle() as { height: string }).height);
+            const fewItemsHeight = Number.parseFloat((component.thumbStyle() as { height: string }).height);
 
             fixture.componentRef.setInput('metrics', manyItems);
             fixture.detectChanges();
-            const manyItemsHeight = parseFloat((component.thumbStyle() as { height: string }).height);
+            const manyItemsHeight = Number.parseFloat((component.thumbStyle() as { height: string }).height);
 
             expect(fewItemsHeight).toBeGreaterThan(manyItemsHeight);
         });
@@ -60,7 +60,7 @@ describe('ChartScrollbarComponent', () => {
             fixture.componentRef.setInput('metrics', metrics);
             fixture.detectChanges();
 
-            const height = parseFloat((component.thumbStyle() as { height: string }).height);
+            const height = Number.parseFloat((component.thumbStyle() as { height: string }).height);
             expect(height).toBeGreaterThanOrEqual(10);
         });
     });
@@ -72,7 +72,7 @@ describe('ChartScrollbarComponent', () => {
             fixture.componentRef.setInput('metrics', metrics);
             fixture.detectChanges();
 
-            const top = parseFloat((component.thumbStyle() as { top: string }).top);
+            const top = Number.parseFloat((component.thumbStyle() as { top: string }).top);
             expect(top).toBe(0);
         });
 
@@ -83,8 +83,8 @@ describe('ChartScrollbarComponent', () => {
             fixture.detectChanges();
 
             const style = component.thumbStyle() as { top: string; height: string };
-            const top = parseFloat(style.top);
-            const height = parseFloat(style.height);
+            const top = Number.parseFloat(style.top);
+            const height = Number.parseFloat(style.height);
             // Thumb should be at bottom: top + height ≈ 100%
             expect(top + height).toBeCloseTo(100, 0);
         });

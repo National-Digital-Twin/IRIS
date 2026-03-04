@@ -2,8 +2,10 @@
 # © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
 # and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-from unittest.mock import ANY, MagicMock
+import math
+from unittest.mock import ANY, AsyncMock, MagicMock, Mock
 
+import db as db_module
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -21,8 +23,6 @@ from api.query import (
 )
 from api.routes import router
 from unit_tests.query_response_mocks import empty_query_response, mock_known_building
-from unittest.mock import AsyncMock
-import db as db_module
 
 
 @pytest.fixture(autouse=True)
@@ -37,102 +37,88 @@ def set_identity_api_url(monkeypatch):
 
 
 @pytest.fixture
-def client():
+def test_app():
+    mock_db_session = AsyncMock()
+
     async def mock_get_db():
-        mock_db_session = AsyncMock()
-        mock_db_result = AsyncMock()
-        mock_db_result.__iter__ = lambda self: iter([])
-        mock_db_result.first = MagicMock(return_value=None)
-        mock_db_session.execute.return_value = mock_db_result
+
         yield mock_db_session
 
     app = FastAPI()
     app.include_router(router)
     app.dependency_overrides[db_module.get_db] = mock_get_db
-    return TestClient(app)
+    yield TestClient(app), mock_db_session
+
+    app.dependency_overrides.clear()
 
 
 class TestGetBuildingsInBoundingBox:
-    def test_successful_get_buildings(self, client, monkeypatch):
+    def test_successful_get_buildings(self, test_app):
         """Test successful retrieval of buildings in a bounding box"""
-        # TODO: update test to work with SQL db
+        client, mock_db_session = test_app
 
-        # response = client.get(
-        #     "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        #
-        # assert len(buildings) == 2
-        # building = buildings[0]
-        #
-        # assert building["uprn"] == "100060763456"
-        # assert building["first_line_of_address"] == "1 Apple Avenue"
-        # assert building["energy_rating"] == "C"
-        # assert building["structure_unit_type"] == "Bungalow"
-        # assert building["toid"] == "osgb1000013062259"
-        # assert building["longitude"] == -1.1834759844410794
-        # assert building["latitude"] == 50.72234886358317
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
+        mock_db_result = AsyncMock()
+        mock_db_result.__iter__ = lambda self: iter(
+            [
+                type(
+                    "",
+                    (object,),
+                    {
+                        "uprn": "100060763456",
+                        "first_line_of_address": "1 Apple Avenue",
+                        "epc_rating": "C",
+                        "structure_unit_type": "Bungalow",
+                        "toid": "osgb1000013062259",
+                        "point": "0101000020e6100000d8698c8384eff2bf029ba5ed755c4940",
+                    },
+                ),
+                type(
+                    "",
+                    (object,),
+                    {
+                        "uprn": "100060763457",
+                        "first_line_of_address": "2 Apple Avenue",
+                        "epc_rating": "B",
+                        "structure_unit_type": "Bungalow",
+                        "toid": "osgb1000013062269",
+                        "point": "0101000020e610000081a2f5f851eff2bfc09857e5755c4940",
+                    },
+                ),
+            ]
+        )
 
-    def test_successful_get_buildings_two_forms(self, client, monkeypatch):
-        """Test successful retrieval of buildings in a bounding box"""
-        # TODO: update test to work with SQL db
+        mock_db_session.execute.return_value = mock_db_result
 
-        # mock_query = MagicMock(return_value=bounded_buildings_response_two_forms())
-        #
-        # response = client.get(
-        #     "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        #
-        # assert len(buildings) == 2
-        # apple_bungalow = buildings[0]
-        # cherry_flat = buildings[1]
-        # self.verify_building_data(
-        #     apple_bungalow,
-        #     "100060763456",
-        #     "1 Apple Avenue",
-        #     "C",
-        #     "Bungalow",
-        #     "osgb1000013062259",
-        #     -1.1834759844410794,
-        #     50.72234886358317,
-        # )
-        # self.verify_building_data(
-        #     cherry_flat,
-        #     "100060768638",
-        #     "3a Cherry Street",
-        #     "D",
-        #     "Maisonette",
-        #     "osgb1000013076936",
-        #     -1.178467890878929,
-        #     50.725098060722736,
-        # )
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
-        #
+        response = client.get(
+            "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
+        )
 
-    def test_empty_results(self, client, monkeypatch):
+        assert response.status_code == 200
+        buildings = response.json()
+
+        assert len(buildings) == 2
+        building = buildings[0]
+
+        assert building["uprn"] == "100060763456"
+        assert building["first_line_of_address"] == "1 Apple Avenue"
+        assert building["energy_rating"] == "C"
+        assert building["structure_unit_type"] == "Bungalow"
+        assert building["toid"] == "osgb1000013062259"
+        assert building["longitude"] == "-1.1834759844410794"
+        assert building["latitude"] == "50.72234888635832"
+
+    def test_empty_results(self, test_app):
         """Test when no buildings are found"""
-        # TODO: update test to work with SQL db
 
-        # mock_query = MagicMock(return_value=empty_query_response())
-        #
-        # response = client.get(
-        #     "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        # assert len(buildings) == 0
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
-        #
+        client, _ = test_app
+
+        response = client.get(
+            "/buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
+        )
+
+        assert response.status_code == 200
+        buildings = response.json()
+        assert len(buildings) == 0
 
     def verify_building_data(
         self,
@@ -154,79 +140,145 @@ class TestGetBuildingsInBoundingBox:
         assert result["latitude"] == exp_lat
 
 
-##TODO: reinstate this test with bounding box params
-#    def verify_query_run_with_correct_args(self, mock_query):
-#        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
-#        mock_query.assert_any_call(get_buildings_in_bounding_box_query(polygon), ANY)
-#        call_args = mock_query.call_args[0]
-#        assert polygon in call_args[0]
-
-
 class TestGetFilterableBuildingsInBoundingBox:
-    def test_successful_get_buildings(self, client, monkeypatch):
+    def test_successful_get_buildings(self, test_app):
         """Test successful retrieval of filterable buildings in a bounding box"""
-        # TODO: update test to work with SQL db.
 
-        # mock_query = MagicMock(return_value=bounded_filterable_buildings_response())
-        #
-        # response = client.get(
-        #     "/filterable-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        #
-        # assert len(buildings) == 2
-        # building = buildings[0]
-        #
-        # assert building["uprn"] == "10003319738"
-        # assert building["postcode"] == "PO36 9JA"
-        # assert building["window_glazing"] == "DoubleGlazingBefore2002"
-        # assert building["wall_construction"] == "CavityWall"
-        # assert building["wall_insulation"] == "InsulatedWall"
-        # assert building["floor_construction"] == "Suspended"
-        # assert building["floor_insulation"] == "NoInsulationInFloor"
-        # assert building["roof_construction"] == ""
-        # assert building["roof_insulation_location"] == ""
-        # assert building["roof_insulation_thickness"] == ""
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
-        #
+        client, mock_db_session = test_app
 
-    def test_empty_results(self, client, monkeypatch):
+        mock_db_result = AsyncMock()
+        mock_db_result.__iter__ = lambda self: iter(
+            [
+                type(
+                    "",
+                    (object,),
+                    {
+                        "uprn": "100000001165",
+                        "post_code": "NE21 4DD",
+                        "built_form": "MidTerrace",
+                        "lodgement_date": "2009-04-06",
+                        "fuel_type": "NaturalFuelGas",
+                        "window_glazing": "DoubleGlazingBefore2002",
+                        "wall_construction": "Sandstone",
+                        "wall_insulation": "InsulatedWall",
+                        "floor_construction": "Suspended",
+                        "floor_insulation": "NoInsulationInFloor",
+                        "roof_construction": "PitchedRoof",
+                        "roof_insulation": "LoftInsulation",
+                        "roof_insulation_thickness": "75mm",
+                        "has_roof_solar_panels": "false",
+                        "roof_material": "Tile Or Stone Or Slate",
+                        "roof_aspect_area_facing_north_m2": 0,
+                        "roof_aspect_area_facing_north_east_m2": 0,
+                        "roof_aspect_area_facing_east_m2": 17.6,
+                        "roof_aspect_area_facing_south_east_m2": 0,
+                        "roof_aspect_area_facing_south_m2": 0,
+                        "roof_aspect_area_facing_south_west_m2": 0,
+                        "roof_aspect_area_facing_west_m2": 0,
+                        "roof_aspect_area_facing_north_west_m2": 21.7,
+                        "roof_aspect_area_indeterminable_m2": 0,
+                        "roof_shape": "Pitched",
+                    },
+                ),
+                type(
+                    "",
+                    (object,),
+                    {
+                        "uprn": "100000002463",
+                        "post_code": "NE21 5RF",
+                        "built_form": "SemiDetached",
+                        "lodgement_date": "2025-02-04",
+                        "fuel_type": "NaturalFuelGas",
+                        "window_glazing": "DoubleGlazing",
+                        "wall_construction": "SystemBuilt",
+                        "wall_insulation": "ExternalInsulation",
+                        "floor_construction": "SolidFloor",
+                        "floor_insulation": "NoInsulationInFloor",
+                        "roof_construction": "PitchedRoof",
+                        "roof_insulation": "LoftInsulation",
+                        "roof_insulation_thickness": "250mm",
+                        "has_roof_solar_panels": "false",
+                        "roof_material": "Tile Or Stone Or Slate",
+                        "roof_aspect_area_facing_north_m2": 0,
+                        "roof_aspect_area_facing_north_east_m2": 0,
+                        "roof_aspect_area_facing_east_m2": 29.8,
+                        "roof_aspect_area_facing_south_east_m2": 0,
+                        "roof_aspect_area_facing_south_m2": 23,
+                        "roof_aspect_area_facing_south_west_m2": 0,
+                        "roof_aspect_area_facing_west_m2": 19.8,
+                        "roof_aspect_area_facing_north_west_m2": 0,
+                        "roof_aspect_area_indeterminable_m2": 2.2,
+                        "roof_shape": "Pitched",
+                    },
+                ),
+            ]
+        )
+
+        mock_db_session.execute.return_value = mock_db_result
+
+        response = client.get(
+            "/filterable-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
+        )
+
+        assert response.status_code == 200
+        buildings = response.json()
+
+        assert len(buildings) == 2
+        building = buildings[0]
+
+        assert building["uprn"] == "100000001165"
+        assert building["postcode"] == "NE21 4DD"
+        assert building["built_form"] == "MidTerrace"
+        assert building["lodgement_date"] == "2009-04-06"
+        assert building["fuel_type"] == "NaturalFuelGas"
+        assert building["window_glazing"] == "DoubleGlazingBefore2002"
+        assert building["wall_construction"] == "Sandstone"
+        assert building["wall_insulation"] == "InsulatedWall"
+        assert building["floor_construction"] == "Suspended"
+        assert building["floor_insulation"] == "NoInsulationInFloor"
+        assert building["roof_construction"] == "PitchedRoof"
+        assert building["roof_insulation_location"] == "LoftInsulation"
+        assert building["roof_insulation_thickness"] == "75mm"
+        assert building["has_roof_solar_panels"] is False
+        assert building["roof_material"] == "TileOrStoneOrSlate"
+        assert building["roof_aspect_area_facing_north"] == 0
+        assert building["roof_aspect_area_facing_north_east"] == 0
+        assert math.isclose(
+            building["roof_aspect_area_facing_east"], 17.6, rel_tol=1e-09, abs_tol=1e-09
+        )
+        assert building["roof_aspect_area_facing_south_east"] == 0
+        assert building["roof_aspect_area_facing_south"] == 0
+        assert building["roof_aspect_area_facing_south_west"] == 0
+        assert building["roof_aspect_area_facing_west"] == 0
+        assert math.isclose(
+            building["roof_aspect_area_facing_north_west"],
+            21.7,
+            rel_tol=1e-09,
+            abs_tol=1e-09,
+        )
+
+    def test_empty_results(self, test_app):
         """Test when no buildings are found"""
-        # TODO: update test to work with SQL db.
 
-        # mock_query = MagicMock(return_value=empty_query_response())
-        # monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
-        #
-        # response = client.get(
-        #     "/filterable-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
-        # )
-        #
-        # assert response.status_code == 200
-        # buildings = response.json()
-        # assert len(buildings) == 0
-        #
-        # self.verify_query_run_with_correct_args(mock_query)
+        client, _ = test_app
 
+        response = client.get(
+            "/filterable-buildings?min_long=-1.1835&max_long=-1.1507&min_lat=50.6445&max_lat=50.7261"
+        )
 
-##TODO: reinstate this test with bounding box params
-#    def verify_query_run_with_correct_args(self, mock_query):
-#        polygon = "POLYGON((-1.1835 50.6445, -1.1507 50.6445, -1.1507 50.7261, -1.1835 50.7261, -1.1835 50.6445))"
-#        mock_query.assert_any_call(
-#            get_filterable_buildings_in_bounding_box_query(polygon), ANY
-#        )
-#        call_args = mock_query.call_args[0]
-#        assert polygon in call_args[0]
+        assert response.status_code == 200
+        buildings = response.json()
+        assert len(buildings) == 0
 
 
 class TestGetBuildingByUprn:
-    def test_successful_get_building(self, client, monkeypatch):
+    def test_successful_get_building(self, test_app, monkeypatch):
         uprn = 10023456789
         mock_query = MagicMock()
         mock_query.side_effect = mock_known_building
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
+
+        client, _ = test_app
 
         response = client.get(f"/buildings/{uprn}")
 
@@ -257,10 +309,17 @@ class TestGetBuildingByUprn:
         mock_query.assert_any_call(get_ngd_roof_shape_for_building(uprn), ANY)
         mock_query.assert_any_call(get_ngd_roof_aspect_areas_for_building(uprn), ANY)
 
-    def test_building_not_found(self, client, monkeypatch):
+    def test_building_not_found(self, test_app, monkeypatch):
         mock_query = MagicMock(return_value=empty_query_response())
         monkeypatch.setattr("api.routes.run_sparql_query", mock_query)
         uprn = 99999999999
+
+        client, mock_db_session = test_app
+
+        mock_db_result = Mock()
+        mock_db_result.__iter__ = lambda self: iter([])
+        mock_db_result.first.return_value = None
+        mock_db_session.execute.return_value = mock_db_result
 
         response = client.get(f"/buildings/{uprn}")
 

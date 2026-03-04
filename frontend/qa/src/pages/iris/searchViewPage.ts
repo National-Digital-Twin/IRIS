@@ -33,12 +33,9 @@ export default class SearchViewPage {
     }
 
     async selectAddressFromDropdown(searchString: any) {
-        /* 
-        // TODO: Once the base framework is approved, the postcode level search will be included
-        await this.page.click(this.Elements.selectPostcode.replace('$DATAVALUE$',searchString));
+        await this.page.click(this.Elements.selectPostcode.replace('$DATAVALUE$', searchString));
         await this.page.fill(this.Elements.inputPostcode, searchString);
-        await this.page.click(this.Elements.selectPostcode.replace('$DATAVALUE$',searchString));
-        */
+        await this.page.click(this.Elements.selectPostcode.replace('$DATAVALUE$', searchString));
 
         await this.page.click(this.Elements.selectFirstDDAddress);
     }
@@ -131,7 +128,7 @@ export default class SearchViewPage {
     async addNewFilter(filterType: string) {
         let text = await this.page.locator('text=/\\d+ results in view/').innerText();
         let match = text.match(/\d+/);
-        const beforeResultsCount = match ? parseInt(match[0], 10) : 0;
+        const beforeResultsCount = match ? Number.parseInt(match[0], 10) : 0;
 
         switch (filterType) {
             case 'EPC Rating':
@@ -146,7 +143,7 @@ export default class SearchViewPage {
 
         text = await this.page.locator('text=/\\d+ results in view/').innerText();
         match = text.match(/\d+/);
-        const afterResultsCount = match ? parseInt(match[0], 10) : 0;
+        const afterResultsCount = match ? Number.parseInt(match[0], 10) : 0;
 
         expect(beforeResultsCount).toBeGreaterThan(afterResultsCount);
     }

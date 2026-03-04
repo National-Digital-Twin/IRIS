@@ -264,7 +264,7 @@ def test_test_user_passthrough(test_app, monkeypatch):
 def test_get_deprivation_data_returns_geojson(test_app):
     expected_geojson = '{"type":"FeatureCollection","features":[]}'
 
-    async def override_fetch_geojson_for_deprivation():
+    def override_fetch_geojson_for_deprivation():
         return expected_geojson
 
     client, _ = test_app
@@ -281,7 +281,7 @@ def test_get_deprivation_data_returns_geojson(test_app):
 def test_get_sunlight_hours_data_returns_geojson(test_app):
     expected_geojson = '{"type":"FeatureCollection","features":[]}'
 
-    async def override_fetch_geojson_for_sunlight_hours():
+    def override_fetch_geojson_for_sunlight_hours():
         return expected_geojson
 
     client, _ = test_app
