@@ -7,7 +7,7 @@ on:
   workflow_call:
   pull_request:
     branches:
-      - 'develop'
+      - "develop"
     paths:
       - "frontend/transparent-proxy/**"
       - ".github/workflows/transparent-proxy-ci-pr.yml"
@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Hadolint (Dockerfile Linter)
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf
         with:
           dockerfile: frontend/transparent-proxy/Dockerfile
           verbose: true
@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
         with:
           scan-type: "fs"
           scan-ref: frontend/transparent-proxy
@@ -71,7 +71,7 @@ jobs:
           docker build -t iris/transparent-proxy:latest .
 
       - name: Run Trivy Scan on Docker Image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
         with:
           image-ref: "iris/transparent-proxy:latest"
           format: "table"
