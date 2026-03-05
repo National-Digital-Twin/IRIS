@@ -28,6 +28,7 @@ to a target Kafka topic. Currently the generic adapter has three modes of operat
   - AWS_REGION: The AWS region for your account and s3 resources (required for local s3 run)
   - S3_ENDPOINT: This is the endpoint where your s3 bucket is hosted (required for local s3 run)
   - S3_BUCKET_NAME: This is the s3 bucket where your source file is located
+  - S3_EXPECTED_BUCKET_OWNER: Optional AWS account ID used to verify the expected owner of `S3_BUCKET_NAME`
   - S3_FILENAME: This is the name of your source file (required for local s3 run)
   - FILENAME: This is the name of your source file (required for the local run)
   - BOOTSTRAP_SERVERS: This is a list of endpoints where to access your Kafka instance (required)
@@ -99,4 +100,3 @@ make docker-run-kafka-adapter TOPIC_MAPPINGS_FILENAME="topic_mappings-single-clu
 `
 
 This will trigger the movement of data from the source topics to the target topics defined in the JSON and within the same Kafka cluster as defined in the .env file.
-
