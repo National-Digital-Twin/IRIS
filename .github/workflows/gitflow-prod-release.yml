@@ -72,12 +72,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        repo_name:
-          ["iris/api", "iris/visualiser", "iris/transparent-proxy"]
+        repo_name: ["iris/api", "iris/visualiser", "iris/transparent-proxy"]
     steps:
       # Set up AWS credentials for the source account
       - name: Set up AWS Credentials for Source Account
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
         with:
           role-to-assume: arn:aws:iam::${{ env.SOURCE_AWS_ACCOUNT_ID }}:role/ecr-access-for-github
           aws-region: eu-west-2
@@ -86,7 +85,7 @@ jobs:
       # Log in to Amazon ECR (source account)
       - name: Login to Amazon ECR - Source Account
         id: login-ecr-source
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
 
       # Pull all tags for the image from the source ECR
       - name: Pull All Tags for the Image
