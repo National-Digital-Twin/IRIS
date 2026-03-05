@@ -86,6 +86,11 @@ S3_BUCKET_NAME = config.get(
     required=False,
     description="The s3 bucket where the object to adapt exists.",
 )
+S3_EXPECTED_BUCKET_OWNER = config.get(
+    "S3_EXPECTED_BUCKET_OWNER",
+    required=False,
+    description="The expected AWS account ID of the S3 bucket owner.",
+)
 S3_FILENAME = config.get(
     "S3_FILENAME",
     required=True,
@@ -151,7 +156,12 @@ def generate_records() -> Iterable[Record]:
         )
     else:
         s3_client = boto3.client("s3", region_name=AWS_REGION)
-    obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=S3_FILENAME)
+
+    get_object_args = {"Bucket": S3_BUCKET_NAME, "Key": S3_FILENAME}
+    if S3_EXPECTED_BUCKET_OWNER:
+        get_object_args["ExpectedBucketOwner"] = S3_EXPECTED_BUCKET_OWNER
+
+    obj = s3_client.get_object(**get_object_args)
     obj_body = obj["Body"]
     stream = codecs.getreader("utf-8")(obj_body)
     rows = csv.DictReader(stream)

@@ -286,15 +286,21 @@ def run_sparql_update(
         raise ValueError("unknown update mode: " + config_settings.UPDATE_MODE)
 
 
+def _build_exclusion_filter_clause(exclude_super) -> str:
+    if exclude_super is None or exclude_super == "":
+        return ""
+    return f"""FILTER NOT EXISTS {{ ?sub rdfs:subClassOf* <{exclude_super}>  }}  """
+
+
+def _append_unique(items: list, value) -> None:
+    if value not in items:
+        items.append(value)
+
+
 def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
     sub_classes = {}
-    sub_list = []
-    if exclude_super is not None and exclude_super != "":
-        filter_clause = (
-            f"""FILTER NOT EXISTS {{ ?sub rdfs:subClassOf* <{exclude_super}>  }}  """
-        )
-    else:
-        filter_clause = """"""
+    filter_clause = _build_exclusion_filter_clause(exclude_super)
+
     results = run_sparql_query(
         f"""
         SELECT ?sub ?parent ?comment WHERE
@@ -308,42 +314,37 @@ def get_subtypes(super_class, headers: dict[str, str], exclude_super=None):
         query_dataset=config_settings.ONTO_DATASET,
     )
 
-    if results and results["results"] and results["results"]["bindings"]:
-        for sub in results["results"]["bindings"]:
-            sub_uri = sub["sub"]["value"]
-            if sub_uri not in sub_classes:
-                # create a new empty(ish) item
-                my_obj = {
-                    "uri": sub_uri,
-                    "shortName": shorten(sub_uri),
-                    "superClasses": [],
-                    "description": [],
-                }
-                sub_classes[sub_uri] = my_obj
-            else:
-                my_obj = sub_classes[sub_uri]
-            # If there are any comments, append them
-            if (
-                "comment" in sub
-                and sub["comment"]["value"]
-                not in sub_classes[sub["sub"]["value"]]["description"]
-            ):
-                sub_classes[sub_uri]["description"].append(sub["comment"]["value"])
-            # There may be more than one parent, so append them as we find them
-            if sub["parent"]["value"] not in my_obj["superClasses"]:
-                my_obj["superClasses"].append(sub["parent"]["value"])
-
-    sub_list = []
-    for key in sub_classes:
-        sub = sub_classes[key]
-        sub_list.append(
+    bindings = (((results or {}).get("results") or {}).get("bindings")) or []
+    for sub in bindings:
+        sub_uri = sub["sub"]["value"]
+        # create a new empty(ish) item
+        my_obj = sub_classes.setdefault(
+            sub_uri,
             {
-                "uri": key,
-                "shortName": sub["shortName"],
-                "superClasses": sub["superClasses"],
-                "description": sub["description"],
-            }
+                "uri": sub_uri,
+                "shortName": shorten(sub_uri),
+                "superClasses": [],
+                "description": [],
+            },
         )
+
+        comment = (sub.get("comment") or {}).get("value")
+        if "comment" in sub:
+            # If there are any comments, append them
+            _append_unique(my_obj["description"], comment)
+
+        # There may be more than one parent, so append them as we find them
+        _append_unique(my_obj["superClasses"], sub["parent"]["value"])
+
+    sub_list = [
+        {
+            "uri": key,
+            "shortName": sub["shortName"],
+            "superClasses": sub["superClasses"],
+            "description": sub["description"],
+        }
+        for key, sub in sub_classes.items()
+    ]
 
     return sub_classes, sub_list
 

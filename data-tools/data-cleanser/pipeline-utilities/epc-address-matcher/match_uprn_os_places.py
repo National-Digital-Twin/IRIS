@@ -267,6 +267,63 @@ def write_records(engine, records):
     logger.info(f"Committing {len(records)} records to the cross reference table.")
 
 
+def _enqueue_records(certificates, in_q, keys):
+    # populate queue with all records which require matching
+    for _, record in certificates.iterrows():
+        in_q.put(record)
+
+    # append Nones to the queue to act as a finish line
+    for _ in keys:
+        in_q.put(None)
+
+
+def _log_matching_progress(matched, unmatched):
+    total = matched + unmatched
+    if total == 10:
+        logger.debug(f"UPRN found for {matched} records so far.")
+        logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
+    if total % LOG_INTERVAL == 0:
+        logger.info(f"UPRN found for {matched} records so far.")
+        logger.info(f"A UPRN could not be found for {unmatched} records so far.")
+
+
+def _update_match_counts(record, matched, unmatched):
+    if record["uprn"] is None and record["match_score"] is None:
+        return matched, unmatched + 1
+    return matched + 1, unmatched
+
+
+def _collect_and_write_results(engine, out_q, total_records):
+    batch = []
+    matched = 0
+    unmatched = 0
+    written = 0
+
+    while written < total_records:
+        # get a record from the out queue
+        try:
+            record = out_q.get(timeout=1)
+        except Empty:
+            continue  # wait for more records to be added to the out queue by the workers
+
+        matched, unmatched = _update_match_counts(record, matched, unmatched)
+        batch.append(record)
+        written += 1
+
+        _log_matching_progress(matched, unmatched)
+
+        # write to DB
+        if len(batch) == COMMIT_INTERVAL:
+            write_records(engine, batch)
+            batch = []
+
+    # write any leftover records
+    if batch:
+        write_records(engine, batch)
+
+    return matched, unmatched, written
+
+
 def main():
 
     engine = get_db_connection(DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
@@ -288,13 +345,7 @@ def main():
     in_q = Queue()
     out_q = Queue()
 
-    # populate queue with all records which require matching
-    for _, record in certificates.iterrows():
-        in_q.put(record)
-
-    # append Nones to the queue to act as a finish line
-    for _ in api_keys:
-        in_q.put(None)
+    _enqueue_records(certificates, in_q, api_keys)
     
     # initiate workers to start address matching records in the queue
     with ThreadPoolExecutor(max_workers=num_api_keys) as executor:
@@ -303,44 +354,9 @@ def main():
         logger.info(f"Instantiated {len(api_keys)} workers in parallel with one API key each.")
 
         # as the out queue begins populating, organise records into batches that are written to the DB
-        batch = []
-        matched = 0
-        unmatched = 0
-        written = 0
-
-        while written < certificates.shape[0]:
-            
-            # get a record from the out queue
-            try: 
-                record = out_q.get(timeout=1)
-            except Empty:
-                continue # wait for more records to be added to the out queue by the workers
-
-            if record["uprn"] is None and record["match_score"] is None:
-                unmatched += 1
-            else:
-                matched += 1
-
-            batch.append(record)
-            written += 1
-
-            if (matched+unmatched) == 10:
-                logger.debug(f"UPRN found for {matched} records so far.")
-                logger.debug(f"A UPRN could not be found for {unmatched} records so far.")
-
-            if (matched+unmatched) % LOG_INTERVAL == 0:
-                logger.info(f"UPRN found for {matched} records so far.")
-                logger.info(f"A UPRN could not be found for {unmatched} records so far.")
-            
-            # write to DB 
-            if len(batch) == COMMIT_INTERVAL:
-                write_records(engine, batch)
-                batch = []
-
-        # write any leftover records
-        if batch:
-            write_records(engine, batch)
-            batch = []
+        matched, unmatched, written = _collect_and_write_results(
+            engine, out_q, certificates.shape[0]
+        )
 
     logger.info(f"A total of {matched} records were successfully matched.")
     logger.info(f"A total of {unmatched} records were not able to be matched.")
@@ -348,6 +364,5 @@ def main():
 
 if __name__ == "__main__":
      main()
-
 
 
