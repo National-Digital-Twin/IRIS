@@ -16,10 +16,17 @@ WORKDIR /app
 
 ENV PATH /home/worker/.local/bin:${PATH}
 
-COPY requirements.txt .
+RUN pip install poetry
+
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
+COPY pyproject.toml poetry.lock requirements-private.txt ./
+
+RUN poetry install --only main --no-root
+
 RUN --mount=type=secret,id=pat_token \
     export GITHUB_ACCESS_TOKEN=$(cat /run/secrets/pat_token) && \
-    pip install --no-cache-dir --upgrade -r requirements.txt
+    poetry run pip install --no-cache-dir --upgrade -r requirements-private.txt
 
 COPY developer-resources/load_gpkg_to_postgis.py developer-resources/load_gpkg_to_postgis.py
 COPY developer-resources/sync_region_fks_dbu.py developer-resources/sync_region_fks_dbu.py
@@ -33,6 +40,7 @@ COPY setup.cfg .
 COPY version.txt .
 
 RUN adduser --system --no-create-home appuser && chmod +x ./entrypoint.sh
+RUN chmod +x entrypoint.sh
 
 USER appuser
 ENTRYPOINT ["./entrypoint.sh"]
