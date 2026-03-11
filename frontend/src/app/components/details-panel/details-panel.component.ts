@@ -130,13 +130,12 @@ export class DetailsPanelComponent {
         const add = (dir: string, value?: string): void => {
             if (!value) return;
             const n = Number(value);
-            if (!Number.isNaN(n)) {
-                if (n === 0) return; // skip zeros
-                const rounded = Math.round(n);
-                entries.push(`${rounded}m² ${dir}`);
-            } else {
+            if (Number.isNaN(n)) {
                 // Non-numeric value; include as-is
                 entries.push(`${value}m² ${dir}`);
+            } else {
+                const rounded = Math.round(n);
+                entries.push(`${rounded}m² ${dir}`);
             }
         };
         add('North', building.RoofAspectAreaNorth);

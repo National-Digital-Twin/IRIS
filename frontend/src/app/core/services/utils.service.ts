@@ -355,7 +355,7 @@ export class UtilService {
                         if (!filterValues?.length) {
                             return true;
                         }
-                        const normalizedValues = filterValues.map((v) => v.replace(/['"]+/g, ''));
+                        const normalizedValues = filterValues.map((v) => v.replaceAll("'", '').replaceAll('"', ''));
                         return this.matchesBuildingFilter(key, filterValues, normalizedValues, filterableBuildingModel, buildingsArray);
                     }),
                 )
@@ -387,7 +387,7 @@ export class UtilService {
         }
 
         const mappedValues = key === 'HasRoofSolarPanels' ? this.mapSolarPanelValues(normalizedValues) : normalizedValues;
-        return mappedValues.includes(((filterableBuildingModel as Record<string, unknown>)[key] ?? '').toString());
+        return mappedValues.includes(((filterableBuildingModel as Record<string, unknown>)[key] ?? {}).toString());
     }
 
     private matchesEpcExpiryFilter(filterableBuildingModel: FilterableBuildingModel, filterValues: string[]): boolean {
@@ -410,7 +410,7 @@ export class UtilService {
     ): boolean | undefined {
         const matchedBuildingModel = buildingsArray.find((building) => building.UPRN === filterableBuildingModel.UPRN);
         const matchedValue = matchedBuildingModel ? (matchedBuildingModel as Record<string, unknown>)[key] : undefined;
-        return matchedBuildingModel && normalizedValues.includes((matchedValue ?? '').toString());
+        return matchedBuildingModel && normalizedValues.includes((matchedValue ?? {}).toString());
     }
 
     private matchesRoofAspectAreaDirectionFilter(normalizedValues: string[], filterableBuildingModel: FilterableBuildingModel): boolean {
@@ -538,15 +538,15 @@ export class UtilService {
          * if multi-dwelling don't deselect
          * building on map
          */
-        if (this.multiDwelling() !== undefined) {
+        if (this.multiDwelling()) {
+            this.deselectResultsCard();
+            this.closeBuildingDetails();
+            this.deselectSingleDwellingOnMap();
+        } else {
             this.deselectResultsCard();
             this.closeBuildingDetails();
             this.multiDwelling.set(undefined);
             this.deselectMultiDwellingOnMap();
-        } else {
-            this.deselectResultsCard();
-            this.closeBuildingDetails();
-            this.deselectSingleDwellingOnMap();
         }
     }
 

@@ -115,7 +115,7 @@ export class MainFiltersComponent {
      * @returns string to use as option value
      */
     public getOptionValue(value: AddressSearchData): string {
-        return value.ADDRESS !== '' ? value.ADDRESS : value.POSTCODE;
+        return value.ADDRESS === '' ? value.POSTCODE : value.ADDRESS;
     }
 
     /**

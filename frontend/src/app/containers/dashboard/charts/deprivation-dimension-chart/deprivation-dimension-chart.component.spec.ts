@@ -16,9 +16,9 @@ const mockApiResponse: BackendBuildingsByDeprivationDimensionResponse = {
     dep_4_count: 603221,
     unfiltered_dep_3_pct: 8.21,
     unfiltered_dep_4_pct: 3.28,
-    min_dep_3_pct: 0.0,
+    min_dep_3_pct: 0,
     max_dep_3_pct: 27.64,
-    min_dep_4_pct: 0.0,
+    min_dep_4_pct: 0,
     max_dep_4_pct: 18.92,
 };
 

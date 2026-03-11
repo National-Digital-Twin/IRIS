@@ -1,4 +1,4 @@
-window.toggleWindDrivenRainScenario = function (button, prefix, properties) {
+globalThis.toggleWindDrivenRainScenario = function (button, prefix, properties) {
     const buttonGroup = button.parentElement;
     if (buttonGroup) {
         buttonGroup.querySelectorAll('.scenario-button').forEach((btn) => {

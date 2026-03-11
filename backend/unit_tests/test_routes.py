@@ -209,9 +209,7 @@ def test_get_subtypes_with_results(monkeypatch):
     monkeypatch.setattr(
         routes, "run_sparql_query", lambda q, h, query_dataset="ontology": dummy_result
     )
-    sub_classes, sub_list = routes.get_subtypes(
-        "super_class", {"header": "value"}, "exclude"
-    )
+    sub_classes, _ = routes.get_subtypes("super_class", {"header": "value"}, "exclude")
     assert "http://example.com/sub1" in sub_classes
     # The description should include "dummy"
     assert "dummy" in sub_classes["http://example.com/sub1"]["description"]
@@ -437,7 +435,7 @@ def test_post_building_state(monkeypatch):
         called["query"] = query
 
     monkeypatch.setattr(routes, "run_sparql_update", dummy_run_sparql_update)
-    uri = routes.post_building_state(dummy_state)
+    routes.post_building_state(dummy_state)
     assert dummy_state.uri.startswith(routes.data_uri_stub)
     assert "INSERT DATA" in called["query"]
 

@@ -126,22 +126,19 @@ export default class SearchViewPage {
     }
 
     async addNewFilter(filterType: string) {
-        let text = await this.page.locator('text=/\\d+ results in view/').innerText();
+        let text = await this.page.locator(`text=/\\d+ results in view/`).innerText();
         let match = text.match(/\d+/);
         const beforeResultsCount = match ? Number.parseInt(match[0], 10) : 0;
 
-        switch (filterType) {
-            case 'EPC Rating':
-                await this.filterByEPC();
-                break;
-            default:
-                console.error('No Matching filter types');
-                break;
+        if (filterType === 'EPC Rating') {
+            await this.filterByEPC();
+        } else {
+            console.error('No Matching filter types');
         }
 
         basePage.sleep(1000);
 
-        text = await this.page.locator('text=/\\d+ results in view/').innerText();
+        text = await this.page.locator(`text=/\\d+ results in view/`).innerText();
         match = text.match(/\d+/);
         const afterResultsCount = match ? Number.parseInt(match[0], 10) : 0;
 
