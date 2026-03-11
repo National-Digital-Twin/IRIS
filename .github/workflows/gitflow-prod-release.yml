@@ -12,13 +12,12 @@ env:
   SOURCE_AWS_ACCOUNT_ID: "${{ vars.STAGING_AWS_ACCOUNT_ID }}"
   DESTINATION_AWS_ACCOUNT_ID: "${{ vars.PROD_AWS_ACCOUNT_ID }}"
 
-permissions:
-  contents: read
-  id-token: write
-  pull-requests: read
-
 jobs:
   determine-tag:
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -68,6 +67,10 @@ jobs:
           echo "The determined tag is: $DETERMINED_TAG"
 
   copy-docker-image:
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
     needs: determine-tag
     runs-on: ubuntu-latest
     strategy:

@@ -18,13 +18,12 @@ on:
       - ".github/workflows/backend-cd-pr-merge.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: read
-  statuses: write # To report GitHub Actions status checks
-
 jobs:
   security-scanning:
+    permissions:
+      contents: read
+      packages: read
+      statuses: write # To report GitHub Actions status checks
     name: Security Scanning
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -44,6 +43,10 @@ jobs:
         continue-on-error: true
 
   unit-tests:
+    permissions:
+      contents: read
+      packages: read
+      statuses: write # To report GitHub Actions status checks
     name: Run Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -71,6 +74,10 @@ jobs:
         run: poetry run pytest backend/unit_tests/ -v
 
   docker-build-test-scan:
+    permissions:
+      contents: read
+      packages: read
+      statuses: write # To report GitHub Actions status checks
     name: Build, Docker Build, Test & Scan
     runs-on: ubuntu-latest
     needs: [security-scanning, unit-tests]
