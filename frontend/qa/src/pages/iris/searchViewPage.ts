@@ -20,7 +20,6 @@ export default class SearchViewPage {
     async verifyIrisSearchViewPage() {
         await this.page.goto(process.env.IRISURL);
 
-        // TODO: Needs to reword on the Loading data once arc-containers are removed as part of reskin
         while (await this.page.locator(this.Elements.msgLoadingData).isVisible()) {
             await this.page.waitForTimeout(500); // Waits 500ms before checking again
         }

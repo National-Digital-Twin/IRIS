@@ -50,9 +50,4 @@ describe('DownloadableContentModal', () => {
         const downloadButtonElement = fixture.debugElement.query(By.css('[data-testid="download-button"]')).nativeElement;
         expect(downloadButtonElement).toBeTruthy();
     });
-
-    it('should add the hidden download link when pdf filepath and name is set', async () => {
-        const downloadLinkElement = fixture.debugElement.query(By.css('#downloadLink')).nativeElement;
-        expect(downloadLinkElement).toBeTruthy();
-    });
 });

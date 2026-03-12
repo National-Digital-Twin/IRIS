@@ -61,13 +61,11 @@ When('I add the Filter area around the multiple properties', async function () {
     await searchViewPage.drawFilterArea();
 });
 
-//TODO: Will be implemented in the next PR
 Then('I should view the filtered properties in the area', async function () {
     searchViewPage = new SearchViewPage(basePage.page);
     await searchViewPage.verifyFilteredPropertiesPanelVisible();
 });
 
-//TODO: Will be implemented in the next PR
 Then('I should be able add additional filter by {string}', async function (filterType: string) {
     searchViewPage = new SearchViewPage(basePage.page);
     await searchViewPage.addNewFilter(filterType);
