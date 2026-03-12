@@ -387,7 +387,8 @@ export class UtilService {
         }
 
         const mappedValues = key === 'HasRoofSolarPanels' ? this.mapSolarPanelValues(normalizedValues) : normalizedValues;
-        return mappedValues.includes(((filterableBuildingModel as Record<string, unknown>)[key] ?? {}).toString());
+        const matchedValue = (filterableBuildingModel as Record<string, unknown>)[key]?.toString();
+        return mappedValues.includes(matchedValue ?? '');
     }
 
     private matchesEpcExpiryFilter(filterableBuildingModel: FilterableBuildingModel, filterValues: string[]): boolean {
@@ -409,8 +410,8 @@ export class UtilService {
         buildingsArray: BuildingModel[],
     ): boolean | undefined {
         const matchedBuildingModel = buildingsArray.find((building) => building.UPRN === filterableBuildingModel.UPRN);
-        const matchedValue = matchedBuildingModel ? (matchedBuildingModel as Record<string, unknown>)[key] : undefined;
-        return matchedBuildingModel && normalizedValues.includes((matchedValue ?? {}).toString());
+        const matchedValue = matchedBuildingModel ? (matchedBuildingModel as Record<string, unknown>)[key]?.toString() : undefined;
+        return matchedBuildingModel && normalizedValues.includes(matchedValue ?? '');
     }
 
     private matchesRoofAspectAreaDirectionFilter(normalizedValues: string[], filterableBuildingModel: FilterableBuildingModel): boolean {

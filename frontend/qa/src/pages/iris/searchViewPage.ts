@@ -126,7 +126,7 @@ export default class SearchViewPage {
     }
 
     async addNewFilter(filterType: string) {
-        let text = await this.page.locator(`text=/\\d+ results in view/`).innerText();
+        let text = await this.page.locator(`text=/\d+ results in view/`).innerText();
         let match = text.match(/\d+/);
         const beforeResultsCount = match ? Number.parseInt(match[0], 10) : 0;
 
@@ -138,7 +138,7 @@ export default class SearchViewPage {
 
         basePage.sleep(1000);
 
-        text = await this.page.locator(`text=/\\d+ results in view/`).innerText();
+        text = await this.page.locator(`text=/\d+ results in view/`).innerText();
         match = text.match(/\d+/);
         const afterResultsCount = match ? Number.parseInt(match[0], 10) : 0;
 
