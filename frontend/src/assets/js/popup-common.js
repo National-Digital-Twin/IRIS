@@ -1,4 +1,4 @@
-window.togglePopoutInfo = function () {
+globalThis.togglePopoutInfo = function () {
     const tooltip = document.getElementById('popout-info');
 
     if (tooltip.style.display === 'none') {
@@ -8,7 +8,7 @@ window.togglePopoutInfo = function () {
     }
 };
 
-window.hidePopoutInfo = function () {
+globalThis.hidePopoutInfo = function () {
     const tooltip = document.getElementById('popout-info');
     if (tooltip) {
         tooltip.style.display = 'none';

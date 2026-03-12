@@ -21,9 +21,9 @@ export class FilterService {
         }
         // combine new filters with existing filters into a single object
         // of unique filters and filter values
-        const keys = combinedFilters.map((o: object) => Object.keys(o)).flat();
+        const keys = combinedFilters.flatMap((o: object) => Object.keys(o));
         const merged = keys.reduce((result: Record<string, string[]>, key) => {
-            const values = [...new Set(combinedFilters.map((o) => o[key]).flat())].filter((prop: string) => prop !== undefined);
+            const values = [...new Set(combinedFilters.flatMap((o) => o[key]))].filter((prop: string) => prop !== undefined);
             if (values.length) {
                 result[key] = values;
             }

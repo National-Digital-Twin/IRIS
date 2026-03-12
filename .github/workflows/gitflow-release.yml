@@ -8,14 +8,13 @@ on:
     branches:
       - "release/*"
 
-permissions:
-  id-token: write
-  contents: write
-  packages: read
-  statuses: write
-
 jobs:
   versioning:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     name: Extract Version
     runs-on: ubuntu-latest
     env:
@@ -58,20 +57,40 @@ jobs:
           echo "Generated Version: $EXTRACTED_VERSION"
 
   api-ci:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     needs: [versioning]
     uses: ./.github/workflows/backend-ci-pr.yml
     secrets:
       GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   frontend-ci:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     needs: [versioning]
     uses: ./.github/workflows/frontend-ci-pr.yml
 
   proxy-ci:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     needs: [versioning]
     uses: ./.github/workflows/transparent-proxy-ci-pr.yml
 
   api-push-to-ECR:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     needs: [api-ci, versioning]
     uses: ./.github/workflows/backend-cd-push-to-ECR.yml
     with:
@@ -83,6 +102,11 @@ jobs:
       GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
 
   frontend-push-to-ECR:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     needs: [frontend-ci, versioning]
     uses: ./.github/workflows/frontend-cd-push-to-ECR.yml
     with:
@@ -92,6 +116,11 @@ jobs:
       version: ${{ needs.versioning.outputs.version }}
 
   proxy-push-to-ECR:
+    permissions:
+      id-token: write
+      contents: write
+      packages: read
+      statuses: write
     needs: [proxy-ci, versioning]
     uses: ./.github/workflows/transparent-proxy-cd-push-to-ECR.yml
     with:

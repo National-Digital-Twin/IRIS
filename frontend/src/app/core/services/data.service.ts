@@ -293,9 +293,7 @@ export class DataService {
             const mergedMap: MinimalBuildingMap = { ...currentMap };
 
             Object.entries(buildingMap).forEach(([toid, buildings]) => {
-                if (!mergedMap[toid]) {
-                    mergedMap[toid] = buildings;
-                } else {
+                if (mergedMap[toid]) {
                     // If this TOID exists, need to merge buildings, deduplicating by UPRN
                     const existingUPRNs = new Set(mergedMap[toid].map((b) => b.UPRN));
 
@@ -305,6 +303,8 @@ export class DataService {
                             mergedMap[toid].push(building);
                         }
                     });
+                } else {
+                    mergedMap[toid] = buildings;
                 }
             });
 

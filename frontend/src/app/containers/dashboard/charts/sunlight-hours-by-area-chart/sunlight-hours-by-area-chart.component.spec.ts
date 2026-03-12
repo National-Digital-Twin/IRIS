@@ -137,7 +137,7 @@ describe('SunlightHoursByAreaChartComponent', () => {
         it('should colour the "National average" bar dark blue (#002244)', () => {
             const dataWithNationalAverage: SunlightHoursRegionData[] = [
                 { area_name: 'Area average', average_daily_sunlight_hours: 4.8 },
-                { area_name: 'National average', average_daily_sunlight_hours: 5.0 },
+                { area_name: 'National average', average_daily_sunlight_hours: 5 },
             ];
 
             component['sunlightHoursAreaData'].set(dataWithNationalAverage);

@@ -96,7 +96,7 @@ export class ResultsCardExpandableComponent {
 
     public isChecked(dwelling: BuildingModel): boolean {
         const checkedCards = this.checkedCards();
-        return !!checkedCards.find((cc) => cc.UPRN === dwelling.UPRN);
+        return checkedCards.some((cc) => cc.UPRN === dwelling.UPRN);
     }
 }
 
