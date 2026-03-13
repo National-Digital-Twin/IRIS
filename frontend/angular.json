@@ -1,0 +1,184 @@
+{
+    "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+    "version": 1,
+    "newProjectRoot": "projects",
+    "projects": {
+        "iris-vis": {
+            "projectType": "application",
+            "schematics": {
+                "@schematics/angular:component": {
+                    "style": "scss"
+                }
+            },
+            "root": "",
+            "sourceRoot": "src",
+            "architect": {
+                "build": {
+                    "builder": "@angular/build:application",
+                    "options": {
+                        "outputPath": {
+                            "base": "dist/iris-vis"
+                        },
+                        "index": "src/index.html",
+                        "polyfills": [
+                            "zone.js"
+                        ],
+                        "inlineStyleLanguage": "scss",
+                        "tsConfig": "tsconfig.app.json",
+                        "assets": [
+                            "src/assets"
+                        ],
+                        "styles": [
+                            {
+                                "input": "modern-normalize/modern-normalize.css",
+                                "bundleName": "normalize"
+                            },
+                            {
+                                "input": "mapbox-gl/dist/mapbox-gl.css",
+                                "bundleName": "mapbox"
+                            },
+                            {
+                                "input": "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css",
+                                "bundleName": "mapbox"
+                            },
+                            {
+                                "input": "src/styles/main.scss",
+                                "bundleName": "styles"
+                            }
+                        ],
+                        "stylePreprocessorOptions": {
+                            "sass": {
+                                "silenceDeprecations": [
+                                    "import"
+                                ]
+                            },
+                            "includePaths": [
+                                "./node_modules"
+                            ]
+                        },
+                        "allowedCommonJsDependencies": [
+                            "mapbox-gl",
+                            "papaparse",
+                            "plotly.js-dist-min",
+                            "fast-deep-equal",
+                            "@mapbox/geojson-normalize",
+                            "file-saver",
+                            "jszip",
+                            "@mapbox/geojson-area",
+                            "rbush"
+                        ],
+                        "browser": "src/main.ts"
+                    },
+                    "configurations": {
+                        "production": {
+                            "baseHref": "/",
+                            "assets": [
+                                "src/assets",
+                                {
+                                    "input": "src/configurations/prod",
+                                    "output": "configuration/",
+                                    "glob": "*.json"
+                                }
+                            ],
+                            "budgets": [
+                                {
+                                    "type": "initial",
+                                    "maximumWarning": "4mb",
+                                    "maximumError": "4.5mb"
+                                },
+                                {
+                                    "type": "anyComponentStyle",
+                                    "maximumWarning": "3.5kb",
+                                    "maximumError": "4kb"
+                                }
+                            ],
+                            "outputHashing": "all"
+                        },
+                        "development": {
+                            "baseHref": "/",
+                            "optimization": false,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "namedChunks": true
+                        },
+                        "dev": {
+                            "baseHref": "/hostedapps/iris-vis/",
+                            "optimization": false,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "namedChunks": true,
+                            "assets": [
+                                "src/assets",
+                                {
+                                    "input": "src/configurations/dev",
+                                    "output": "configuration/",
+                                    "glob": "*.json"
+                                }
+                            ]
+                        },
+                        "local": {
+                            "baseHref": "/",
+                            "optimization": false,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "namedChunks": true,
+                            "assets": [
+                                "src/favicon.ico",
+                                "src/assets",
+                                {
+                                    "input": "src/configurations/local",
+                                    "output": "configuration/",
+                                    "glob": "*.json"
+                                }
+                            ],
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.local.ts"
+                                }
+                            ]
+                        }
+                    },
+                    "defaultConfiguration": "production"
+                },
+                "serve": {
+                    "builder": "@angular/build:dev-server",
+                    "configurations": {
+                        "production": {
+                            "buildTarget": "iris-vis:build:production"
+                        },
+                        "development": {
+                            "buildTarget": "iris-vis:build:development"
+                        },
+                        "dev": {
+                            "buildTarget": "iris-vis:build:dev"
+                        },
+                        "local": {
+                            "buildTarget": "iris-vis:build:local",
+                            "proxyConfig": "proxy.conf.json"
+                        }
+                    },
+                    "defaultConfiguration": "development"
+                },
+                "extract-i18n": {
+                    "builder": "@angular/build:extract-i18n",
+                    "options": {
+                        "buildTarget": "iris-vis:build"
+                    }
+                },
+                "lint": {
+                    "builder": "@angular-eslint/builder:lint",
+                    "options": {
+                        "lintFilePatterns": [
+                            "src/**/*.ts",
+                            "src/**/*.html"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "cli": {
+        "analytics": false
+    }
+}

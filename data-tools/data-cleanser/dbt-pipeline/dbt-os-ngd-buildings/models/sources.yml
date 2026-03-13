@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: postgres
+    schema: "{{ env_var('DB_SCHEMA') }}"
+    tables:
+      - name: bld_fts_building
+      - name: bld_fts_building_bldtoaddrcrossref

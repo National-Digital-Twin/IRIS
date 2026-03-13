@@ -1,0 +1,397 @@
+@use '@angular/material' as mat;
+@use 'light-theme' as light-theme;
+@use 'dark-theme' as dark-theme;
+@use 'mapbox' as mapbox;
+
+:root {
+    // EPC Colors
+
+    --color-epc-a: #3d4e3b;
+    --color-epc-b: #4ba046;
+    --color-epc-c: #a3eb9f;
+    --color-epc-d: #ffd10a;
+    --color-epc-e: #ffcc99;
+    --color-epc-f: #e66e23;
+    --color-epc-g: #b60007;
+    --color-epc-none: #bebebe;
+    --color-epc-avg: #000000;
+
+    // Core overrides
+
+    --border-radius: 4px;
+
+    // Material
+
+    --mat-option-selected-state-label-text-color: var(--mat-sys-on-surface-variant);
+    --mat-option-selected-state-layer-color: var(--mat-sys-primary-container);
+    --mat-option-focus-state-label-text-color: var(--mat-sys-on-surface-variant);
+    --mat-option-focus-state-layer-color: var(--mat-sys-primary-container);
+    --mat-option-hover-state-label-text-color: var(--mat-sys-on-surface-variant);
+    --mat-option-hover-state-layer-color: var(--mat-sys-surface-container-low);
+    --font-size-large: 0.1rem;
+    --font-size-xlarge: 0.2rem;
+    --line-height-dense: 0.3rem;
+    --line-height-loose: 0.3rem;
+    --letter-spacing-dense: 0.05rem;
+    --letter-spacing-loose: 0.05rem;
+}
+
+html {
+    color-scheme: light;
+
+    @include mat.theme((color: (primary: light-theme.$primary-palette,
+                tertiary: light-theme.$tertiary-palette,
+                theme-type: light,
+            ),
+            typography: Roboto,
+            density: 0,
+        ));
+}
+
+body {
+    line-height: 1.4rem;
+
+    @include mat.form-field-overrides((filled-container-color: var(--mat-sys-surface-container-lowest),
+        ));
+
+    &[theme='dark'] {
+        color-scheme: dark;
+
+        @include mat.theme((color: (primary: dark-theme.$primary-palette,
+                    tertiary: dark-theme.$tertiary-palette,
+                    theme-type: dark,
+                ),
+                typography: Roboto,
+                density: 0,
+            ));
+    }
+
+    .mapboxgl-popup {
+        @include mapbox.climate-data-popup;
+    }
+
+    .mapboxgl-popup-content {
+        @include mapbox.popup;
+    }
+}
+
+body[colour-blind-mode='true'] {
+    --color-epc-a: #0051f2;
+    --color-epc-b: #377cf6;
+    --color-epc-c: #6da7fb;
+    --color-epc-d: #daffa5;
+    --color-epc-e: #ffd173;
+    --color-epc-f: #d9963a;
+    --color-epc-g: #b35a00;
+}
+
+h1 {
+    margin: 0;
+    font-family: var(--mat-sys-headline-small-font);
+    font-size: var(--mat-sys-headline-small-size);
+    font-weight: var(--mat-sys-headline-small-weight);
+}
+
+h2 {
+    margin: 0;
+    font-family: var(--mat-sys-title-large-font);
+    font-size: var(--mat-sys-title-large-size);
+    font-weight: var(--mat-sys-title-large-weight);
+}
+
+h3 {
+    margin: 0;
+    font-family: var(--mat-sys-title-medium-font);
+    font-size: var(--mat-sys-title-medium-size);
+    font-weight: var(--mat-sys-title-medium-weight);
+}
+
+h4 {
+    margin: 0;
+
+    font-family: var(--mat-sys-title-small-font);
+    font-size: var(--mat-sys-title-small-size);
+    font-weight: var(--mat-sys-title-small-weight);
+    color: var(--mat-sys-primary);
+    text-transform: uppercase;
+}
+
+div,
+p {
+    font-family: var(--mat-sys-body-medium-font);
+    font-size: var(--mat-sys-body-medium-size);
+    font-weight: var(--mat-sys-body-medium-weight);
+}
+
+@include mat.toolbar-overrides((standard-height: 56px,
+        container-background-color: #002244,
+        container-text-color: var(--mat-sys-on-primary),
+    ));
+
+@include mat.button-overrides((text-container-shape: var(--border-radius),
+        text-label-text-transform: uppercase,
+        filled-container-shape: var(--border-radius),
+        filled-label-text-transform: uppercase,
+        outlined-container-shape: var(--border-radius),
+        outlined-label-text-transform: uppercase,
+    ));
+
+@include mat.button-toggle-overrides((selected-state-text-color: var(--mat-sys-on-surface-variant),
+        selected-state-background-color: var(--mat-sys-primary-container),
+    ));
+
+@include mat.slide-toggle-overrides(( // General
+        track-height: 1rem,
+        track-outline-width: 0,
+        pressed-handle-size: 2rem,
+        with-icon-handle-size: 2rem,
+        handle-elevation-shadow: var(--mat-sys-level1),
+        // Unselected state
+        unselected-icon-color: var(--mat-sys-on-surface),
+        unselected-handle-color: var(--mat-sys-surface-container),
+        unselected-focus-handle-color: var(--mat-sys-surface-container),
+        unselected-hover-handle-color: var(--mat-sys-surface-container),
+        unselected-pressed-handle-color: var(--mat-sys-surface-container),
+        unselected-pressed-handle-horizontal-margin: 0,
+        unselected-with-icon-handle-horizontal-margin: 0,
+        unselected-track-color: var(--mat-sys-outline),
+        unselected-focus-track-color: var(--mat-sys-outline),
+        unselected-hover-track-color: var(--mat-sys-outline),
+        unselected-pressed-track-color: var(--mat-sys-outline),
+        // Selected state
+        selected-icon-color: var(--mat-sys-on-primary),
+        selected-handle-color: var(--mat-sys-primary),
+        selected-focus-handle-color: var(--mat-sys-primary),
+        selected-hover-handle-color: var(--mat-sys-primary),
+        selected-pressed-handle-color: var(--mat-sys-primary),
+        selected-pressed-handle-horizontal-margin: 0 1.375rem,
+        selected-with-icon-handle-horizontal-margin: 0 1.375rem,
+        selected-track-color: var(--mat-sys-primary-container),
+        selected-focus-track-color: var(--mat-sys-primary-container),
+        selected-hover-track-color: var(--mat-sys-primary-container),
+        selected-pressed-track-color: var(--mat-sys-primary-container)));
+
+@include mat.form-field-overrides((filled-container-color: var(--mat-sys-surface-container-lowest),
+        filled-active-indicator-height: 0,
+        filled-focus-active-indicator-height: 0,
+    ));
+
+@include mat.divider-overrides((color: var(--mat-sys-outline-variant),
+    ));
+
+@include mat.autocomplete-overrides((background-color: var(--mat-sys-surface-container-lowest),
+    ));
+
+@include mat.tabs-overrides((divider-color: var(--mat-sys-outline-variant),
+        active-label-text-color: var(--mat-sys-primary),
+    ));
+
+@include mat.select-overrides((panel-background-color: var(--mat-sys-surface-container-lowest),
+    ));
+
+@include mat.expansion-overrides((container-shape: 0,
+        container-background-color: var(--mat-sys-surface-container-lowest),
+        header-hover-state-layer-color: var(--mat-sys-surface-bright),
+    ));
+
+@include mat.dialog-overrides((container-shape: var(--border-radius),
+        container-color: var(--mat-sys-surface-container-lowest),
+        headline-padding: 2rem 2rem 1rem,
+        actions-padding: 1rem 2rem 2rem,
+        with-actions-content-padding: 1rem 2rem,
+    ));
+
+@include mat.menu-overrides((divider-top-spacing: 0,
+        container-shape: var(--border-radius),
+        item-leading-spacing: 2rem,
+        item-trailing-spacing: 3rem,
+        item-with-icon-leading-spacing: 1rem,
+        item-with-icon-trailing-spacing: 1em,
+        item-label-text-color: #002244,
+        item-icon-color: #002244,
+        container-color: var(--mat-sys-surface-container-lowest),
+    ));
+
+.download-modal {
+    @include mat.dialog-overrides((headline-padding: 3rem 4rem 1rem,
+            actions-padding: 2rem 4rem 3rem,
+            with-actions-content-padding: 0 4rem,
+        ));
+}
+
+.section-item-warning-guidance-more-info-modal {
+
+    @include mat.dialog-overrides((container-color: #e5e5e5, with-actions-content-padding: 1rem, actions-padding: 1rem, container-max-width: 700px));
+    .downloadable-content {
+        padding: 0.5rem;
+        background-color: #ffffff;
+    }
+}
+
+.profile-menu {
+    p {
+        padding-right: 1rem;
+        padding-left: 1rem;
+        font-size: 1rem;
+        opacity: 0.38;
+    }
+
+    button.mat-mdc-menu-item {
+        padding-right: 3rem;
+    }
+}
+
+.layers-menu {
+    position: absolute;
+    top: -3rem;
+    right: 3rem;
+    margin-right: 0.5rem;
+}
+
+.layers-submenu {
+    position: absolute;
+    top: 0;
+    right: 0.25rem;
+    margin-right: 0.5rem;
+}
+
+.mat-mdc-menu-panel {
+    .mat-mdc-menu-content {
+        padding: 0;
+    }
+
+    .mat-mdc-menu-item {
+        &.active {
+            color: var(--mat-sys-on-surface-variant);
+            background-color: var(--mat-sys-primary-container);
+        }
+    }
+}
+
+.font-size-large {
+    --mat-sys-body-large-size: calc(1rem + var(--font-size-large));
+    --mat-sys-body-medium-size: calc(0.875rem + var(--font-size-large));
+    --mat-sys-body-small-size: calc(0.75rem + var(--font-size-large));
+    --mat-sys-display-large-size: calc(3.562rem + var(--font-size-large));
+    --mat-sys-display-medium-size: calc(2.812rem + var(--font-size-large));
+    --mat-sys-display-small-size: calc(2.25rem + var(--font-size-large));
+    --mat-sys-headline-large-size: calc(2rem + var(--font-size-large));
+    --mat-sys-headline-medium-size: calc(1.75rem + var(--font-size-large));
+    --mat-sys-headline-small-size: calc(1.5rem + var(--font-size-large));
+    --mat-sys-label-large-size: calc(0.875rem + var(--font-size-large));
+    --mat-sys-label-medium-size: calc(0.75rem + var(--font-size-large));
+    --mat-sys-label-small-size: calc(0.688rem + var(--font-size-large));
+    --mat-sys-title-large-size: calc(1.375rem + var(--font-size-large));
+    --mat-sys-title-medium-size: calc(1rem + var(--font-size-large));
+    --mat-sys-title-small-size: calc(0.875rem + var(--font-size-large));
+}
+
+.font-size-xlarge {
+    --mat-sys-body-large-size: calc(1rem + var(--font-size-xlarge));
+    --mat-sys-body-medium-size: calc(0.875rem + var(--font-size-xlarge));
+    --mat-sys-body-small-size: calc(0.75rem + var(--font-size-xlarge));
+    --mat-sys-display-large-size: calc(3.562rem + var(--font-size-xlarge));
+    --mat-sys-display-medium-size: calc(2.812rem + var(--font-size-xlarge));
+    --mat-sys-display-small-size: calc(2.25rem + var(--font-size-xlarge));
+    --mat-sys-headline-large-size: calc(2rem + var(--font-size-xlarge));
+    --mat-sys-headline-medium-size: calc(1.75rem + var(--font-size-xlarge));
+    --mat-sys-headline-small-size: calc(1.5rem + var(--font-size-xlarge));
+    --mat-sys-label-large-size: calc(0.875rem + var(--font-size-xlarge));
+    --mat-sys-label-medium-size: calc(0.75rem + var(--font-size-xlarge));
+    --mat-sys-label-small-size: calc(0.688rem + var(--font-size-xlarge));
+    --mat-sys-title-large-size: calc(1.375rem + var(--font-size-xlarge));
+    --mat-sys-title-medium-size: calc(1rem + var(--font-size-xlarge));
+    --mat-sys-title-small-size: calc(0.875rem + var(--font-size-xlarge));
+}
+
+.line-height-dense {
+    --mat-sys-body-large-line-height: calc(1.5rem - var(--line-height-dense));
+    --mat-sys-body-medium-line-height: calc(1.25rem - var(--line-height-dense));
+    --mat-sys-body-small-line-height: calc(1rem - var(--line-height-dense));
+    --mat-sys-display-large-line-height: calc(4rem - var(--line-height-dense));
+    --mat-sys-display-medium-line-height: calc(3.25rem - var(--line-height-dense));
+    --mat-sys-display-small-line-height: calc(2.75rem - var(--line-height-dense));
+    --mat-sys-headline-large-line-height: calc(2.5rem - var(--line-height-dense));
+    --mat-sys-headline-medium-line-height: calc(2.25rem - var(--line-height-dense));
+    --mat-sys-headline-small-line-height: calc(2rem - var(--line-height-dense));
+    --mat-sys-label-large-line-height: calc(1.25rem - var(--line-height-dense));
+    --mat-sys-label-medium-line-height: calc(1rem - var(--line-height-dense));
+    --mat-sys-label-small-line-height: calc(1rem - var(--line-height-dense));
+    --mat-sys-title-large-line-height: calc(1.75rem - var(--line-height-dense));
+    --mat-sys-title-medium-line-height: calc(1.5rem - var(--line-height-dense));
+    --mat-sys-title-small-line-height: calc(1.25rem - var(--line-height-dense));
+
+    line-height: calc(1.4rem - var(--line-height-dense));
+}
+
+.line-height-loose {
+    --mat-sys-body-large-line-height: calc(1.5rem + var(--line-height-loose));
+    --mat-sys-body-medium-line-height: calc(1.25rem + var(--line-height-loose));
+    --mat-sys-body-small-line-height: calc(1rem + var(--line-height-loose));
+    --mat-sys-display-large-line-height: calc(4rem + var(--line-height-loose));
+    --mat-sys-display-medium-line-height: calc(3.25rem + var(--line-height-loose));
+    --mat-sys-display-small-line-height: calc(2.75rem + var(--line-height-loose));
+    --mat-sys-headline-large-line-height: calc(2.5rem + var(--line-height-loose));
+    --mat-sys-headline-medium-line-height: calc(2.25rem + var(--line-height-loose));
+    --mat-sys-headline-small-line-height: calc(2rem + var(--line-height-loose));
+    --mat-sys-label-large-line-height: calc(1.25rem + var(--line-height-loose));
+    --mat-sys-label-medium-line-height: calc(1rem + var(--line-height-loose));
+    --mat-sys-label-small-line-height: calc(1rem + var(--line-height-loose));
+    --mat-sys-title-large-line-height: calc(1.75rem + var(--line-height-loose));
+    --mat-sys-title-medium-line-height: calc(1.5rem + var(--line-height-loose));
+    --mat-sys-title-small-line-height: calc(1.25rem + var(--line-height-loose));
+
+    line-height: calc(1.4rem + var(--line-height-loose));
+}
+
+.letter-spacing-dense {
+    --mat-sys-body-large-tracking: calc(0.031rem - var(--letter-spacing-dense));
+    --mat-sys-body-medium-tracking: calc(0.016rem - var(--letter-spacing-dense));
+    --mat-sys-body-small-tracking: calc(0.025rem - var(--letter-spacing-dense));
+    --mat-sys-display-large-tracking: calc(-0.016rem - var(--letter-spacing-dense));
+    --mat-sys-display-medium-tracking: calc(0 - var(--letter-spacing-dense));
+    --mat-sys-display-small-tracking: calc(0 - var(--letter-spacing-dense));
+    --mat-sys-headline-large-tracking: calc(0 - var(--letter-spacing-dense));
+    --mat-sys-headline-medium-tracking: calc(0 - var(--letter-spacing-dense));
+    --mat-sys-headline-small-tracking: calc(0 - var(--letter-spacing-dense));
+    --mat-sys-label-large-tracking: calc(0.006rem - var(--letter-spacing-dense));
+    --mat-sys-label-medium-tracking: calc(0.031rem - var(--letter-spacing-dense));
+    --mat-sys-label-small-tracking: calc(0.031rem - var(--letter-spacing-dense));
+    --mat-sys-title-large-tracking: calc(0 - var(--letter-spacing-dense));
+    --mat-sys-title-medium-tracking: calc(0.009rem - var(--letter-spacing-dense));
+    --mat-sys-title-small-tracking: calc(0.006rem - var(--letter-spacing-dense));
+}
+
+.letter-spacing-loose {
+    --mat-sys-body-large-tracking: calc(0.031rem + var(--letter-spacing-loose));
+    --mat-sys-body-medium-tracking: calc(0.016rem + var(--letter-spacing-loose));
+    --mat-sys-body-small-tracking: calc(0.025rem + var(--letter-spacing-loose));
+    --mat-sys-display-large-tracking: calc(-0.016rem + var(--letter-spacing-loose));
+    --mat-sys-display-medium-tracking: calc(0 + var(--letter-spacing-loose));
+    --mat-sys-display-small-tracking: calc(0 + var(--letter-spacing-loose));
+    --mat-sys-headline-large-tracking: calc(0 + var(--letter-spacing-loose));
+    --mat-sys-headline-medium-tracking: calc(0 + var(--letter-spacing-loose));
+    --mat-sys-headline-small-tracking: calc(0 + var(--letter-spacing-loose));
+    --mat-sys-label-large-tracking: calc(0.006rem + var(--letter-spacing-loose));
+    --mat-sys-label-medium-tracking: calc(0.031rem + var(--letter-spacing-loose));
+    --mat-sys-label-small-tracking: calc(0.031rem + var(--letter-spacing-loose));
+    --mat-sys-title-large-tracking: calc(0 + var(--letter-spacing-loose));
+    --mat-sys-title-medium-tracking: calc(0.009rem + var(--letter-spacing-loose));
+    --mat-sys-title-small-tracking: calc(0.006rem + var(--letter-spacing-loose));
+}
+
+button {
+    &.mdc-button {
+        line-height: normal;
+
+        &>.mat-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 1.5rem;
+        }
+    }
+}
+
+.mat-mdc-form-field {
+    width: 100%;
+}

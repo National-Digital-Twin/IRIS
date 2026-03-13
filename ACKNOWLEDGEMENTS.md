@@ -1,7 +1,8 @@
 # Acknowledgements
 
-**Repository:** `[repository-name]`  
+**Repository:** `IRIS`  
 **Description:** `Recognises suppliers, partner organisations, and other contributors to the repository's development.`  
+**SPDX-License-Identifier:** OGL-UK-3.0
 
 The National Digital Twin Programme (NDTP) would like to acknowledge the contributions of various organisations and individuals who have supported the development of this repository.
 
@@ -9,24 +10,16 @@ The National Digital Twin Programme (NDTP) would like to acknowledge the contrib
 
 Over time, the following organisations have provided technical expertise, development support, and domain knowledge that have contributed to the evolution of this project:
 
-i.e. 
-- [Supplier A]
-- [Supplier B]
-- [Supplier C]
-- [Supplier D]
-(etc.)
-
-<!--
-
-GUIDANCE: IN PLACE OF THE ABOVE LIST, PROVIDE THE ACTUAL SUPPLIER/ORGANISATION DETAILS THAT ARE RELEVANT TO THE REPOSITORY
- 
- -->
+- Informed Solutions
+- Ove Arup & Partners
+- Coefficient Systems
+- Telicent
 
 We are grateful for the collaboration that has helped shape this repository.
 
 ## Individual contributions
 
-For a list of individual contributors who have made direct commits to this repository, see GitHub’s auto-generated contributor insights: [Contributors](../../../graphs/contributors).
+For a list of individual contributors who have made direct commits to this repository, see GitHub’s auto-generated contributor insights: [Contributors](https://github.com/National-Digital-Twin/IRIS/graphs/contributors).
 
 ---
 
@@ -34,7 +27,5 @@ For a list of individual contributors who have made direct commits to this repos
 
 © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
 
-Licensed under the NDTP InnerSource Licence – Version 1.0.
-
-For full licensing terms, see [LICENSE.md](LICENSE.md).
-
+Licensed under the Open Government Licence v3.0.
+For full licensing terms, see [OGL_LICENSE.md](OGL_LICENSE.md).

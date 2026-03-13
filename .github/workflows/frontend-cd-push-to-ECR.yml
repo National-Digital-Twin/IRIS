@@ -1,0 +1,140 @@
+# SPDX-License-Identifier: Apache-2.0
+# © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+
+name: Frontend CD - push to ECR
+
+on:
+  workflow_call:
+    inputs:
+      aws_account_number:
+        type: string
+        required: true
+        description: "AWS Account Number for ECR"
+      repo_name:
+        type: string
+        required: true
+        description: "Name of the repository in ECR"
+      app_name:
+        type: string
+        required: true
+        description: "Name of app - frontend, backend or transparent-proxy"
+      version:
+        type: string
+        required: true
+        description: "Version number passed from main workflow"
+  workflow_dispatch:
+    inputs:
+      aws_account_number:
+        type: string
+        required: true
+        description: "AWS Account Number for ECR"
+      repo_name:
+        type: string
+        required: true
+        description: "Name of the repository in ECR"
+      app_name:
+        type: string
+        required: true
+        description: "Name of app - frontend, backend or transparent-proxy"
+      version:
+        type: string
+        required: true
+        description: "Version number passed from main workflow"
+
+permissions:
+  id-token: write
+  contents: read
+  packages: read
+  statuses: write
+
+jobs:
+  docker-build-push:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      AWS_ACCOUNT_NUMBER: ${{ inputs.aws_account_number }}
+      REPO_NAME: ${{ inputs.repo_name }}
+      APP_NAME: ${{ inputs.app_name }}
+      VERSION: ${{ inputs.version }}
+      IMAGE_SHA: ${{ github.sha }}
+    environment: development
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Use Provided Version
+        run: |
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Debug Version Output
+        run: |
+          echo "Using provided version: $VERSION"
+
+      - name: Validate workflow inputs
+        run: |
+          if [[ ! "$AWS_ACCOUNT_NUMBER" =~ ^[0-9]{12}$ ]]; then
+              echo "Error: AWS account number must be 12 digits."
+              exit 1
+          fi
+
+          if [[ ! "$REPO_NAME" =~ ^[a-z0-9][a-z0-9._/-]{0,127}$ ]]; then
+              echo "Error: repo_name contains invalid characters."
+              exit 1
+          fi
+
+          if [[ ! "$APP_NAME" =~ ^[a-z0-9][a-z0-9._/-]{0,127}$ ]]; then
+              echo "Error: app_name contains invalid characters."
+              exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Error: version must be in x.y.z format."
+              exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build Frontend
+        run: |
+          npm run build
+
+      - name: Build Docker Image
+        run: |
+          docker build --load \
+                  -t ${AWS_ACCOUNT_NUMBER}.dkr.ecr.eu-west-2.amazonaws.com/${REPO_NAME}:${IMAGE_SHA} \
+                  -t ${AWS_ACCOUNT_NUMBER}.dkr.ecr.eu-west-2.amazonaws.com/${REPO_NAME}:${VERSION} \
+                  -f docker/Dockerfile .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_NUMBER }}:role/ecr-access-for-github
+          aws-region: eu-west-2
+          role-session-name: githubsession
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker image push --all-tags ${AWS_ACCOUNT_NUMBER}.dkr.ecr.eu-west-2.amazonaws.com/${REPO_NAME}
+
+      - name: Verify Docker Image
+        run: |
+          docker images
+          aws ecr describe-images --repository-name ${REPO_NAME} --query 'sort_by(imageDetails, &imagePushedAt)[-1]' --output table  >> $GITHUB_STEP_SUMMARY

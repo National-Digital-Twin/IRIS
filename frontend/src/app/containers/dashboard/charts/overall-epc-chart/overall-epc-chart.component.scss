@@ -1,0 +1,21 @@
+@import '../chart-shared';
+
+.overall-epc-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+
+    .donut-section {
+        position: relative;
+        flex: 0 0 auto;
+    }
+
+    .bar-section {
+        position: relative;
+        flex: 1;
+    }
+
+    plotly-plot {
+        width: 100%;
+    }
+}

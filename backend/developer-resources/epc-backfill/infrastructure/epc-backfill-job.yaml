@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epc-backfill-job
+  namespace: iris
+spec:
+  template:
+    spec:
+      serviceAccountName: epc-backfill-sa
+      automountServiceAccountToken: false
+      containers:
+        - name: epc-backfill-python
+          image: 537124944113.dkr.ecr.eu-west-2.amazonaws.com/iris/epc-backfill-python:1.0.0
+          resources:
+            limits:
+              memory: 500Mi
+              cpu: 1
+            requests:
+              memory: 250Mi
+              cpu: 0.5
+              ephemeral-storage: 1Gi
+          env:
+            - name: AWS_ROLE_ARN
+              value: "arn:aws:iam::537124944113:role/epc-backfill-role"
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: epc-backfill-config-map
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: epc-backfill-config-map
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: epc-backfill-config-map
+                  key: DB_NAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: epc-backfill-secrets
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: epc-backfill-secrets
+                  key: DB_PASSWORD
+            - name: CSV_PATH
+              value: "{REPLACE ME}"
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 999
+  backoffLimit: 0

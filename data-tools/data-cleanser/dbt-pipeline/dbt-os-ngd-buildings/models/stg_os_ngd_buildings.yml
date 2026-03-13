@@ -1,0 +1,9 @@
+version: 2
+models:
+  - name: stg_os_ngd_buildings
+    description: "Pass-through staging model for OS NGD Address with light type coercions."
+    columns:
+      - name: osid
+        tests:
+          - not_null
+          - unique

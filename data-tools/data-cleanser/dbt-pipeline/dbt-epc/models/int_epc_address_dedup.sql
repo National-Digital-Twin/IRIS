@@ -1,0 +1,39 @@
+{{ config(materialized='view') }}
+
+-- Keep all EPC records, dropping only exact duplicates.
+
+select distinct
+    lmk_key,
+    uprn,
+    address,
+    postcode,
+    saprating,
+    sapband,
+    lodgement_date,
+    construction_age_band,
+    posttown,
+    built_form,
+    total_floor_area,
+    environmental_impact_rating,
+    tco2,
+    heating_cost_gbp_per_yr,
+    water_heating_cost_gbp_per_yr,
+    lighting_cost_gbp_per_yr,
+    property_type,
+    main_heating_category,
+    main_fuel_type,
+    multiple_glazing_type,
+    roof_construction,
+    roof_insulation_location,
+    roof_insulation_thickness,
+    wall_construction,
+    wall_insulation_type,
+    floor_construction,
+    floor_insulation,
+    windows_description,
+    floor_description,
+    open_fireplaces_count,
+    renewables,
+    ventilation,
+    certificate_type
+from {{ ref('int_epc_address_features') }}

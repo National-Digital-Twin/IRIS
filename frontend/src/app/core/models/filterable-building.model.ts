@@ -1,0 +1,26 @@
+export type FilterableBuildingModel = {
+    UPRN: string;
+    PostCode: string;
+    BuiltForm?: string;
+    LodgementDate: string;
+    YearOfAssessment?: string;
+    FuelType?: string;
+    FloorConstruction?: string;
+    FloorInsulation?: string;
+    RoofConstruction?: string;
+    RoofInsulationLocation?: string;
+    RoofInsulationThickness?: string;
+    WallConstruction?: string;
+    WallInsulation?: string;
+    WindowGlazing?: string;
+    RoofMaterial?: string;
+    HasRoofSolarPanels?: boolean;
+    RoofAspectAreaFacingNorth?: number;
+    RoofAspectAreaFacingNorthEast?: number;
+    RoofAspectAreaFacingEast?: number;
+    RoofAspectAreaFacingSouthEast?: number;
+    RoofAspectAreaFacingSouth?: number;
+    RoofAspectAreaFacingSouthWest?: number;
+    RoofAspectAreaFacingWest?: number;
+    RoofAspectAreaFacingNorthWest?: number;
+};

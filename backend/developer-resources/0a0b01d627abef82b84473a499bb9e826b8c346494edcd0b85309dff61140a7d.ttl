@@ -1,0 +1,25 @@
+@prefix data: <http://nationaldigitaltwin.gov.uk/data#> .
+@prefix geoplace: <https://www.geoplace.co.uk/addresses-streets/location-data/the-uprn#> .
+@prefix ies: <http://ies.data.gov.uk/ontology/ies4#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+data:building_100060748037 ies:inLocation <http://geohash.org/gcp0drcfsm8> ;
+    ies:isIdentifiedBy data:toid_osgb1000013026999,
+        data:uprn_100060748037 .
+
+<http://geohash.org/gcp0drcfsm8> a ies:GeoPoint ;
+    ies:isIdentifiedBy <http://geohash.org/gcp0drcfsm8_LAT>,
+        <http://geohash.org/gcp0drcfsm8_LON> .
+
+<http://geohash.org/gcp0drcfsm8_LAT> a ies:Latitude ;
+    ies:representationValue "50.75592140867639"^^xsd:float .
+
+<http://geohash.org/gcp0drcfsm8_LON> a ies:Longitude ;
+    ies:representationValue "-1.3047868185874387"^^xsd:float .
+
+data:toid_osgb1000013026999 a ies:TOID ;
+    ies:representationValue "osgb1000013026999"^^xsd:string .
+
+data:uprn_100060748037 a geoplace:UniquePropertyReferenceNumber ;
+    ies:representationValue "100060748037"^^xsd:string .
+

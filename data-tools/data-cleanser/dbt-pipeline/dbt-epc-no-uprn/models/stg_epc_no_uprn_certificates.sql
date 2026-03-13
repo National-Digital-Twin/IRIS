@@ -1,0 +1,254 @@
+{{ config(materialized = 'table') }}
+{% set NO_DATA_LITERALS = "'', 'NO DATA!', 'NODATA!', 'NO DATA', 'NODATA', 'N/A', 'UNKNOWN'" %}
+
+with certificates as (
+    SELECT
+        CAST("LMK_KEY" AS TEXT) AS lmk_key,
+        CAST(NULLIF(TRIM("ADDRESS1"), '') AS TEXT) AS address1,
+        CAST(NULLIF(TRIM("ADDRESS2"), '') AS TEXT) AS address2,
+        CAST(NULLIF(TRIM("ADDRESS3"), '') AS TEXT) AS address3,
+        CAST(NULLIF(TRIM("POSTCODE"), '') AS TEXT) AS postcode,
+        CAST(NULLIF(TRIM("BUILDING_REFERENCE_NUMBER"), '') AS TEXT) AS building_reference_number,
+        CAST(NULLIF(TRIM("CURRENT_ENERGY_RATING"), '') AS TEXT) AS current_energy_rating,
+        CAST(NULLIF(TRIM("POTENTIAL_ENERGY_RATING"), '') AS TEXT) AS potential_energy_rating,
+        CAST(NULLIF(TRIM("CURRENT_ENERGY_EFFICIENCY"), '') AS FLOAT) AS current_energy_efficiency,
+        CAST(NULLIF(TRIM("POTENTIAL_ENERGY_EFFICIENCY"), '') AS FLOAT) AS potential_energy_efficiency,
+        CAST(NULLIF(TRIM("PROPERTY_TYPE"), '') AS TEXT) AS property_type,
+        CASE
+            WHEN UPPER(TRIM("BUILT_FORM")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("BUILT_FORM")
+        END AS built_form,
+        CAST(NULLIF(TRIM("INSPECTION_DATE"), '') AS DATE) AS inspection_date,
+        CAST(NULLIF(TRIM("LOCAL_AUTHORITY"), '') AS TEXT) AS local_authority,
+        CAST(NULLIF(TRIM("CONSTITUENCY"), '') AS TEXT) AS constituency,
+        CAST(NULLIF(TRIM("COUNTY"), '') AS TEXT) AS county,
+        CAST(NULLIF(TRIM("LODGEMENT_DATE"), '') AS DATE) AS lodgement_date,
+        CASE
+            WHEN UPPER(TRIM("TRANSACTION_TYPE")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("TRANSACTION_TYPE")
+        END AS transaction_type,
+        CAST(NULLIF(TRIM("ENVIRONMENT_IMPACT_CURRENT"), '') AS FLOAT) AS environment_impact_current,
+        CAST(NULLIF(TRIM("ENVIRONMENT_IMPACT_POTENTIAL"), '') AS FLOAT) AS environment_impact_potential,
+        CAST(NULLIF(TRIM("ENERGY_CONSUMPTION_CURRENT"), '') AS FLOAT) AS energy_consumption_current,
+        CAST(NULLIF(TRIM("ENERGY_CONSUMPTION_POTENTIAL"), '') AS FLOAT) AS energy_consumption_potential,
+        CAST(NULLIF(TRIM("CO2_EMISSIONS_CURRENT"), '') AS FLOAT) AS co2_emissions_current,
+        CAST(NULLIF(TRIM("CO2_EMISS_CURR_PER_FLOOR_AREA"), '') AS FLOAT) AS co2_emiss_curr_per_floor_area,
+        CAST(NULLIF(TRIM("CO2_EMISSIONS_POTENTIAL"), '') AS FLOAT) AS co2_emissions_potential,
+        CAST(NULLIF(TRIM("LIGHTING_COST_CURRENT"), '') AS FLOAT) AS lighting_cost_current,
+        CAST(NULLIF(TRIM("LIGHTING_COST_POTENTIAL"), '') AS FLOAT) AS lighting_cost_potential,
+        CAST(NULLIF(TRIM("HEATING_COST_CURRENT"), '') AS FLOAT) AS heating_cost_current,
+        CAST(NULLIF(TRIM("HEATING_COST_POTENTIAL"), '') AS FLOAT) AS heating_cost_potential,
+        CAST(NULLIF(TRIM("HOT_WATER_COST_CURRENT"), '') AS FLOAT) AS hot_water_cost_current,
+        CAST(NULLIF(TRIM("HOT_WATER_COST_POTENTIAL"), '') AS FLOAT) AS hot_water_cost_potential,
+        CAST(NULLIF(TRIM("TOTAL_FLOOR_AREA"), '') AS FLOAT) AS total_floor_area,
+        CASE
+            WHEN UPPER(TRIM("ENERGY_TARIFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("ENERGY_TARIFF")
+        END AS energy_tariff,
+        CASE
+            WHEN UPPER(TRIM("MAINS_GAS_FLAG")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINS_GAS_FLAG")
+        END AS mains_gas_flag,
+        CASE
+            WHEN UPPER(TRIM("FLOOR_LEVEL")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("FLOOR_LEVEL")
+        END AS floor_level,
+        CAST(NULLIF(TRIM("FLAT_TOP_STOREY"), '') AS TEXT) AS flat_top_storey,
+        CAST(NULLIF(TRIM("FLAT_STOREY_COUNT"), '') AS FLOAT) AS flat_storey_count,
+        CAST(NULLIF(TRIM("MAIN_HEATING_CONTROLS"), '') AS TEXT) AS main_heating_controls,
+        CAST(NULLIF(TRIM("MULTI_GLAZE_PROPORTION"), '') AS FLOAT) AS multi_glaze_proportion,
+        CASE
+            WHEN UPPER(TRIM("GLAZED_TYPE")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("GLAZED_TYPE")
+        END AS glazed_type,
+        CASE
+            WHEN UPPER(TRIM("GLAZED_AREA")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("GLAZED_AREA")
+        END AS glazed_area,
+        CAST(NULLIF(TRIM("EXTENSION_COUNT"), '') AS FLOAT) AS extension_count,
+        CAST(NULLIF(TRIM("NUMBER_HABITABLE_ROOMS"), '') AS INT) AS number_habitable_rooms,
+        CAST(NULLIF(TRIM("NUMBER_HEATED_ROOMS"), '') AS INT) AS number_heated_rooms,
+        CAST(NULLIF(TRIM("LOW_ENERGY_LIGHTING"), '') AS INT) AS low_energy_lighting,
+        CAST(NULLIF(TRIM("NUMBER_OPEN_FIREPLACES"), '') AS INT) AS number_open_fireplaces,
+        CASE
+            WHEN UPPER(TRIM("HOTWATER_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("HOTWATER_DESCRIPTION")
+        END AS hotwater_description,
+        CASE
+            WHEN UPPER(TRIM("HOT_WATER_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("HOT_WATER_ENERGY_EFF")
+        END AS hot_water_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("HOT_WATER_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("HOT_WATER_ENV_EFF")
+        END AS hot_water_env_eff,
+        CASE
+            WHEN UPPER(TRIM("FLOOR_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("FLOOR_DESCRIPTION")
+        END AS floor_description,
+        CASE
+            WHEN UPPER(TRIM("FLOOR_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("FLOOR_ENERGY_EFF")
+        END AS floor_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("FLOOR_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("FLOOR_ENV_EFF")
+        END AS floor_env_eff,
+        CASE
+            WHEN UPPER(TRIM("WINDOWS_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("WINDOWS_DESCRIPTION")
+        END AS windows_description,
+        CASE
+            WHEN UPPER(TRIM("WINDOWS_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("WINDOWS_ENERGY_EFF")
+        END AS windows_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("WINDOWS_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("WINDOWS_ENV_EFF")
+        END AS windows_env_eff,
+        CASE
+            WHEN UPPER(TRIM("WALLS_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("WALLS_DESCRIPTION")
+        END AS walls_description,
+        CASE
+            WHEN UPPER(TRIM("WALLS_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("WALLS_ENERGY_EFF")
+        END AS walls_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("WALLS_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("WALLS_ENV_EFF")
+        END AS walls_env_eff,
+        CASE
+            WHEN UPPER(TRIM("SECONDHEAT_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("SECONDHEAT_DESCRIPTION")
+        END AS secondheat_description,
+        CASE
+            WHEN UPPER(TRIM("SHEATING_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("SHEATING_ENERGY_EFF")
+        END AS sheating_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("SHEATING_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("SHEATING_ENV_EFF")
+        END AS sheating_env_eff,
+        CASE
+            WHEN UPPER(TRIM("ROOF_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("ROOF_DESCRIPTION")
+        END AS roof_description,
+        CASE
+            WHEN UPPER(TRIM("ROOF_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("ROOF_ENERGY_EFF")
+        END AS roof_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("ROOF_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("ROOF_ENV_EFF")
+        END AS roof_env_eff,
+        CASE
+            WHEN UPPER(TRIM("MAINHEAT_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINHEAT_DESCRIPTION")
+        END AS mainheat_description,
+        CASE
+            WHEN UPPER(TRIM("MAINHEAT_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINHEAT_ENERGY_EFF")
+        END AS mainheat_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("MAINHEAT_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINHEAT_ENV_EFF")
+        END AS mainheat_env_eff,
+        CASE
+            WHEN UPPER(TRIM("MAINHEATCONT_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINHEATCONT_DESCRIPTION")
+        END AS mainheatcont_description,
+        CASE
+            WHEN UPPER(TRIM("MAINHEATC_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINHEATC_ENERGY_EFF")
+        END AS mainheatc_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("MAINHEATC_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAINHEATC_ENV_EFF")
+        END AS mainheatc_env_eff,
+        CASE
+            WHEN UPPER(TRIM("LIGHTING_DESCRIPTION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("LIGHTING_DESCRIPTION")
+        END AS lighting_description,
+        CASE
+            WHEN UPPER(TRIM("LIGHTING_ENERGY_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("LIGHTING_ENERGY_EFF")
+        END AS lighting_energy_eff,
+        CASE
+            WHEN UPPER(TRIM("LIGHTING_ENV_EFF")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("LIGHTING_ENV_EFF")
+        END AS lighting_env_eff,
+        CASE
+            WHEN UPPER(TRIM("MAIN_FUEL")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MAIN_FUEL")
+        END AS main_fuel,
+        CAST(NULLIF(TRIM("WIND_TURBINE_COUNT"), '') AS INT) AS wind_turbine_count,
+        CASE
+            WHEN UPPER(TRIM("HEAT_LOSS_CORRIDOR")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("HEAT_LOSS_CORRIDOR")
+        END AS heat_loss_corridor,
+        CAST(NULLIF(TRIM("UNHEATED_CORRIDOR_LENGTH"), '') AS FLOAT) AS unheated_corridor_length,
+        CAST(NULLIF(TRIM("FLOOR_HEIGHT"), '') AS FLOAT) AS floor_height,
+        CAST(NULLIF(TRIM("PHOTO_SUPPLY"), '') AS FLOAT) AS photo_supply,
+        CASE
+            WHEN UPPER(TRIM("SOLAR_WATER_HEATING_FLAG")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("SOLAR_WATER_HEATING_FLAG")
+        END AS solar_water_heating_flag,
+        CASE
+            WHEN UPPER(TRIM("MECHANICAL_VENTILATION")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("MECHANICAL_VENTILATION")
+        END AS mechanical_ventilation,
+        CASE
+            WHEN UPPER(TRIM("ADDRESS")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("ADDRESS")
+        END AS address,
+        CASE
+            WHEN UPPER(TRIM("LOCAL_AUTHORITY_LABEL")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("LOCAL_AUTHORITY_LABEL")
+        END AS local_authority_label,
+        CASE
+            WHEN UPPER(TRIM("CONSTITUENCY_LABEL")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("CONSTITUENCY_LABEL")
+        END AS constituency_label,
+        CASE
+            WHEN UPPER(TRIM("POSTTOWN")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("POSTTOWN")
+        END AS posttown,
+        CASE
+            WHEN UPPER(TRIM("CONSTRUCTION_AGE_BAND")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("CONSTRUCTION_AGE_BAND")
+        END AS construction_age_band,
+        CAST(NULLIF(TRIM("LODGEMENT_DATETIME"), '') AS TIMESTAMP) AS lodgement_datetime,
+        CASE
+            WHEN UPPER(TRIM("TENURE")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("TENURE")
+        END AS tenure,
+        CAST(NULLIF(TRIM("FIXED_LIGHTING_OUTLETS_COUNT"), '') AS FLOAT) AS fixed_lighting_outlets_count,
+        CAST(NULLIF(TRIM("LOW_ENERGY_FIXED_LIGHT_COUNT"), '') AS FLOAT) AS low_energy_fixed_light_count,
+        CASE
+            WHEN UPPER(TRIM("UPRN_SOURCE")) IN ({{ NO_DATA_LITERALS }}) THEN NULL
+            ELSE TRIM("UPRN_SOURCE")
+        END AS uprn_source,
+        CAST(NULLIF(TRIM("REPORT_TYPE"), '') AS INT) AS report_type,
+        'domestic' AS certificate_type,
+        _airbyte_raw_id,
+        _airbyte_extracted_at,
+        _airbyte_generation_id,
+        _airbyte_meta
+    FROM
+        {{ source('postgres', 'certificates') }}
+    WHERE
+        NULLIF(TRIM("UPRN"), '') IS NULL
+),
+
+epc_address_uprn_crossref as (
+    select * from {{ source('postgres', 'epc_address_uprn_crossref')}}
+)
+
+select 
+    c.*,
+    eauc.uprn as uprn,
+    eauc.match_score as match_score
+from certificates c
+left join epc_address_uprn_crossref eauc on eauc.lmk_key=c.lmk_key
+where eauc.uprn is not null

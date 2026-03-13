@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: postgres
+    schema: "{{ env_var('DB_SCHEMA') }}"
+    tables:
+      - name: certificates
