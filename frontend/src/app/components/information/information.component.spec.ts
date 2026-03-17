@@ -43,8 +43,8 @@ describe('InformationComponent', () => {
         expect(renderer.createElement).toHaveBeenCalledWith('a');
 
         expect(fakeAnchor.setAttribute).toHaveBeenCalledWith('target', '_self');
-        expect(fakeAnchor.setAttribute).toHaveBeenCalledWith('href', 'assets/NDTP-IRIS-User-Guide.pdf');
-        expect(fakeAnchor.setAttribute).toHaveBeenCalledWith('download', 'NDTP-IRIS-User-Guide.pdf');
+        expect(fakeAnchor.setAttribute).toHaveBeenCalledWith('href', 'assets/downloads/IRIS - Documentation and Guides.zip');
+        expect(fakeAnchor.setAttribute).toHaveBeenCalledWith('download', 'IRIS - Documentation and Guides.zip');
 
         expect(fakeAnchor.click).toHaveBeenCalled();
         expect(fakeAnchor.remove).toHaveBeenCalled();
