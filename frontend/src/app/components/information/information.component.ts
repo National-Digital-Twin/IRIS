@@ -16,8 +16,8 @@ export class InformationComponent {
     public downloadUserGuide(): void {
         const link = this.#renderer.createElement('a');
         link.setAttribute('target', '_self');
-        link.setAttribute('href', 'assets/NDTP-IRIS-User-Guide.pdf');
-        link.setAttribute('download', `NDTP-IRIS-User-Guide.pdf`);
+        link.setAttribute('href', 'assets/downloads/IRIS - Documentation and Guides.zip');
+        link.setAttribute('download', 'IRIS - Documentation and Guides.zip');
         link.click();
         link.remove();
     }
