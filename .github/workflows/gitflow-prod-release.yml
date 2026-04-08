@@ -79,7 +79,7 @@ jobs:
     steps:
       # Set up AWS credentials for the source account
       - name: Set up AWS Credentials for Source Account
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
         with:
           role-to-assume: arn:aws:iam::${{ env.SOURCE_AWS_ACCOUNT_ID }}:role/ecr-access-for-github
           aws-region: eu-west-2
@@ -118,7 +118,7 @@ jobs:
 
       # Set up AWS credentials for the destination account
       - name: Set up AWS Credentials for Destination Account
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
         with:
           role-to-assume: arn:aws:iam::${{ env.DESTINATION_AWS_ACCOUNT_ID }}:role/ecr-access-for-github
           aws-region: eu-west-2

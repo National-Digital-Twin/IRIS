@@ -108,7 +108,7 @@ jobs:
                   -f backend/Dockerfile backend
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7
         with:
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_NUMBER }}:role/ecr-access-for-github
           aws-region: eu-west-2
