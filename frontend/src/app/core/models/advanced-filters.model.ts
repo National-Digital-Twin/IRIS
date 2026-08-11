@@ -10,7 +10,7 @@ import {
     WindowGlazing,
     YearOfAssessment,
 } from '@core/enums';
-import { Moment } from 'moment/moment';
+import { Moment } from 'moment';
 
 export type EPCExpiry = 'EPC Expired' | 'EPC In Date';
 
