@@ -1,2 +1,2 @@
-node-lib @ git+https://${GITHUB_ACCESS_TOKEN}@github.com/National-Node-Net/node-lib.git@pre#egg=node-lib
-ianode-label-builder @ git+https://${GITHUB_ACCESS_TOKEN}@github.com/National-Node-Net/label-builder.git@pre#egg=ianode-label-builder
+node-lib @ git+https://${GITHUB_ACCESS_TOKEN}@github.com/National-Node-Net/node-lib.git@main#egg=node-lib
+ianode-label-builder @ git+https://${GITHUB_ACCESS_TOKEN}@github.com/National-Node-Net/label-builder.git@main#egg=ianode-label-builder
