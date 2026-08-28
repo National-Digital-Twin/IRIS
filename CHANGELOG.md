@@ -18,7 +18,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ---
 
-## [0.90.0] – 2025-03-20
+## [0.90.0] – 2026-03-20
 
 ### Initial Public Release
 - Assess housing stock based on energy performance data
