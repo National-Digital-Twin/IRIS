@@ -3,4 +3,9 @@
 # No fix currently provided for CVE-2026-14456, vulnerability is to the QUIC server side of OpenSSL
 
 CVE-2026-22184
-CVE-2026-14456 
+CVE-2026-14456
+
+# libexpat: fix released upstream (2.8.4) but not yet published as an Alpine 3.24 apk package.
+# TODO: remove once alpinelinux.org ships an updated expat package for the 3.24 branch.
+CVE-2026-66046
+CVE-2026-76641 
