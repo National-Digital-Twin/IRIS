@@ -14,6 +14,8 @@ This monorepo contains:
 - `data-tools/data-cleanser/` — ETL pipeline using Airbyte + dbt to prepare data for IRIS.
 - `data-tools/data-pipeline/` — data pipelines to process EPC and geographic data.
 
+For guidance using IRIS, refer to the **[user guides directory](docs/user-guide)**.
+
 ## Repository Structure
 
 ```
