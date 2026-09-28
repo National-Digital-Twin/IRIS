@@ -19,21 +19,20 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`). 
 
 ---
-## [0.90.0]
+## [0.90.1]
 
 ### Changed
 - Update privacy notice.
 
-## [Unreleased] 
+## [0.90.0] – 2026-03-20
 
-### Added 
-- Placeholder for upcoming features and enhancements. 
-
-### Fixed 
-- Placeholder for bug fixes and security updates. 
-
-### Changed 
-- Updated GitHub Actions to latest versions. 
+### Initial Public Release
+- Assess housing stock based on energy performance data
+- Data driven decision making
+- Search bar functionality by address, postcode, EPC rating or building type
+- 3D and 2D map functionality
+- UI enhancements
+- Privacy notice
 
 ---
 
