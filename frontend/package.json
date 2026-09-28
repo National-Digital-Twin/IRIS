@@ -45,6 +45,7 @@
         "jszip": "3.10.1",
         "mapbox-gl": "3.19.0",
         "modern-normalize": "3.0.1",
+        "moment": "^2.30.1",
         "plotly.js-dist-min": "3.4.0",
         "proj4": "2.20.3",
         "rxjs": "7.8.2",
@@ -87,6 +88,7 @@
         "stylelint": "17.4.0",
         "stylelint-config-clean-order": "8.0.1",
         "stylelint-config-recommended-scss": "17.0.0",
+        "stylelint-order": "^7.0.1",
         "ts-node": "10.9.2",
         "typescript": "5.9.3"
     }

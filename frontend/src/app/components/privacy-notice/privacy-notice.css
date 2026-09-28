@@ -38,7 +38,7 @@
     height: auto !important;
     display: block;
     margin: 0 0 8px 0;
-    transform: translateX(var(--pn-logo-shift, -32px));
+    
   }
   
   .privacy-html h1 {

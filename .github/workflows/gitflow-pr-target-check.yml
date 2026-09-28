@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
-# © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+# © Crown Copyright 2026. This work has been developed by the National Digital Twin Programme and is legally attributed to the UK's Department for Business, Innovation, Science and Trade (BIST) as the governing entity.
 
 name: GitFlow - PR Target Check
 
 on:
   pull_request:
 
+permissions: {}
+
 jobs:
   pr-target-check:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check merge target
@@ -15,21 +18,29 @@ jobs:
           BASE_BRANCH: ${{ github.base_ref }}
           HEAD_BRANCH: ${{ github.head_ref }}
         run: |
-          # Allow merging feature, hotfix, or bugfix into develop
-          if [[ "$HEAD_BRANCH" =~ ^(feature/|hotfix/|bugfix/) && "$BASE_BRANCH" == "develop" ]]; then
-            echo "✅ Allowed: $HEAD_BRANCH → $BASE_BRANCH"
+          # Allow merging feature, hotfix, bugfix, or dependabot into develop
+          if [[ "$HEAD_BRANCH" =~ ^(feature/|hotfix/|bugfix/|dependabot/) && "$BASE_BRANCH" == "develop" ]]; then
+            echo "Allowed: $HEAD_BRANCH → $BASE_BRANCH"
             exit 0
           fi
 
-          # Allow merging release into main
-          if [[ "$HEAD_BRANCH" =~ ^release/.*$ && "$BASE_BRANCH" == "main" ]]; then
-            echo "✅ Allowed: $HEAD_BRANCH → $BASE_BRANCH"
+          # Allow merging release or hotfix into main
+          if [[ "$HEAD_BRANCH" =~ ^(release/|hotfix/).*$ && "$BASE_BRANCH" == "main" ]]; then
+            echo "Allowed: $HEAD_BRANCH → $BASE_BRANCH"
+            exit 0
+          fi
+
+          # Allow merging sync branches into intermediate-sync (Automated Fork Sync)
+          if [[ "$HEAD_BRANCH" =~ ^sync/ && "$BASE_BRANCH" == "intermediate-sync" ]]; then
+            echo "Allowed: $HEAD_BRANCH → $BASE_BRANCH"
             exit 0
           fi
 
           # If none of the above conditions match, block the PR
-          echo "❌ Error: Invalid PR - '$HEAD_BRANCH' cannot be merged into '$BASE_BRANCH'."
-          echo "✅ Allowed merges:"
-          echo "  - feature/*, hotfix/*, bugfix/* → develop"
-          echo "  - release/* → main"
+          echo "Error: Invalid PR - '$HEAD_BRANCH' cannot be merged into '$BASE_BRANCH'."
+          echo "Allowed merges:"
+          echo "  - feature/*, hotfix/*, bugfix/*, dependabot/* → develop"
+          echo "  - release/*, hotfix/* → main"
+          echo "  - sync/* → intermediate-sync"
           exit 1
+
