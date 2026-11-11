@@ -19,6 +19,11 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - **Build metadata** – If needed, use `+build` (e.g., `2.1.0+20250314`). 
 
 ---
+## [0.90.2]
+
+### Changed
+- Pass MapBox access token to all Mapbox requests
+
 ## [0.90.1]
 
 ### Changed
