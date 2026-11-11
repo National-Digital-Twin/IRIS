@@ -54,7 +54,7 @@ export class MinimapComponent implements OnInit {
 
             const map = new mapboxgl.Map({
                 container: 'minimap',
-                accessToken: 'undefined',
+                accessToken: this.#runtimeConfig.mapbox.accessToken,
                 zoom: this.#runtimeConfig.minimap.zoom,
                 center: this.#runtimeConfig.map.center,
                 interactive: false,

@@ -125,7 +125,7 @@ export class MapBoxService implements MapService<mapboxgl.Map> {
 
         this.mapInstance = new mapboxgl.Map({
             container: 'map',
-            accessToken: 'undefined',
+            accessToken: this.#runtimeConfig.mapbox.accessToken,
             pitch,
             zoom,
             center,
