@@ -2,14 +2,14 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withFetch, withInterceptorsFromDi
 import { ErrorHandler } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { loadRuntimeConfiguration } from '@core/helpers/runtime-configuration';
 import { HandleHttpErrorInterceptor } from '@core/interceptors/handle-http-error.interceptor';
 import { ExceptionService } from '@core/services/exception.service';
 import { RUNTIME_CONFIGURATION } from '@core/tokens/runtime-configuration.token';
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
-fetch('configuration/config.json')
-    .then((response) => response.json())
+loadRuntimeConfiguration()
     .then((config) =>
         bootstrapApplication(AppComponent, {
             providers: [
@@ -24,5 +24,6 @@ fetch('configuration/config.json')
                 provideHttpClient(withFetch(), withInterceptorsFromDi()),
                 provideAnimations(),
             ],
-        }).catch((err) => console.error(err)),
-    );
+        }),
+    )
+    .catch((err) => console.error(err));

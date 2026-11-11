@@ -55,6 +55,12 @@ server {
         proxy_pass https://api.os.uk/$requested_path?$args$api_key_qs;
     }
 
+    location = /transparent-proxy/mapbox-config {
+        default_type application/json;
+        add_header Cache-Control "no-store" always;
+        return 200 '{"accessToken":"$MAPBOX_ACCESS_TOKEN"}';
+    }
+
     # Mapbox
     location /transparent-proxy/mapbox-api/ {
         set $delimeter "?";

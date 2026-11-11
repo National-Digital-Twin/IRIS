@@ -11,6 +11,10 @@ export interface RuntimeConfigurationModel {
     production: boolean;
     /* Appliation environment */
     env: 'local' | 'dev' | 'prod';
+    /** Public token used by Mapbox GL JS session authentication and events. */
+    mapbox: {
+        accessToken: string;
+    };
     /** Address search configuration */
     addressSearch: {
         maxResults: number;
